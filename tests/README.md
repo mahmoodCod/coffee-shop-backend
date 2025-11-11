@@ -1,35 +1,54 @@
-# تست‌های پروژه
+# Project Tests
 
-## نصب Dependencies
+## Installing Dependencies
 
-قبل از اجرای تست‌ها، باید Jest و Supertest را نصب کنید:
+Before running tests, you need to install Jest and Supertest:
 
 ```bash
 npm install --save-dev jest supertest
 ```
 
-## اجرای تست‌ها
+## Running Tests
 
 ```bash
-# اجرای همه تست‌ها
+# Run all tests
 npm test
 
-# اجرای تست‌ها با watch mode
+# Run tests in watch mode
 npm run test:watch
 
-# اجرای تست‌ها با coverage
+# Run tests with coverage
 npm run test:coverage
 ```
 
-## ساختار تست‌ها
+## Test Structure
 
-- `tests/app.test.js` - تست‌های Express app configuration
+- `tests/app.test.js` - Express app configuration tests
 
-## تست‌های فعلی
+## Current Tests
 
 ### app.test.js
-- تست 404 handler برای route های undefined
-- تست JSON response
-- تست JSON body parser
-- تست HTTP methods مختلف (GET, POST, PUT, DELETE)
+- Test 404 handler for undefined routes
+- Test JSON response
+- Test JSON body parser
+- Test different HTTP methods (GET, POST, PUT, DELETE)
 
+## Test Coverage
+
+Tests cover:
+- Express app structure and configuration
+- Middleware setup (CORS, body parsers)
+- Error handling (404 handler)
+- HTTP methods availability
+
+## Adding New Tests
+
+When adding new features, create corresponding test files:
+- `tests/[feature-name].test.js` - Unit tests for specific feature
+- Follow the existing test structure and naming conventions
+
+## Notes
+
+- All tests should pass before merging to develop
+- Tests are automatically run on CI/CD pipeline
+- Coverage reports are generated in the `coverage/` directory
