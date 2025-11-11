@@ -4,7 +4,9 @@
   "description": "Backend API for coffee shop e-commerce platform built with Node.js, Express.js, and MongoDB",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx jest",
+    "test:watch": "npx jest --watch",
+    "test:coverage": "npx jest --coverage",
     "dev": "nodemon server.js"
   },
   "repository": {
@@ -32,5 +34,9 @@
     "swagger-ui-express": "^5.0.1",
     "yup": "^1.7.1",
     "zarinpal-checkout": "^0.3.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3"
   }
 }
