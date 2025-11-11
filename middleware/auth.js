@@ -32,6 +32,17 @@ exports.auth = async (req,res,next) => {
             return errorResponse(res, 401, "Token is not valid !!");
         };
 
+        const userId = decoded.userId;
+
+        const user = await User.findOne({ _id: userId });
+
+        if (!user) {
+          return errorResponse(res, 404, "User not found !!");
+        }
+
+        req.user = user;
+
+        next();
     } catch (err) {
         next(err);
     };
