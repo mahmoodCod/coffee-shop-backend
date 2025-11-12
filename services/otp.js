@@ -10,49 +10,58 @@ const generateOTP = () => {
 const sendSms = async (phone, otp) => {
   try {
     const smsProvider = process.env.SMS_PROVIDER || 'faraz'; // 'faraz' or 'custom'
-    const smsApiKey = process.env.SMS_API_KEY;
     const smsApiUrl = process.env.SMS_API_URL;
-    
-    // If no API key or URL, log OTP for development
-    if (!smsApiKey && !smsApiUrl) {
-      console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
-      return { success: true, message: 'OTP logged (development mode)' };
-    }
 
     let options = {};
 
     if (smsProvider === 'faraz') {
       // Faraz SMS API integration
       // Documentation: https://docs.farazsms.com/
-      const farazApiUrl = smsApiUrl || 'https://api.farazsms.com/v1/send';
+      // API URL: https://ippanel.com/api/select (or https://api.farazsms.com/v1/send)
+      const farazApiUrl = smsApiUrl || 'https://ippanel.com/api/select';
       const message = `کد تایید شما: ${otp}`;
+      const farazUsername = process.env.FARAZ_USERNAME || '';
+      const farazPassword = process.env.FARAZ_PASSWORD || '';
+      const farazSender = process.env.FARAZ_SENDER_NUMBER || '';
+      
+      // If no username or password, use development mode
+      if (!farazUsername || !farazPassword) {
+        console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
+        return { success: true, message: 'OTP logged (development mode - no credentials)' };
+      }
       
       options = {
         url: farazApiUrl,
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${smsApiKey}`
+          'Content-Type': 'application/json'
         },
         json: {
           op: 'send', // Operation: send
-          uname: process.env.FARAZ_USERNAME || '',
-          pass: process.env.FARAZ_PASSWORD || '',
+          uname: farazUsername,
+          pass: farazPassword,
           message: message,
           to: [phone], // Array of phone numbers
-          from: process.env.FARAZ_SENDER_NUMBER || '',
-          // Optional: template_id for template messages
-          // template_id: process.env.FARAZ_TEMPLATE_ID || ''
+          from: farazSender
+          // Optional: pattern code for template messages
+          // pattern: process.env.FARAZ_PATTERN_CODE || ''
         }
       };
     } else {
       // Custom SMS service integration
+      const customApiKey = process.env.SMS_API_KEY || '';
+      
+      if (!smsApiUrl || !customApiKey) {
+        console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
+        return { success: true, message: 'OTP logged (development mode - no custom SMS config)' };
+      }
+      
       options = {
         url: smsApiUrl,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${smsApiKey}`
+          'Authorization': `Bearer ${customApiKey}`
         },
         json: {
           phone: phone,
