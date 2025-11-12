@@ -1,6 +1,44 @@
-// User model - TODO: Implement User schema
-// This is a placeholder to prevent module not found errors
-// Replace this with actual Mongoose schema when ready
+const mongoose = require('mongoose');
 
-module.exports = null; // Placeholder - implement User model here
+const addressesSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    postalCode: {
+        type: String,
+        required: true,
+    },
+    province: {
+        type: String,
+        required: true,
+    },
+    city: {
+        type: String,
+        required: true,
+    },
+    street: {
+        type: String,
+        required: true,
+    },
+});
 
+const userSchema = new mongoose.Schema({
+    phone: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    username: {
+        type: String,
+        required: true,
+    },
+    roles: {
+        type: [String],
+        enum: ['ADMIN', 'USER'],
+        default: ['USER'],
+    },
+    addresses: [addressesSchema],
+}, {timestamps : true});
+
+module.exports = mongoose.model('User', userSchema);
