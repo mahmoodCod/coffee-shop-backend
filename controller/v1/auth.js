@@ -4,8 +4,8 @@ const jwt = require('jsonwebtoken');
 const { sendSms } = require('../../services/otp');
 const { sendOtpValidator, otpVerifyValidator } = require('../../validator/auth');
 const { errorResponse, successRespons } = require('../../helpers/responses');
-// const Ban = require('../../model/Ban'); // TODO: Create Ban model if needed
-const User = require('../../model/User'); // TODO: Ensure User model exists
+const Ban = require('../../model/Ban');
+const User = require('../../model/User');
 
 function getOtpRedisPattern(phone) {
     return `OTP: ${phone}`;
@@ -53,12 +53,10 @@ exports.send = async (req,res,next) => {
 
         await sendOtpValidator.validate(req.body, {abortEarly: false});
 
-        // TODO: Uncomment when Ban model is created
-        // const Ban = require('../../model/Ban');
-        // const isBanned = await Ban.findOne({ phone });
-        // if (isBanned) {
-        //     return errorResponse(res, 403, 'This phone number has been banned');
-        // };
+        const isBanned = await Ban.findOne({ phone });
+        if (isBanned) {
+            return errorResponse(res, 403, 'This phone number has been banned');
+        };
 
         const { expired,remainingTime } = await getOtpDetails(phone);
 
