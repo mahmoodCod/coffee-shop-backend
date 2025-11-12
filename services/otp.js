@@ -17,6 +17,7 @@ const sendSms = async (phone, otp) => {
       const farapayamakSender = process.env.FARAPAYAMAK_SENDER_NUMBER || '';
       
       if (!smsEnabled || !farapayamakUsername || !farapayamakPassword) {
+        console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
         return { success: true, message: 'OTP logged (development mode)' };
       }
 
@@ -54,8 +55,10 @@ const sendSms = async (phone, otp) => {
       return new Promise((resolve, reject) => {
         request(options, (error, response, body) => {
           if (error) {
+            console.error('SMS sending error:', error);
             reject(error);
           } else if (response.statusCode !== 200) {
+            console.error('SMS API error:', response.statusCode, body);
             reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
             try {
@@ -76,17 +79,22 @@ const sendSms = async (phone, otp) => {
                   : result.RetStatus;
                 
                 if (retStatus === 0) {
+                  console.log('SMS sent successfully:', result);
                   resolve({ success: true, messageId: result.Value, body: result });
                 } else {
                   const errorMsg = result.StrRetStatus || `RetStatus: ${result.RetStatus}`;
+                  console.error('SMS API error response:', result);
                   reject(new Error(`SMS API error: ${errorMsg}`));
                 }
               } else if (typeof result === 'number' && result > 1000) {
+                console.log('SMS sent successfully:', result);
                 resolve({ success: true, messageId: result, body });
               } else {
+                console.error('SMS API unknown response format:', body);
                 reject(new Error(`SMS API error: Unknown response format - ${JSON.stringify(body)}`));
               }
             } catch (parseError) {
+              console.error('SMS API response parse error:', parseError, body);
               reject(new Error(`SMS API error: Failed to parse response - ${body}`));
             }
           }
@@ -96,6 +104,7 @@ const sendSms = async (phone, otp) => {
       const customApiKey = process.env.SMS_API_KEY || '';
       
       if (!smsEnabled || !smsApiUrl || !customApiKey) {
+        console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
         return { success: true, message: 'OTP logged (development mode)' };
       }
       
@@ -116,16 +125,20 @@ const sendSms = async (phone, otp) => {
       return new Promise((resolve, reject) => {
         request(options, (error, response, body) => {
           if (error) {
+            console.error('SMS sending error:', error);
             reject(error);
           } else if (response.statusCode !== 200) {
+            console.error('SMS API error:', response.statusCode, body);
             reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
+            console.log('SMS sent successfully:', body);
             resolve({ success: true, messageId: body.id || body.messageId, body });
           }
         });
       });
     }
   } catch (error) {
+    console.error('SMS sending failed:', error);
     throw error;
   }
 };
