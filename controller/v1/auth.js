@@ -2,9 +2,10 @@ const redis = require('../../redis');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { sendSms } = require('../../services/otp');
-const { sendOtpValidator } = require('../../validator/auth');
+const { sendOtpValidator, otpVerifyValidator } = require('../../validator/auth');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 // const Ban = require('../../model/Ban'); // TODO: Create Ban model if needed
+const User = require('../../model/User'); // TODO: Ensure User model exists
 
 function getOtpRedisPattern(phone) {
     return `OTP: ${phone}`;
@@ -77,7 +78,58 @@ exports.send = async (req,res,next) => {
 
 exports.verify = async (req,res,next) => {
     try {
+        const { phone, otp } = req.body;
+    
+        await otpVerifyValidator.validate(req.body, { abortEarly: false });
+    
+        const savedOtp = await redis.get(getOtpRedisPattern(phone));
+    
+        if (!savedOtp) {
+          return errorResponse(res, 400, "Wrong or expired OTP");
+        }
+    
+        const otpIsCorrect = await bcrypt.compare(otp, savedOtp);
+    
+        if (!otpIsCorrect) {
+          return errorResponse(res, 400, "Wrong or expired OTP !!");
+        }
+    
+        // consume OTP on success to prevent reuse
+        await redis.del(getOtpRedisPattern(phone));
 
+        const existingUser = await User.findOne({ phone });
+        if (existingUser) {
+          const token = jwt.sign(
+            { userId: existingUser._id },
+            process.env.JWT_SECRET,
+            {
+              expiresIn: "30d",
+            }
+          );
+    
+          return successRespons(res, 200, { user: existingUser, token });
+        }
+    
+        //* Register
+        const isFirstUser = (await User.countDocuments()) === 0;
+
+        const user = await User.create({
+          phone,
+          username: phone,
+          roles: isFirstUser && process.env.ALLOW_FIRST_ADMIN === 'true'
+            ? ["ADMIN"]
+            : ["USER"],
+        });
+    
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+          expiresIn: "30d",
+        });
+    
+        return successRespons(res, 201, {
+          message: "User registed successfully :))",
+          token,
+          user,
+        });
     } catch (err) {
         next(err);
     };
