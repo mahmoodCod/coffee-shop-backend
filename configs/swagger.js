@@ -6,18 +6,18 @@ const configSwagger = (app) => {
     swaggerDefinition: {
       openapi: "3.0.1",
       info: {
-        title: "Social project apis  ❤️ ",
+        title: "Coffee Shop API",
         description:
-          "Social Media project apis with nodejs + express.js + MongoDB",
+          "Coffee Shop e-commerce platform APIs with Node.js + Express.js + MongoDB",
         version: "1.0.0",
       },
       servers: [
         {
-          url: "http://localhost:4000",
+          url: `http://localhost:${process.env.PORT || 3000}`,
         },
       ],
     },
-    apis: ["./server.js"],
+    apis: ["./routes/**/*.js", "./server.js"],
   });
 
   const swagger = swaggerUi.setup(swaggerDocument, {});
@@ -25,3 +25,4 @@ const configSwagger = (app) => {
 };
 
 module.exports = configSwagger;
+
