@@ -1,4 +1,7 @@
 const app = require('./app');
+const configSwagger = require('./configs/swagger');
+
+configSwagger(app);
 
 const mongoose = require('mongoose');
 require("dotenv").config();
