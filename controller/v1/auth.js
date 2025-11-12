@@ -1,3 +1,5 @@
+const redis = require('../../redis');
+const bcrypt = require('bcrypt');
 
 function getOtpRedisPattern(phone) {
     return `OTP: ${phone}`;
