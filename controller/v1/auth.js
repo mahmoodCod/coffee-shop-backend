@@ -4,8 +4,29 @@ const jwt = require('jsonwebtoken');
 const { sendSms } = require('../../services/otp');
 const { sendOtpValidator, otpVerifyValidator } = require('../../validator/auth');
 const { errorResponse, successRespons } = require('../../helpers/responses');
-const Ban = require('../../model/Ban');
-const User = require('../../model/User');
+
+// Optional models - comment out if not created yet
+let Ban = null;
+let User = null;
+
+try {
+  Ban = require('../../model/Ban');
+} catch (err) {
+  // Ban model not found - will skip ban check
+  console.log('Ban model not found - ban check will be skipped');
+}
+
+try {
+  User = require('../../model/User');
+  // If User is null (placeholder), set it to null
+  if (User === null) {
+    User = null;
+    console.log('User model is placeholder - verify and getMe endpoints will not work');
+  }
+} catch (err) {
+  // User model not found - verify and getMe will not work
+  console.log('User model not found - verify and getMe endpoints will not work');
+}
 
 function getOtpRedisPattern(phone) {
     return `OTP: ${phone}`;
@@ -53,10 +74,13 @@ exports.send = async (req,res,next) => {
 
         await sendOtpValidator.validate(req.body, {abortEarly: false});
 
-        const isBanned = await Ban.findOne({ phone });
-        if (isBanned) {
-            return errorResponse(res, 403, 'This phone number has been banned');
-        };
+        // Ban check - skip if Ban model not available
+        if (Ban) {
+            const isBanned = await Ban.findOne({ phone });
+            if (isBanned) {
+                return errorResponse(res, 403, 'This phone number has been banned');
+            }
+        }
 
         const { expired,remainingTime } = await getOtpDetails(phone);
 
@@ -94,6 +118,11 @@ exports.verify = async (req,res,next) => {
     
         // consume OTP on success to prevent reuse
         await redis.del(getOtpRedisPattern(phone));
+
+        // User operations - skip if User model not available
+        if (!User) {
+            return errorResponse(res, 500, 'User model not available. Please create User model.');
+        }
 
         const existingUser = await User.findOne({ phone });
         if (existingUser) {
