@@ -9,10 +9,9 @@ try {
   if (User === null) {
     User = null;
   }
-} catch (err) {
-  // User model not found
-  console.log('User model not found - auth middleware will not work');
-}
+  } catch (err) {
+    // User model not found
+  }
 
 exports.auth = async (req,res,next) => {
     try {
