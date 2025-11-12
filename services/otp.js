@@ -9,29 +9,52 @@ const generateOTP = () => {
 // Send SMS using SMS service (Farapayamak or custom SMS service)
 const sendSms = async (phone, otp) => {
   try {
+    // Check if SMS is enabled (set SMS_ENABLED=false to disable SMS sending)
+    // Default: SMS is disabled (development mode)
+    const smsEnabled = process.env.SMS_ENABLED === 'true';
+    
     const smsProvider = process.env.SMS_PROVIDER || 'farapayamak'; // 'farapayamak' or 'custom'
     const smsApiUrl = process.env.SMS_API_URL;
-
-    let options = {};
 
     if (smsProvider === 'farapayamak') {
       // Farapayamak API integration
       // Documentation: https://farapayamak.ir/
-      // API URL: https://rest.payamak-panel.com/api/SendSMS/SendSMS
-      // Alternative: https://api.farapayamak.ir/v1/SendSMS
-      const farapayamakApiUrl = smsApiUrl || 'https://rest.payamak-panel.com/api/SendSMS/SendSMS';
-      const message = `کد تایید شما: ${otp}`;
+      // API URL: http://rest.payamak-panel.com/api/SendSMS/SendSMS
+      // Response format: {"Value":"messageId","RetStatus":0,"StrRetStatus":"Ok"}
+      // RetStatus: 0 = success, other values = error
+      // RetStatus 35 = InvalidData (wrong phone format, sender number, or parameters)
       const farapayamakUsername = process.env.FARAPAYAMAK_USERNAME || '';
       const farapayamakPassword = process.env.FARAPAYAMAK_PASSWORD || '';
       const farapayamakSender = process.env.FARAPAYAMAK_SENDER_NUMBER || '';
       
-      // If no username or password, use development mode
-      if (!farapayamakUsername || !farapayamakPassword) {
+      // Development mode: If SMS is disabled or credentials are not provided, just log OTP
+      if (!smsEnabled || !farapayamakUsername || !farapayamakPassword) {
         console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
-        return { success: true, message: 'OTP logged (development mode - no credentials)' };
+        return { success: true, message: 'OTP logged (development mode)' };
       }
+
+      // Normalize phone number format for Iranian numbers
+      // Farapayamak expects format: 09123456789 (starting with 0)
+      let normalizedPhone = phone.toString().trim();
+      // Remove any spaces or dashes
+      normalizedPhone = normalizedPhone.replace(/[\s\-]/g, '');
+      // Convert international format to local format
+      if (normalizedPhone.startsWith('+98')) {
+        normalizedPhone = '0' + normalizedPhone.substring(3);
+      } else if (normalizedPhone.startsWith('0098')) {
+        normalizedPhone = '0' + normalizedPhone.substring(4);
+      } else if (normalizedPhone.startsWith('98') && normalizedPhone.length === 12) {
+        normalizedPhone = '0' + normalizedPhone.substring(2);
+      }
+      // Ensure phone starts with 0 and has 11 digits
+      if (!normalizedPhone.startsWith('0') && normalizedPhone.length === 10) {
+        normalizedPhone = '0' + normalizedPhone;
+      }
+
+      const farapayamakApiUrl = smsApiUrl || 'http://rest.payamak-panel.com/api/SendSMS/SendSMS';
+      const message = `کد تایید شما: ${otp}`;
       
-      options = {
+      const options = {
         url: farapayamakApiUrl,
         method: 'POST',
         headers: {
@@ -40,21 +63,79 @@ const sendSms = async (phone, otp) => {
         form: {
           username: farapayamakUsername,
           password: farapayamakPassword,
-          to: phone,
+          to: normalizedPhone,
           from: farapayamakSender,
           text: message
         }
       };
+
+      return new Promise((resolve, reject) => {
+        request(options, (error, response, body) => {
+          if (error) {
+            console.error('SMS sending error:', error);
+            reject(error);
+          } else if (response.statusCode !== 200) {
+            console.error('SMS API error:', response.statusCode, body);
+            reject(new Error(`SMS API returned status ${response.statusCode}`));
+          } else {
+            try {
+              // Farapayamak API returns JSON response
+              // Format: {"Value":"messageId","RetStatus":0,"StrRetStatus":"Ok"}
+              // RetStatus: 0 = success, other values = error
+              let result;
+              if (typeof body === 'string') {
+                try {
+                  result = JSON.parse(body);
+                } catch (e) {
+                  // If not JSON, try to parse as number
+                  result = parseInt(body, 10);
+                }
+              } else {
+                result = body;
+              }
+
+              // Check if response is JSON object with RetStatus
+              if (result && typeof result === 'object' && 'RetStatus' in result) {
+                // RetStatus can be number or string, convert to number for comparison
+                const retStatus = typeof result.RetStatus === 'string' 
+                  ? parseInt(result.RetStatus, 10) 
+                  : result.RetStatus;
+                
+                if (retStatus === 0) {
+                  console.log('SMS sent successfully:', result);
+                  resolve({ success: true, messageId: result.Value, body: result });
+                } else {
+                  const errorMsg = result.StrRetStatus || `RetStatus: ${result.RetStatus}`;
+                  console.error('SMS API error response:', result);
+                  reject(new Error(`SMS API error: ${errorMsg}`));
+                }
+              } else if (typeof result === 'number' && result > 1000) {
+                // Legacy numeric response format (success)
+                console.log('SMS sent successfully:', result);
+                resolve({ success: true, messageId: result, body });
+              } else {
+                // Unknown response format
+                console.error('SMS API unknown response format:', body);
+                reject(new Error(`SMS API error: Unknown response format - ${JSON.stringify(body)}`));
+              }
+            } catch (parseError) {
+              console.error('SMS API response parse error:', parseError, body);
+              reject(new Error(`SMS API error: Failed to parse response - ${body}`));
+            }
+          }
+        });
+      });
     } else {
       // Custom SMS service integration
       const customApiKey = process.env.SMS_API_KEY || '';
       
-      if (!smsApiUrl || !customApiKey) {
+      // Development mode: If SMS is disabled or credentials are not provided, just log OTP
+      if (!smsEnabled || !smsApiUrl || !customApiKey) {
         console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
-        return { success: true, message: 'OTP logged (development mode - no custom SMS config)' };
+        return { success: true, message: 'OTP logged (development mode)' };
       }
       
-      options = {
+      const options = {
         url: smsApiUrl,
         method: 'POST',
         headers: {
@@ -67,32 +148,22 @@ const sendSms = async (phone, otp) => {
           otp: otp
         }
       };
-    }
 
-    return new Promise((resolve, reject) => {
-      request(options, (error, response, body) => {
-        if (error) {
-          console.error('SMS sending error:', error);
-          reject(error);
-        } else if (response.statusCode !== 200) {
-          console.error('SMS API error:', response.statusCode, body);
-          reject(new Error(`SMS API returned status ${response.statusCode}`));
-        } else {
-          // Farapayamak API returns a numeric response
-          // If response > 1000, it means success
-          // If response < 0, it means error
-          const result = typeof body === 'string' ? parseInt(body, 10) : body;
-          
-          if (result > 1000) {
-            console.log('SMS sent successfully:', body);
-            resolve({ success: true, messageId: result, body });
+      return new Promise((resolve, reject) => {
+        request(options, (error, response, body) => {
+          if (error) {
+            console.error('SMS sending error:', error);
+            reject(error);
+          } else if (response.statusCode !== 200) {
+            console.error('SMS API error:', response.statusCode, body);
+            reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
-            console.error('SMS API error response:', body);
-            reject(new Error(`SMS API error: ${body}`));
+            console.log('SMS sent successfully:', body);
+            resolve({ success: true, messageId: body.id || body.messageId, body });
           }
-        }
+        });
       });
-    });
+    }
   } catch (error) {
     console.error('SMS sending failed:', error);
     throw error;
