@@ -6,45 +6,43 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send SMS using SMS service (Faraz SMS or custom SMS service)
+// Send SMS using SMS service (Farapayamak or custom SMS service)
 const sendSms = async (phone, otp) => {
   try {
-    const smsProvider = process.env.SMS_PROVIDER || 'faraz'; // 'faraz' or 'custom'
+    const smsProvider = process.env.SMS_PROVIDER || 'farapayamak'; // 'farapayamak' or 'custom'
     const smsApiUrl = process.env.SMS_API_URL;
 
     let options = {};
 
-    if (smsProvider === 'faraz') {
-      // Faraz SMS API integration
-      // Documentation: https://docs.farazsms.com/
-      // API URL: https://ippanel.com/api/select (or https://api.farazsms.com/v1/send)
-      const farazApiUrl = smsApiUrl || 'https://ippanel.com/api/select';
+    if (smsProvider === 'farapayamak') {
+      // Farapayamak API integration
+      // Documentation: https://farapayamak.ir/
+      // API URL: https://rest.payamak-panel.com/api/SendSMS/SendSMS
+      // Alternative: https://api.farapayamak.ir/v1/SendSMS
+      const farapayamakApiUrl = smsApiUrl || 'https://rest.payamak-panel.com/api/SendSMS/SendSMS';
       const message = `کد تایید شما: ${otp}`;
-      const farazUsername = process.env.FARAZ_USERNAME || '';
-      const farazPassword = process.env.FARAZ_PASSWORD || '';
-      const farazSender = process.env.FARAZ_SENDER_NUMBER || '';
+      const farapayamakUsername = process.env.FARAPAYAMAK_USERNAME || '';
+      const farapayamakPassword = process.env.FARAPAYAMAK_PASSWORD || '';
+      const farapayamakSender = process.env.FARAPAYAMAK_SENDER_NUMBER || '';
       
       // If no username or password, use development mode
-      if (!farazUsername || !farazPassword) {
+      if (!farapayamakUsername || !farapayamakPassword) {
         console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
         return { success: true, message: 'OTP logged (development mode - no credentials)' };
       }
       
       options = {
-        url: farazApiUrl,
+        url: farapayamakApiUrl,
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/x-www-form-urlencoded'
         },
-        json: {
-          op: 'send', // Operation: send
-          uname: farazUsername,
-          pass: farazPassword,
-          message: message,
-          to: [phone], // Array of phone numbers
-          from: farazSender
-          // Optional: pattern code for template messages
-          // pattern: process.env.FARAZ_PATTERN_CODE || ''
+        form: {
+          username: farapayamakUsername,
+          password: farapayamakPassword,
+          to: phone,
+          from: farapayamakSender,
+          text: message
         }
       };
     } else {
@@ -80,8 +78,18 @@ const sendSms = async (phone, otp) => {
           console.error('SMS API error:', response.statusCode, body);
           reject(new Error(`SMS API returned status ${response.statusCode}`));
         } else {
-          console.log('SMS sent successfully:', body);
-          resolve(body);
+          // Farapayamak API returns a numeric response
+          // If response > 1000, it means success
+          // If response < 0, it means error
+          const result = typeof body === 'string' ? parseInt(body, 10) : body;
+          
+          if (result > 1000) {
+            console.log('SMS sent successfully:', body);
+            resolve({ success: true, messageId: result, body });
+          } else {
+            console.error('SMS API error response:', body);
+            reject(new Error(`SMS API error: ${body}`));
+          }
         }
       });
     });
