@@ -1,44 +1,28 @@
 const redis = require('../redis');
 const request = require('request');
 
-// Generate random OTP code
 const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send SMS using SMS service (Farapayamak or custom SMS service)
 const sendSms = async (phone, otp) => {
   try {
-    // Check if SMS is enabled (set SMS_ENABLED=false to disable SMS sending)
-    // Default: SMS is disabled (development mode)
     const smsEnabled = process.env.SMS_ENABLED === 'true';
-    
-    const smsProvider = process.env.SMS_PROVIDER || 'farapayamak'; // 'farapayamak' or 'custom'
+    const smsProvider = process.env.SMS_PROVIDER || 'farapayamak';
     const smsApiUrl = process.env.SMS_API_URL;
 
     if (smsProvider === 'farapayamak') {
-      // Farapayamak API integration
-      // Documentation: https://farapayamak.ir/
-      // API URL: http://rest.payamak-panel.com/api/SendSMS/SendSMS
-      // Response format: {"Value":"messageId","RetStatus":0,"StrRetStatus":"Ok"}
-      // RetStatus: 0 = success, other values = error
-      // RetStatus 35 = InvalidData (wrong phone format, sender number, or parameters)
       const farapayamakUsername = process.env.FARAPAYAMAK_USERNAME || '';
       const farapayamakPassword = process.env.FARAPAYAMAK_PASSWORD || '';
       const farapayamakSender = process.env.FARAPAYAMAK_SENDER_NUMBER || '';
       
-      // Development mode: If SMS is disabled or credentials are not provided, just log OTP
       if (!smsEnabled || !farapayamakUsername || !farapayamakPassword) {
         console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
         return { success: true, message: 'OTP logged (development mode)' };
       }
 
-      // Normalize phone number format for Iranian numbers
-      // Farapayamak expects format: 09123456789 (starting with 0)
       let normalizedPhone = phone.toString().trim();
-      // Remove any spaces or dashes
       normalizedPhone = normalizedPhone.replace(/[\s\-]/g, '');
-      // Convert international format to local format
       if (normalizedPhone.startsWith('+98')) {
         normalizedPhone = '0' + normalizedPhone.substring(3);
       } else if (normalizedPhone.startsWith('0098')) {
@@ -46,7 +30,6 @@ const sendSms = async (phone, otp) => {
       } else if (normalizedPhone.startsWith('98') && normalizedPhone.length === 12) {
         normalizedPhone = '0' + normalizedPhone.substring(2);
       }
-      // Ensure phone starts with 0 and has 11 digits
       if (!normalizedPhone.startsWith('0') && normalizedPhone.length === 10) {
         normalizedPhone = '0' + normalizedPhone;
       }
@@ -79,24 +62,18 @@ const sendSms = async (phone, otp) => {
             reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
             try {
-              // Farapayamak API returns JSON response
-              // Format: {"Value":"messageId","RetStatus":0,"StrRetStatus":"Ok"}
-              // RetStatus: 0 = success, other values = error
               let result;
               if (typeof body === 'string') {
                 try {
                   result = JSON.parse(body);
                 } catch (e) {
-                  // If not JSON, try to parse as number
                   result = parseInt(body, 10);
                 }
               } else {
                 result = body;
               }
 
-              // Check if response is JSON object with RetStatus
               if (result && typeof result === 'object' && 'RetStatus' in result) {
-                // RetStatus can be number or string, convert to number for comparison
                 const retStatus = typeof result.RetStatus === 'string' 
                   ? parseInt(result.RetStatus, 10) 
                   : result.RetStatus;
@@ -110,11 +87,9 @@ const sendSms = async (phone, otp) => {
                   reject(new Error(`SMS API error: ${errorMsg}`));
                 }
               } else if (typeof result === 'number' && result > 1000) {
-                // Legacy numeric response format (success)
                 console.log('SMS sent successfully:', result);
                 resolve({ success: true, messageId: result, body });
               } else {
-                // Unknown response format
                 console.error('SMS API unknown response format:', body);
                 reject(new Error(`SMS API error: Unknown response format - ${JSON.stringify(body)}`));
               }
@@ -126,10 +101,8 @@ const sendSms = async (phone, otp) => {
         });
       });
     } else {
-      // Custom SMS service integration
       const customApiKey = process.env.SMS_API_KEY || '';
       
-      // Development mode: If SMS is disabled or credentials are not provided, just log OTP
       if (!smsEnabled || !smsApiUrl || !customApiKey) {
         console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
         return { success: true, message: 'OTP logged (development mode)' };
@@ -170,7 +143,6 @@ const sendSms = async (phone, otp) => {
   }
 };
 
-// Store OTP in Redis with expiration
 const storeOTP = async (phone, otp, expirySeconds = 300) => {
   try {
     const key = `otp:${phone}`;
@@ -181,7 +153,6 @@ const storeOTP = async (phone, otp, expirySeconds = 300) => {
   }
 };
 
-// Get OTP from Redis
 const getOTP = async (phone) => {
   try {
     const key = `otp:${phone}`;
@@ -192,7 +163,6 @@ const getOTP = async (phone) => {
   }
 };
 
-// Delete OTP from Redis
 const deleteOTP = async (phone) => {
   try {
     const key = `otp:${phone}`;
@@ -203,28 +173,19 @@ const deleteOTP = async (phone) => {
   }
 };
 
-// Send OTP to phone number
 exports.sendOTP = async (phone) => {
   try {
-    // Generate OTP
     const otp = generateOTP();
-    
-    // Store OTP in Redis with 5 minutes expiration
     await storeOTP(phone, otp, 300);
-    
-    // Send SMS
     await sendSms(phone, otp);
-    
     return { success: true, message: 'OTP sent successfully' };
   } catch (error) {
     throw error;
   }
 };
 
-// Verify OTP
 exports.verifyOTP = async (phone, otp) => {
   try {
-    // Get OTP from Redis
     const storedOTP = await getOTP(phone);
     
     if (!storedOTP) {
@@ -235,16 +196,13 @@ exports.verifyOTP = async (phone, otp) => {
       return { success: false, message: 'Invalid OTP code' };
     }
     
-    // Delete OTP after successful verification
     await deleteOTP(phone);
-    
     return { success: true, message: 'OTP verified successfully' };
   } catch (error) {
     throw error;
   }
 };
 
-// Export helper functions if needed
 exports.sendSms = sendSms;
 exports.generateOTP = generateOTP;
 exports.storeOTP = storeOTP;
