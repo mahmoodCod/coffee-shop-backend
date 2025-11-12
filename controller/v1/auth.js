@@ -137,7 +137,14 @@ exports.verify = async (req,res,next) => {
 
 exports.getMe = async (req,res,next) => {
     try {
+        // User is already set by auth middleware
+        const user = req.user;
 
+        if (!user) {
+            return errorResponse(res, 404, 'User not found');
+        }
+
+        return successRespons(res, 200, { user });
     } catch (err) {
         next(err);
     };
