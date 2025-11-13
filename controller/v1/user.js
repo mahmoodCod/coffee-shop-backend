@@ -34,6 +34,16 @@ exports.banUser = async(req,res,next) => {
         if (user.roles.includes("ADMIN")) {
             return errorResponse(res, 403, "You cannot ban an admin !!");
         };
+
+        const deletedUser = await User.findOneAndDelete({ _id: userId });
+
+        await Ban.create({ phone: user.phone });
+
+        return successRespons(res, 200, {
+            user: deletedUser,
+            message: "User banned successfully, user and posts removed",
+        });
+
     } catch (err) {
         next(err);
     };
