@@ -27,7 +27,7 @@ exports.createAddress = async(req,res,next) => {
 
         await createAddressValidator.validate( req.body, { abortEarly: false } );
 
-        const cityData = cities.find((city) => +city.id === +city);
+        const cityData = cities.find((cityItem) => cityItem.name === city);
         if (!cityData) {
             return errorResponse(res,409, "City is not valid !!");
         };
