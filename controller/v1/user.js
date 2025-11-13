@@ -5,6 +5,11 @@ const User = require('../../model/User');
 
 exports.getAll = async(req,res,next) => {
     try {
+        let { page = 1, limit = 10,  } = req.query;
+
+        const users = await User.find({}).skip((page - 1) * limit).limit(limit);
+
+        const totalUsers = await User.countDocuments();
 
     } catch (err) {
         next(err);
