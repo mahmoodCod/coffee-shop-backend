@@ -1,4 +1,5 @@
-
+const { createAddressValidator } = require('../../validator/address');
+const cities = require('../../cities/')
 
 exports.getAll = async(req,res,next) => {
     try {
@@ -18,6 +19,11 @@ exports.banUser = async(req,res,next) => {
 
 exports.createAddress = async(req,res,next) => {
     try {
+        const user = req.user;
+
+        const { name, postalCode, province, city, street } = req.body;
+
+        await createAddressValidator.validate( req.body, { abortEarly: false } );
 
     } catch (err) {
         next(err);
