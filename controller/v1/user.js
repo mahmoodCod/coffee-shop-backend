@@ -70,6 +70,14 @@ exports.createAddress = async(req,res,next) => {
 
 exports.removeAddress = async(req,res,next) => {
     try {
+        const { addressId } = req.params;
+
+        const user = await User.findOne({ _id: req.user._id });
+
+        const address = user.addresses.id(addressId);
+        if(!address) {
+            return errorResponse(res,404, 'Address not found !!');
+        };
 
     } catch (err) {
         next(err);
