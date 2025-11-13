@@ -2,6 +2,7 @@ const { createAddressValidator, updateAddressValidator } = require('../../valida
 const cities = require('../../cities/cities.json');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const User = require('../../model/User');
+const { createPaginationData } = require('../../utils')
 
 exports.getAll = async(req,res,next) => {
     try {
@@ -10,6 +11,11 @@ exports.getAll = async(req,res,next) => {
         const users = await User.find({}).skip((page - 1) * limit).limit(limit);
 
         const totalUsers = await User.countDocuments();
+
+        return successRespons(res,200, {
+            users,
+            pagination: createPaginationData(page, limit, totalUsers, 'Users'),
+        });
 
     } catch (err) {
         next(err);
