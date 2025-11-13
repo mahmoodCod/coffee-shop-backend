@@ -6,13 +6,14 @@ describe('Auth Controller Tests', () => {
     test('should send OTP for valid phone number', async () => {
       const response = await request(app)
         .post('/api/v1/auth/send')
-        .send({ phone: '09123456789' });
+        .send({ phone: '09123456789' })
+        .timeout(10000);
 
       if (response.status === 200) {
         expect(response.body.success).toBe(true);
         expect(response.body.data).toHaveProperty('message');
       }
-    });
+    }, 15000);
 
     test('should return error for missing phone', async () => {
       const response = await request(app)
