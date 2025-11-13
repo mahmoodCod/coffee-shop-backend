@@ -56,3 +56,8 @@ const updateAddressValidator = yup.object({
   .min(3)
   .max(255),
 });
+
+module.exports = {
+    createAddressValidator,
+    updateAddressValidator,
+};
