@@ -4,6 +4,7 @@ const { errorResponse, successRespons } = require('../../helpers/responses');
 const User = require('../../model/User');
 const { createPaginationData } = require('../../utils')
 const Ban = require('../../model/Ban');
+const { isValidObjectId } = require('mongoose');
 
 exports.getAll = async(req,res,next) => {
     try {
@@ -45,6 +46,20 @@ exports.banUser = async(req,res,next) => {
             message: "User banned successfully, user and posts removed",
         });
 
+    } catch (err) {
+        next(err);
+    };
+};
+
+exports.changeRole = async(req,res,next) => {
+    try {
+        const { id } = req.body;
+
+        if (!isValidObjectId(id)) {
+            return errorResponse(res,400, "Invalid user id !!");
+        };
+
+        const user = await User.findOne({ _id : id });
     } catch (err) {
         next(err);
     };
