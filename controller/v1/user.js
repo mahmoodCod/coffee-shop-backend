@@ -24,7 +24,16 @@ exports.getAll = async(req,res,next) => {
 
 exports.banUser = async(req,res,next) => {
     try {
+        const { userId } = req.params;
 
+        const user = await User.findOne({ _id: userId });
+        if (!user) {
+            return errorResponse(res, 404, "User not found !!");
+        };
+
+        if (user.roles.includes("ADMIN")) {
+            return errorResponse(res, 403, "You cannot ban an admin !!");
+        };
     } catch (err) {
         next(err);
     };
