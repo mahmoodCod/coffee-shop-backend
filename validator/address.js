@@ -30,3 +30,29 @@ const createAddressValidator = yup.object({
   .min(3, "Street name is too short")
   .max(255, "Street name is too long"),
 });
+
+const updateAddressValidator = yup.object({
+  name: yup
+  .string()
+  .min(3)
+  .max(255),
+
+  postalCode: yup
+  .string()
+  .length(10),
+
+  province: yup
+  .string()
+  .min(3)
+  .max(50),
+
+  city: yup
+  .string()
+  .min(2)
+  .max(50),
+
+  street: yup
+  .string()
+  .min(3)
+  .max(255),
+});
