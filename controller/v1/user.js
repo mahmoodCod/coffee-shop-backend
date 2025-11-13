@@ -60,6 +60,16 @@ exports.changeRole = async(req,res,next) => {
         };
 
         const user = await User.findOne({ _id : id });
+
+        let newRole = user.roles === 'ADMIN' ? 'USER' : 'ADMIN';
+
+        const updatedUser = await userModel.findByIdAndUpdate({ _id : id }, {
+            role: newRole,
+        });
+
+        if (updatedUser) {
+            return successRespons(res,201, "User role change successfully :))");
+        };
     } catch (err) {
         next(err);
     };
