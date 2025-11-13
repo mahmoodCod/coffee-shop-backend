@@ -80,6 +80,19 @@ exports.updateAddress = async(req,res,next) => {
             return errorResponse(res,404, 'Address not found !!');
         };
 
+        userAddress.name = name || userAddress.name;
+        userAddress.province = province || userAddress.province;
+        userAddress.postalCode = postalCode || userAddress.postalCode;
+        userAddress.city = city || userAddress.city;
+        userAddress.street = street || userAddress.street;
+
+        const updateAddress = await user.save();
+
+        return successRespons(res,200, {
+          user:updateAddress,
+          message: 'Address updated successfully :))',
+        });
+
     } catch (err) {
         next(err);
     };
