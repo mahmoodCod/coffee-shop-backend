@@ -79,6 +79,15 @@ exports.removeAddress = async(req,res,next) => {
             return errorResponse(res,404, 'Address not found !!');
         };
 
+        await user.addresses.pull(addressId);
+
+        const updatedUser = await user.save();
+
+        return successRespons(res,200, {
+            user: updatedUser,
+            message: 'Address deleted successfully :))'
+        });
+
     } catch (err) {
         next(err);
     };
