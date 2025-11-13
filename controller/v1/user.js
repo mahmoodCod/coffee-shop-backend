@@ -1,5 +1,5 @@
 const { createAddressValidator } = require('../../validator/address');
-const cities = require('../../cities/')
+const cities = require('../../cities/cities.json')
 
 exports.getAll = async(req,res,next) => {
     try {
