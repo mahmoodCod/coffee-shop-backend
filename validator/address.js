@@ -25,7 +25,7 @@ const createAddressValidator = yup.object({
   .max(50, "City must have at ,most 50 letters"),
 
   street: yup
-  .string
+  .string()
   .required("Street is required")
   .min(3, "Street name is too short")
   .max(255, "Street name is too long"),

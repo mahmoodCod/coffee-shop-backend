@@ -1,5 +1,6 @@
 const { createAddressValidator } = require('../../validator/address');
-const cities = require('../../cities/cities.json')
+const cities = require('../../cities/cities.json');
+const { errorResponse } = require('../../helpers/responses');
 
 exports.getAll = async(req,res,next) => {
     try {
@@ -24,6 +25,11 @@ exports.createAddress = async(req,res,next) => {
         const { name, postalCode, province, city, street } = req.body;
 
         await createAddressValidator.validate( req.body, { abortEarly: false } );
+
+        const cityData = cities.find((city) => +city.id === +city);
+        if (!cityData) {
+            return errorResponse(res,409, "City is not valid !!");
+        };
 
     } catch (err) {
         next(err);
