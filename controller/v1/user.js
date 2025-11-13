@@ -53,7 +53,7 @@ exports.banUser = async(req,res,next) => {
 
 exports.changeRole = async(req,res,next) => {
     try {
-        const { id } = req.body;
+        const { id } = req.params;
 
         if (!isValidObjectId(id)) {
             return errorResponse(res,400, "Invalid user id !!");
@@ -63,8 +63,8 @@ exports.changeRole = async(req,res,next) => {
 
         let newRole = user.roles === 'ADMIN' ? 'USER' : 'ADMIN';
 
-        const updatedUser = await userModel.findByIdAndUpdate({ _id : id }, {
-            role: newRole,
+        const updatedUser = await User.findByIdAndUpdate({ _id : id }, {
+            roles: newRole,
         });
 
         if (updatedUser) {
