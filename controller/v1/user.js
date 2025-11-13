@@ -1,4 +1,4 @@
-const { createAddressValidator } = require('../../validator/address');
+const { createAddressValidator, updateAddressValidator } = require('../../validator/address');
 const cities = require('../../cities/cities.json');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const User = require('../../model/User');
@@ -67,6 +67,18 @@ exports.removeAddress = async(req,res,next) => {
 
 exports.updateAddress = async(req,res,next) => {
     try {
+        const user = await User.findOne({ _id: req.user._id });
+        const { addressId } = req.params;
+
+        const { name, postalCode, province, city, street } = req.body;
+
+        await updateAddressValidator.validate(req.body, { abortEarly: false });
+
+        const userAddress = user.addresses.id(addressId);
+
+        if(!userAddress) {
+            return errorResponse(res,404, 'Address not found !!');
+        };
 
     } catch (err) {
         next(err);
