@@ -3,6 +3,7 @@ const cities = require('../../cities/cities.json');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const User = require('../../model/User');
 const { createPaginationData } = require('../../utils')
+const Ban = require('../../model/Ban');
 
 exports.getAll = async(req,res,next) => {
     try {

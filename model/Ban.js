@@ -6,6 +6,6 @@ const banSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Ban', banSchema);
