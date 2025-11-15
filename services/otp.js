@@ -8,30 +8,81 @@ const generateOTP = () => {
 const sendSms = async (phone, otp) => {
   try {
     const smsEnabled = process.env.SMS_ENABLED === 'true';
-    const smsProvider = process.env.SMS_PROVIDER || 'farapayamak';
+    const smsProvider = process.env.SMS_PROVIDER || 'sms.ir';
     const smsApiUrl = process.env.SMS_API_URL;
 
-    if (smsProvider === 'farapayamak') {
+    let normalizedPhone = phone.toString().trim();
+    normalizedPhone = normalizedPhone.replace(/[\s\-]/g, '');
+    if (normalizedPhone.startsWith('+98')) {
+      normalizedPhone = '0' + normalizedPhone.substring(3);
+    } else if (normalizedPhone.startsWith('0098')) {
+      normalizedPhone = '0' + normalizedPhone.substring(4);
+    } else if (normalizedPhone.startsWith('98') && normalizedPhone.length === 12) {
+      normalizedPhone = '0' + normalizedPhone.substring(2);
+    }
+    if (!normalizedPhone.startsWith('0') && normalizedPhone.length === 10) {
+      normalizedPhone = '0' + normalizedPhone;
+    }
+
+    if (smsProvider === 'sms.ir') {
+      const smsIrApiKey = process.env.SMS_IR_API_KEY || '';
+      const smsIrLineNumber = process.env.SMS_IR_LINE_NUMBER || '';
+      
+      if (!smsEnabled || !smsIrApiKey || !smsIrLineNumber) {
+        return { success: true, message: 'OTP logged (development mode)' };
+      }
+
+      const smsIrApiUrl = smsApiUrl || 'https://api.sms.ir/v1/send';
+      const message = `کد تایید شما: ${otp}`;
+      
+      const options = {
+        url: smsIrApiUrl,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-KEY': smsIrApiKey
+        },
+        json: {
+          mobile: normalizedPhone,
+          lineNumber: smsIrLineNumber,
+          message: message
+        }
+      };
+
+      return new Promise((resolve, reject) => {
+        request(options, (error, response, body) => {
+          if (error) {
+            reject(error);
+          } else if (response.statusCode !== 200 && response.statusCode !== 201) {
+            reject(new Error(`SMS API returned status ${response.statusCode}`));
+          } else {
+            try {
+              let result = body;
+              if (typeof body === 'string') {
+                result = JSON.parse(body);
+              }
+
+              if ((result && result.status === 'success') || (result && result.statusCode === 200)) {
+                resolve({ success: true, messageId: result.messageId || result.data?.messageId || Date.now(), body: result });
+              } else if (result && result.status === true) {
+                resolve({ success: true, messageId: result.data?.messageId || result.messageId || Date.now(), body: result });
+              } else {
+                const errorMsg = result.message || result.Message || `SMS API error: ${JSON.stringify(result)}`;
+                reject(new Error(errorMsg));
+              }
+            } catch (parseError) {
+              reject(new Error(`SMS API error: Failed to parse response - ${JSON.stringify(body)}`));
+            }
+          }
+        });
+      });
+    } else if (smsProvider === 'farapayamak') {
       const farapayamakUsername = process.env.FARAPAYAMAK_USERNAME || '';
       const farapayamakPassword = process.env.FARAPAYAMAK_PASSWORD || '';
       const farapayamakSender = process.env.FARAPAYAMAK_SENDER_NUMBER || '';
       
       if (!smsEnabled || !farapayamakUsername || !farapayamakPassword) {
-        console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
         return { success: true, message: 'OTP logged (development mode)' };
-      }
-
-      let normalizedPhone = phone.toString().trim();
-      normalizedPhone = normalizedPhone.replace(/[\s\-]/g, '');
-      if (normalizedPhone.startsWith('+98')) {
-        normalizedPhone = '0' + normalizedPhone.substring(3);
-      } else if (normalizedPhone.startsWith('0098')) {
-        normalizedPhone = '0' + normalizedPhone.substring(4);
-      } else if (normalizedPhone.startsWith('98') && normalizedPhone.length === 12) {
-        normalizedPhone = '0' + normalizedPhone.substring(2);
-      }
-      if (!normalizedPhone.startsWith('0') && normalizedPhone.length === 10) {
-        normalizedPhone = '0' + normalizedPhone;
       }
 
       const farapayamakApiUrl = smsApiUrl || 'http://rest.payamak-panel.com/api/SendSMS/SendSMS';
@@ -55,10 +106,8 @@ const sendSms = async (phone, otp) => {
       return new Promise((resolve, reject) => {
         request(options, (error, response, body) => {
           if (error) {
-            console.error('SMS sending error:', error);
             reject(error);
           } else if (response.statusCode !== 200) {
-            console.error('SMS API error:', response.statusCode, body);
             reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
             try {
@@ -79,22 +128,17 @@ const sendSms = async (phone, otp) => {
                   : result.RetStatus;
                 
                 if (retStatus === 0) {
-                  console.log('SMS sent successfully:', result);
                   resolve({ success: true, messageId: result.Value, body: result });
                 } else {
                   const errorMsg = result.StrRetStatus || `RetStatus: ${result.RetStatus}`;
-                  console.error('SMS API error response:', result);
                   reject(new Error(`SMS API error: ${errorMsg}`));
                 }
               } else if (typeof result === 'number' && result > 1000) {
-                console.log('SMS sent successfully:', result);
                 resolve({ success: true, messageId: result, body });
               } else {
-                console.error('SMS API unknown response format:', body);
                 reject(new Error(`SMS API error: Unknown response format - ${JSON.stringify(body)}`));
               }
             } catch (parseError) {
-              console.error('SMS API response parse error:', parseError, body);
               reject(new Error(`SMS API error: Failed to parse response - ${body}`));
             }
           }
@@ -104,7 +148,6 @@ const sendSms = async (phone, otp) => {
       const customApiKey = process.env.SMS_API_KEY || '';
       
       if (!smsEnabled || !smsApiUrl || !customApiKey) {
-        console.log(`[DEV MODE] OTP for ${phone}: ${otp}`);
         return { success: true, message: 'OTP logged (development mode)' };
       }
       
@@ -116,7 +159,7 @@ const sendSms = async (phone, otp) => {
           'Authorization': `Bearer ${customApiKey}`
         },
         json: {
-          phone: phone,
+          phone: normalizedPhone,
           message: `Your OTP code is: ${otp}`,
           otp: otp
         }
@@ -125,20 +168,16 @@ const sendSms = async (phone, otp) => {
       return new Promise((resolve, reject) => {
         request(options, (error, response, body) => {
           if (error) {
-            console.error('SMS sending error:', error);
             reject(error);
           } else if (response.statusCode !== 200) {
-            console.error('SMS API error:', response.statusCode, body);
             reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
-            console.log('SMS sent successfully:', body);
             resolve({ success: true, messageId: body.id || body.messageId, body });
           }
         });
       });
     }
   } catch (error) {
-    console.error('SMS sending failed:', error);
     throw error;
   }
 };
