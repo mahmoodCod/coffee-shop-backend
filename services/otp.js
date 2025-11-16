@@ -27,7 +27,7 @@ const sendSms = async (phone, otp) => {
 
     const response = await axios.post('https://api.sms.ir/v1/send/verify', {
       mobile: normalizedPhone,
-      templateId: smsIrTemplateId, // send as string
+      templateId: Number(smsIrTemplateId), // send as number
       parameters: [
         { name: smsIrParamName, value: String(otp) }
       ]
