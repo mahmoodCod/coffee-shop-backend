@@ -1,5 +1,7 @@
+const redis = require('../../redis');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sendOTP, verifyOTP } = require('../../services/otp');
+const { sendSms } = require('../../services/otp');
 const { sendOtpValidator, otpVerifyValidator } = require('../../validator/auth');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 
@@ -23,6 +25,44 @@ try {
   // User model not found - verify and getMe will not work
 }
 
+function getOtpRedisPattern(phone) {
+    return `OTP: ${phone}`;
+};
+async function getOtpDetails(phone) {
+    const otp = await redis.get(getOtpRedisPattern(phone));
+
+    if (!otp) {
+        return {
+            expired: true,
+            remainingTime: 0,
+        };
+    };
+    const remainingTime =  await redis.ttl(getOtpRedisPattern(phone));
+    const minutes = Math.floor(remainingTime / 60);
+    const seconds = remainingTime % 60;
+    const formattedTime = `${minutes.toString().padStart(2,'0')}: ${seconds.toString().padStart(2,'0')}`;
+
+    return {
+        expired: false,
+        remainingTime: formattedTime,
+    };
+};
+
+const genarateOtp = async(phone, length = 6, expireTime = 2) => {
+    const digits = '0123456789';
+    let otp = '';
+
+    for (let i = 0 ; i < length ; i++) {
+        const index = Math.floor(Math.random() * digits.length);
+        otp += digits[index];
+    };
+
+    const hashedOtp = await bcrypt.hash(otp,12);
+
+    await redis.set(getOtpRedisPattern(phone), hashedOtp, 'EX', expireTime * 60);
+
+    return otp;
+};
 
 exports.send = async (req,res,next) => {
     try {
@@ -38,9 +78,17 @@ exports.send = async (req,res,next) => {
             }
         }
 
-        await sendOTP(phone);
+        const { expired,remainingTime } = await getOtpDetails(phone);
 
-        return successRespons(res,200,{message: 'OTP sent successfully'});
+        if (!expired) {
+            return successRespons(res, 200, {message: `OTP already send, please try again after ${remainingTime}`});
+        };
+
+        const otp = await genarateOtp(phone);
+
+        await sendSms(phone,otp);
+
+        return successRespons(res,200,{message: 'otp send successfully :))'});
     } catch (err) {
         next(err);
     };
@@ -52,11 +100,20 @@ exports.verify = async (req,res,next) => {
 
         await otpVerifyValidator.validate(req.body, { abortEarly: false });
 
-        const otpResult = await verifyOTP(phone, otp);
+        const savedOtp = await redis.get(getOtpRedisPattern(phone));
 
-        if (!otpResult.success) {
-          return errorResponse(res, 400, otpResult.message);
+        if (!savedOtp) {
+          return errorResponse(res, 400, "Wrong or expired OTP");
         }
+
+        const otpIsCorrect = await bcrypt.compare(otp, savedOtp);
+
+        if (!otpIsCorrect) {
+          return errorResponse(res, 400, "Wrong or expired OTP !!");
+        }
+
+        // consume OTP on success to prevent reuse
+        await redis.del(getOtpRedisPattern(phone));
 
         // User operations - skip if User model not available
         if (!User) {
@@ -92,7 +149,7 @@ exports.verify = async (req,res,next) => {
         });
 
         return successRespons(res, 201, {
-          message: "User registered successfully",
+          message: "User registed successfully :))",
           token,
           user,
         });
