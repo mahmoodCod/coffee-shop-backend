@@ -11,6 +11,7 @@ const sendSms = async (phone, otp) => {
     const smsProvider = process.env.SMS_PROVIDER || 'sms.ir';
     const smsApiUrl = process.env.SMS_API_URL;
 
+    // Normalize phone to 09xxxxxxxxx
     let normalizedPhone = phone.toString().trim();
     normalizedPhone = normalizedPhone.replace(/[\s\-]/g, '');
     if (normalizedPhone.startsWith('+98')) {
@@ -27,26 +28,26 @@ const sendSms = async (phone, otp) => {
     if (smsProvider === 'sms.ir') {
       const smsIrApiKey = process.env.SMS_IR_API_KEY || '';
       const smsIrLineNumber = process.env.SMS_IR_LINE_NUMBER || '';
-      
+
       if (!smsEnabled || !smsIrApiKey || !smsIrLineNumber) {
         return { success: true, message: 'OTP logged (development mode)' };
       }
 
       const smsIrApiUrl = smsApiUrl || 'https://api.sms.ir/v1/send';
       const message = `کد تایید شما: ${otp}`;
-      
+
       const options = {
         url: smsIrApiUrl,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-KEY': smsIrApiKey
+          'X-API-KEY': smsIrApiKey,
         },
         json: {
           mobile: normalizedPhone,
           lineNumber: smsIrLineNumber,
-          message: message
-        }
+          message: message,
+        },
       };
 
       return new Promise((resolve, reject) => {
@@ -106,8 +107,10 @@ const sendSms = async (phone, otp) => {
       return new Promise((resolve, reject) => {
         request(options, (error, response, body) => {
           if (error) {
+            console.error('SMS sending error:', error);
             reject(error);
           } else if (response.statusCode !== 200) {
+            console.error('SMS API error:', response.statusCode, body);
             reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
             try {
@@ -131,14 +134,17 @@ const sendSms = async (phone, otp) => {
                   resolve({ success: true, messageId: result.Value, body: result });
                 } else {
                   const errorMsg = result.StrRetStatus || `RetStatus: ${result.RetStatus}`;
+                  console.error('SMS API error response:', result);
                   reject(new Error(`SMS API error: ${errorMsg}`));
                 }
               } else if (typeof result === 'number' && result > 1000) {
                 resolve({ success: true, messageId: result, body });
               } else {
+                console.error('SMS API unknown response format:', body);
                 reject(new Error(`SMS API error: Unknown response format - ${JSON.stringify(body)}`));
               }
             } catch (parseError) {
+              console.error('SMS API response parse error:', parseError, body);
               reject(new Error(`SMS API error: Failed to parse response - ${body}`));
             }
           }
@@ -159,7 +165,7 @@ const sendSms = async (phone, otp) => {
           'Authorization': `Bearer ${customApiKey}`
         },
         json: {
-          phone: normalizedPhone,
+          phone: phone,
           message: `Your OTP code is: ${otp}`,
           otp: otp
         }
@@ -168,8 +174,10 @@ const sendSms = async (phone, otp) => {
       return new Promise((resolve, reject) => {
         request(options, (error, response, body) => {
           if (error) {
+            console.error('SMS sending error:', error);
             reject(error);
           } else if (response.statusCode !== 200) {
+            console.error('SMS API error:', response.statusCode, body);
             reject(new Error(`SMS API returned status ${response.statusCode}`));
           } else {
             resolve({ success: true, messageId: body.id || body.messageId, body });
@@ -178,6 +186,7 @@ const sendSms = async (phone, otp) => {
       });
     }
   } catch (error) {
+    console.error('SMS sending failed:', error);
     throw error;
   }
 };
