@@ -5,6 +5,7 @@ const sendSms = async (phone, otp) => {
     const smsEnabled = process.env.SMS_ENABLED === 'true';
     const smsIrApiKey = process.env.SMS_IR_API_KEY || '';
     const smsIrTemplateId = process.env.SMS_IR_TEMPLATE_ID || '';
+    const smsIrParamName = process.env.SMS_IR_PARAM_NAME || 'OTP';
 
     if (!smsEnabled || !smsIrApiKey || !smsIrTemplateId) {
       return { success: true, message: 'OTP logged (development mode)' };
@@ -28,7 +29,7 @@ const sendSms = async (phone, otp) => {
       mobile: normalizedPhone,
       templateId: Number(smsIrTemplateId),
       parameters: [
-        { name: 'OTP', value: String(otp) }
+        { name: smsIrParamName, value: String(otp) }
       ]
     }, {
       headers: {
@@ -49,6 +50,11 @@ const sendSms = async (phone, otp) => {
       throw new Error(`SMS API returned status ${response.status}`);
     }
   } catch (error) {
+    if (error.response) {
+      // Surface SMS.ir error body to logs to diagnose issues like wrong templateId/param name
+      const details = typeof error.response.data === 'object' ? JSON.stringify(error.response.data) : String(error.response.data);
+      throw new Error(`SMS.ir error ${error.response.status}: ${details}`);
+    }
     throw error;
   }
 };
