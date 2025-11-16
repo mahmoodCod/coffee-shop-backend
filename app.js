@@ -6,6 +6,7 @@ const authRouter = require('./routes/v1/auth');
 
 const userRouter = require('./routes/v1/user');
 
+const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
@@ -18,16 +19,14 @@ app.use(cors());
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter);
 
-
-
 app.use((req,res) => {
-    console.log('This path is not found :', req.path);
-
     return res.status(404).json({
-        message: "404! path not found.please double check the path / method"
+        status: 404,
+        success: false,
+        error: "404! path not found.please double check the path / method"
     });
 });
 
-// app.use(errorHandler);
+app.use(errorHandler);
 
 module.exports = app;
