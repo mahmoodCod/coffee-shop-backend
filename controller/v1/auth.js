@@ -13,7 +13,6 @@ try {
   Ban = require('../../model/Ban');
 } catch (err) {
   // Ban model not found - will skip ban check
-  console.log('Ban model not found - ban check will be skipped');
 }
 
 try {
@@ -21,11 +20,9 @@ try {
   // If User is null (placeholder), set it to null
   if (User === null) {
     User = null;
-    console.log('User model is placeholder - verify and getMe endpoints will not work');
   }
 } catch (err) {
   // User model not found - verify and getMe will not work
-  console.log('User model not found - verify and getMe endpoints will not work');
 }
 
 function getOtpRedisPattern(phone) {
@@ -40,9 +37,9 @@ async function getOtpDetails(phone) {
             remainingTime: 0,
         };
     };
-    const remainingTime =  await redis.ttl(getOtpRedisPattern(phone));// second
+    const remainingTime =  await redis.ttl(getOtpRedisPattern(phone));
     const minutes = Math.floor(remainingTime / 60);
-    const seconds = remainingTime % 60; // 01:20
+    const seconds = remainingTime % 60;
     const formattedTime = `${minutes.toString().padStart(2,'0')}: ${seconds.toString().padStart(2,'0')}`;
 
     return {
@@ -67,7 +64,6 @@ const genarateOtp = async(phone, length = 6, expireTime = 2) => {
     return otp;
 };
 
-
 exports.send = async (req,res,next) => {
     try {
         const { phone } = req.body;
@@ -85,7 +81,7 @@ exports.send = async (req,res,next) => {
         const { expired,remainingTime } = await getOtpDetails(phone);
 
         if (!expired) {
-            return successRespons(res, 200, {message: `OTP already send, please try again afetr ${remainingTime}`});
+            return successRespons(res, 200, {message: `OTP already send, please try again after ${remainingTime}`});
         };
 
         const otp = await genarateOtp(phone);
@@ -101,21 +97,21 @@ exports.send = async (req,res,next) => {
 exports.verify = async (req,res,next) => {
     try {
         const { phone, otp } = req.body;
-    
+
         await otpVerifyValidator.validate(req.body, { abortEarly: false });
-    
+
         const savedOtp = await redis.get(getOtpRedisPattern(phone));
-    
+
         if (!savedOtp) {
           return errorResponse(res, 400, "Wrong or expired OTP");
         }
-    
+
         const otpIsCorrect = await bcrypt.compare(otp, savedOtp);
-    
+
         if (!otpIsCorrect) {
           return errorResponse(res, 400, "Wrong or expired OTP !!");
         }
-    
+
         // consume OTP on success to prevent reuse
         await redis.del(getOtpRedisPattern(phone));
 
@@ -133,10 +129,10 @@ exports.verify = async (req,res,next) => {
               expiresIn: "30d",
             }
           );
-    
+
           return successRespons(res, 200, { user: existingUser, token });
         }
-    
+
         //* Register
         const isFirstUser = (await User.countDocuments()) === 0;
 
@@ -147,11 +143,11 @@ exports.verify = async (req,res,next) => {
             ? ["ADMIN"]
             : ["USER"],
         });
-    
+
         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
           expiresIn: "30d",
         });
-    
+
         return successRespons(res, 201, {
           message: "User registed successfully :))",
           token,

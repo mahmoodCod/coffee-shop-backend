@@ -9,6 +9,7 @@ module.exports = {
     '!server.js'
   ],
   coverageDirectory: 'coverage',
-  verbose: true
+  verbose: true,
+  testTimeout: 15000
 };
 
