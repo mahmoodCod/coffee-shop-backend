@@ -4,6 +4,9 @@ const cors = require('cors');
 
 const authRouter = require('./routes/v1/auth');
 
+const userRouter = require('./routes/v1/user');
+
+
 const app = express();
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json({ limits: "30mb" }));
@@ -13,6 +16,8 @@ app.use(cors());
 
 // Router
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/user', userRouter);
+
 
 
 app.use((req,res) => {
