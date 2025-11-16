@@ -28,7 +28,7 @@ const sendSms = async (phone, otp) => {
       mobile: normalizedPhone,
       templateId: Number(smsIrTemplateId),
       parameters: [
-        { name: 'OTP', value: String(otp) }
+        { name: 'code', value: String(otp) }
       ]
     }, {
       headers: {
