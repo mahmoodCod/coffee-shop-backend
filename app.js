@@ -20,10 +20,10 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter);
 
 app.use((req,res) => {
+    console.log('This path is not found :', req.path);
+
     return res.status(404).json({
-        status: 404,
-        success: false,
-        error: "404! path not found.please double check the path / method"
+        message: "404! path not found.please double check the path / method"
     });
 });
 
