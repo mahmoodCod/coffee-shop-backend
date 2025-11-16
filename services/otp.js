@@ -8,6 +8,7 @@ const sendSms = async (phone, otp) => {
     const smsIrParamName = (process.env.SMS_IR_PARAM_NAME || 'OTP').trim();
 
     if (!smsEnabled || !smsIrApiKey || !smsIrTemplateId) {
+      console.log(`[DEV MODE] SMS disabled or missing config. SMS_ENABLED=${smsEnabled}, API_KEY=${!!smsIrApiKey}, TEMPLATE_ID=${!!smsIrTemplateId}`);
       return { success: true, message: 'OTP logged (development mode)' };
     }
 
