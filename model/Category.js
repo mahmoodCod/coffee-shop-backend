@@ -20,7 +20,7 @@ const categorySchema = new mongoose.Schema({
         required: true,
       },
     
-      image: {
+      images: {
         type: String,
         required: true,
         default: '/images/categories/default.jpg'
@@ -30,13 +30,6 @@ const categorySchema = new mongoose.Schema({
         type: String,
         required: true,
         default: '#8B4513'
-      },
-    
-      icon: {
-        type: {
-            filename: { type: String, trim: true },
-            path: { type: String, trim: true },
-        },
       },
 
       parent: {

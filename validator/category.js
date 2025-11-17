@@ -19,15 +19,21 @@ const categorySchema = yup.object({
     .trim()
     .max(500, 'Description cannot exceed 500 characters'),
 
-  image: yup
+  images: yup
     .string()
-    .required('Image is required')
-    .url('Image must be a valid URL'),
+    .nullable()
+    .notRequired(),
 
   color: yup
     .string()
-    .required('Color is required')
-    .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Color must be a valid hex color'),
+    .nullable()
+    .notRequired()
+    .test('color-format', 'Color must be a valid hex color', function(value) {
+      if (!value || value === null || value.length === 0) {
+        return true; // Optional field, skip validation if empty
+      }
+      return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value);
+    }),
 
   icon: yup
     .string()
