@@ -5,7 +5,7 @@ const sendSms = async (phone, otp) => {
     const smsEnabled = process.env.SMS_ENABLED === 'true';
     const smsIrApiKey = (process.env.SMS_IR_API_KEY || '').trim();
     const smsIrTemplateId = (process.env.SMS_IR_TEMPLATE_ID || '').trim();
-    const smsIrParamName = (process.env.SMS_IR_PARAM_NAME || 'OTP').trim();
+    const smsIrParamName = (process.env.SMS_IR_PARAM_NAME || 'code').trim();
 
     console.log('\n========== SMS SEND ATTEMPT ==========');
     console.log('Phone:', phone);
@@ -47,9 +47,9 @@ const sendSms = async (phone, otp) => {
     };
 
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
-    console.log('Sending to: https://api.sms.ir/v1/send/verify');
+    console.log('Sending to: POST https://api.sms.ir/v1/send/verify-code');
 
-    const response = await axios.post('https://api.sms.ir/v1/send/verify', requestBody, {
+    const response = await axios.post('https://api.sms.ir/v1/send/verify-code', requestBody, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
