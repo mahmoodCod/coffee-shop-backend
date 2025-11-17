@@ -120,6 +120,12 @@ exports.getFeaturedCategories = async(req,res,next) => {
 
 exports.getRootCategories = async(req,res,next) => {
     try{
+        const rootCategories = await Category.getRootCategories();
+
+        return successRespons(res, 200, {
+            categories: rootCategories,
+            message: 'Root categories retrieved successfully'
+        });
 
     } catch (err) {
         next(err);
