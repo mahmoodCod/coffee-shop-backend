@@ -285,6 +285,34 @@ exports.getSubcategories = async(req,res,next) => {
 
 exports.updateCategoryStatus = async(req,res,next) => {
     try{
+        const { categoryId } = req.params;
+        const { isActive } = req.body;
+
+        // Validate categoryId
+        if (!isValidObjectId(categoryId)) {
+            return errorResponse(res, 400, 'Invalid category ID');
+        }
+
+        // Validate isActive
+        if (typeof isActive !== 'boolean') {
+            return errorResponse(res, 400, 'isActive must be a boolean value');
+        }
+
+        // Find and update category
+        const category = await Category.findByIdAndUpdate(
+            categoryId,
+            { isActive },
+            { new: true, runValidators: true }
+        );
+
+        if (!category) {
+            return errorResponse(res, 404, 'Category not found');
+        }
+
+        return successRespons(res, 200, {
+            category,
+            message: `Category ${isActive ? 'activated' : 'deactivated'} successfully`
+        });
 
     } catch (err) {
         next(err);
