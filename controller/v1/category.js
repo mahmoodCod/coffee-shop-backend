@@ -2,6 +2,7 @@ const { categorySchema, categoryUpdateSchema } = require('../../validator/catego
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const Category = require('../../model/Category');
 const { isValidObjectId } = require('mongoose');
+const { createPaginationData } = require('../../utils');
 
 const supportedFormat = [
     "image/jpeg",
@@ -14,6 +15,33 @@ const supportedFormat = [
 
 exports.getCategory = async(req,res,next) => {
     try{
+        let { page = 1, limit = 10, isActive, parent } = req.query;
+
+        // Build query
+        const query = {};
+        if (isActive !== undefined) {
+            query.isActive = isActive === 'true';
+        }
+        if (parent !== undefined) {
+            if (parent === 'null' || parent === null) {
+                query.parent = null;
+            } else if (isValidObjectId(parent)) {
+                query.parent = parent;
+            }
+        }
+
+        const categories = await Category.find(query)
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit))
+            .sort({ order: 1, createdAt: -1 })
+            .select('-__v');
+
+        const totalCategories = await Category.countDocuments(query);
+
+        return successRespons(res, 200, {
+            categories,
+            pagination: createPaginationData(page, limit, totalCategories, 'Categories'),
+        });
 
     } catch (err) {
         next(err);
