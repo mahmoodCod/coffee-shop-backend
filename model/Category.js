@@ -34,8 +34,8 @@ const categorySchema = new mongoose.Schema({
     
       icon: {
         type: {
-            filename: { type: String, required: true, trim: true },
-            path: { type: String, required: true, trim: true },
+            filename: { type: String, trim: true },
+            path: { type: String, trim: true },
         },
       },
 
