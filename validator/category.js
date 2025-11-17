@@ -72,3 +72,73 @@ const categorySchema = yup.object({
     .min(0, 'Products count must be a positive number')
     .default(0)
 });
+
+const categoryUpdateSchema = yup.object({
+    name: yup
+      .string()
+      .trim()
+      .max(100, 'Category name cannot exceed 100 characters'),
+  
+    slug: yup
+      .string()
+      .trim()
+      .lowercase()
+      .matches(/^[a-z0-9\u0600-\u06FF-]+$/, 'Slug must contain only lowercase letters, numbers and hyphens'),
+  
+    description: yup
+      .string()
+      .trim()
+      .max(500, 'Description cannot exceed 500 characters'),
+  
+    image: yup
+      .string()
+      .url('Image must be a valid URL'),
+  
+    color: yup
+      .string()
+      .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Color must be a valid hex color'),
+  
+    icon: yup
+      .string()
+      .trim(),
+  
+    parent: yup
+      .string()
+      .nullable()
+      .matches(/^[0-9a-fA-F]{24}$/, 'Parent must be a valid ObjectId'),
+  
+    order: yup
+      .number()
+      .integer()
+      .min(0, 'Order must be a positive number'),
+  
+    isActive: yup
+      .boolean(),
+  
+    showOnHomepage: yup
+      .boolean(),
+  
+    seo: yup.object({
+      metaTitle: yup
+        .string()
+        .max(70, 'Meta title cannot exceed 70 characters'),
+  
+      metaDescription: yup
+        .string()
+        .max(160, 'Meta description cannot exceed 160 characters'),
+  
+      metaKeywords: yup
+        .array()
+        .of(yup.string())
+    }),
+  
+    productsCount: yup
+      .number()
+      .integer()
+      .min(0, 'Products count must be a positive number')
+  });
+  
+  module.exports = {
+    categorySchema,
+    categoryUpdateSchema
+  };
