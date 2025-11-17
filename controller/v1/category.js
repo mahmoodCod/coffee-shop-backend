@@ -321,6 +321,37 @@ exports.updateCategoryStatus = async(req,res,next) => {
 
 exports.updateCategoryOrder = async(req,res,next) => {
     try{
+        const { categoryId } = req.params;
+        const { order } = req.body;
+
+        // Validate categoryId
+        if (!isValidObjectId(categoryId)) {
+            return errorResponse(res, 400, 'Invalid category ID');
+        }
+
+        // Validate order
+        if (order === undefined || order === null) {
+            return errorResponse(res, 400, 'Order is required');
+        }
+        if (typeof order !== 'number' || order < 0) {
+            return errorResponse(res, 400, 'Order must be a positive number');
+        }
+
+        // Find and update category
+        const category = await Category.findByIdAndUpdate(
+            categoryId,
+            { order },
+            { new: true, runValidators: true }
+        );
+
+        if (!category) {
+            return errorResponse(res, 404, 'Category not found');
+        }
+
+        return successRespons(res, 200, {
+            category,
+            message: 'Category order updated successfully'
+        });
 
     } catch (err) {
         next(err);
