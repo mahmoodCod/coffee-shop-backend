@@ -87,6 +87,12 @@ exports.createCategory = async(req,res,next) => {
 
 exports.getCategoryTree = async(req,res,next) => {
     try{
+        const categoryTree = await Category.getCategoryTree();
+
+        return successRespons(res, 200, {
+            categories: categoryTree,
+            message: 'Category tree retrieved successfully'
+        });
 
     } catch (err) {
         next(err);
