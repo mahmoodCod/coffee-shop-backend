@@ -2,6 +2,8 @@ const express = require('express');
 const { auth } = require('../../middleware/auth');
 const roleGuard = require('../../middleware/roleGuard');
 const { multerStorage } = require('../../utils/multerConfigs');
+const { createCategory, getCategoryTree, getFeaturedCategories, getRootCategories, getCategoryById, updateCategory, removeCategory, 
+        getSubcategories, updateCategoryOrder, updateCategoryStatus} = require('../../controller/v1/category');
 
 const upload = multerStorage('public/images/category-icons');
 
