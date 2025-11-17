@@ -101,6 +101,17 @@ exports.getCategoryTree = async(req,res,next) => {
 
 exports.getFeaturedCategories = async(req,res,next) => {
     try{
+        const featuredCategories = await Category.find({
+            showOnHomepage: true,
+            isActive: true
+        })
+        .sort({ order: 1 })
+        .select('-__v');
+
+        return successRespons(res, 200, {
+            categories: featuredCategories,
+            message: 'Featured categories retrieved successfully'
+        });
 
     } catch (err) {
         next(err);
