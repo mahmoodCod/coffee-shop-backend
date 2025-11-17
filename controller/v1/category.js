@@ -157,7 +157,56 @@ exports.updateCategory = async(req,res,next) => {
             if (existingCategory) {
                 return errorResponse(res, 409, 'Category with this slug already exists');
             }
+        };
+
+        // Validate parent if provided
+        if (parent !== undefined && parent !== null) {
+            if (!isValidObjectId(parent)) {
+                return errorResponse(res, 400, 'Invalid parent category ID');
+            }
+            if (parent === categoryId) {
+                return errorResponse(res, 400, 'Category cannot be its own parent');
+            }
+            const parentCategory = await Category.findById(parent);
+            if (!parentCategory) {
+                return errorResponse(res, 404, 'Parent category not found');
+            }
         }
+
+        // Handle image upload if file exists
+        let imagePath = images;
+        if (req.file) {
+            // Validate file format
+            if (!supportedFormat.includes(req.file.mimetype)) {
+                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+            }
+            imagePath = req.file.path.replace(/\\/g, '/');
+        };
+
+        // Build update object (only update provided fields)
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (slug !== undefined) updateData.slug = slug;
+        if (description !== undefined) updateData.description = description;
+        if (imagePath !== undefined && imagePath !== null) updateData.images = imagePath;
+        if (color !== undefined) updateData.color = color;
+        if (parent !== undefined) updateData.parent = parent || null;
+        if (order !== undefined) updateData.order = order;
+        if (isActive !== undefined) updateData.isActive = isActive;
+        if (showOnHomepage !== undefined) updateData.showOnHomepage = showOnHomepage;
+        if (seo !== undefined) updateData.seo = seo;
+
+        // Update category
+        const updatedCategory = await Category.findByIdAndUpdate(
+            categoryId,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        return successRespons(res, 200, {
+            category: updatedCategory,
+            message: 'Category updated successfully'
+        });
     } catch (err) {
         next(err);
     };
