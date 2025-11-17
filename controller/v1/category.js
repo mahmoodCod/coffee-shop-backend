@@ -247,6 +247,36 @@ exports.removeCategory = async(req,res,next) => {
 
 exports.getSubcategories = async(req,res,next) => {
     try{
+        const { categoryId } = req.params;
+
+        // Validate categoryId
+        if (!isValidObjectId(categoryId)) {
+            return errorResponse(res, 400, 'Invalid category ID');
+        }
+
+        // Find category
+        const category = await Category.findById(categoryId);
+        if (!category) {
+            return errorResponse(res, 404, 'Category not found');
+        }
+
+        // Get subcategories
+        const subcategories = await Category.find({
+            parent: categoryId,
+            isActive: true
+        })
+        .sort({ order: 1 })
+        .select('-__v');
+
+        return successRespons(res, 200, {
+            category: {
+                _id: category._id,
+                name: category.name,
+                slug: category.slug
+            },
+            subcategories,
+            message: 'Subcategories retrieved successfully'
+        });
 
     } catch (err) {
         next(err);
