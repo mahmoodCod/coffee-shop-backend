@@ -96,13 +96,21 @@ const categoryUpdateSchema = yup.object({
       .trim()
       .max(500, 'Description cannot exceed 500 characters'),
   
-    image: yup
+    images: yup
       .string()
-      .url('Image must be a valid URL'),
+      .nullable()
+      .notRequired(),
   
     color: yup
       .string()
-      .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Color must be a valid hex color'),
+      .nullable()
+      .notRequired()
+      .test('color-format', 'Color must be a valid hex color', function(value) {
+        if (!value || value === null || value.length === 0) {
+          return true;
+        }
+        return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value);
+      }),
   
     icon: yup
       .string()

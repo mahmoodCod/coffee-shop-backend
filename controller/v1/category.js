@@ -1,4 +1,4 @@
-const { categorySchema } = require('../../validator/category');
+const { categorySchema, categoryUpdateSchema } = require('../../validator/category');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const Category = require('../../model/Category');
 const { isValidObjectId } = require('mongoose');
@@ -134,7 +134,30 @@ exports.getRootCategories = async(req,res,next) => {
 
 exports.updateCategory = async(req,res,next) => {
     try{
+        const { categoryId } = req.params;
+        const { name, slug, description, parent, images, color, order, isActive, showOnHomepage, seo } = req.body;
 
+        // Validate categoryId
+        if (!isValidObjectId(categoryId)) {
+            return errorResponse(res, 400, 'Invalid category ID');
+        }
+
+        // Find category
+        const category = await Category.findById(categoryId);
+        if (!category) {
+            return errorResponse(res, 404, 'Category not found');
+        }
+
+        // Validate request body
+        await categoryUpdateSchema.validate(req.body, { abortEarly: false });
+
+        // Check slug uniqueness if slug is being updated
+        if (slug && slug !== category.slug) {
+            const existingCategory = await Category.findOne({ slug, _id: { $ne: categoryId } });
+            if (existingCategory) {
+                return errorResponse(res, 409, 'Category with this slug already exists');
+            }
+        }
     } catch (err) {
         next(err);
     };
