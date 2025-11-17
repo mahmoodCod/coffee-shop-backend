@@ -7,9 +7,25 @@ const upload = multerStorage('public/images/category-icons');
 
 const router = express.Router();
 
-router.route('/').post(auth, roleGuard('ADMIN'),upload.single('icon'), createCategory)
-.get(getCategory);
+router.route('/')
+    .get(getCategory)
+    .post(auth, roleGuard('ADMIN'), upload.single('icon'), createCategory);
 
-router.route('/categoryId').post(auth, roleGuard('ADMIN'), upload.single('icon'), updateCategory)
-.delete(auth, roleGuard('ADMIN'), removeCategory);
+router.route('/tree').get(getCategoryTree);
+
+router.route('/featured').get(getFeaturedCategories);
+
+router.route('/root').get(getRootCategories);
+
+router.route('/:categoryId')
+    .get(getCategoryById)
+    .put(auth, roleGuard('ADMIN'), upload.single('icon'), updateCategory)
+    .delete(auth, roleGuard('ADMIN'), removeCategory);
+
+router.route('/:categoryId/subcategories').get(getSubcategories);
+
+router.route('/:categoryId/status').put(auth, roleGuard('ADMIN'), updateCategoryStatus);
+
+router.route('/:categoryId/order').put(auth, roleGuard('ADMIN'), updateCategoryOrder);
+
 module.exports = router;
