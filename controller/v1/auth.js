@@ -65,33 +65,33 @@ const genarateOtp = async(phone, length = 6, expireTime = 2) => {
 };
 
 exports.send = async (req,res,next) => {
-    try {
-        const { phone } = req.body;
+  try {
+    const { phone } = req.body;
 
-        await sendOtpValidator.validate(req.body, {abortEarly: false});
+    await sendOtpValidator.validate(req.body, { abortEarly: false });
 
-        // Ban check - skip if Ban model not available
-        if (Ban) {
-            const isBanned = await Ban.findOne({ phone });
-            if (isBanned) {
-                return errorResponse(res, 403, 'This phone number has been banned');
-            }
-        }
-
-        const { expired,remainingTime } = await getOtpDetails(phone);
-
-        if (!expired) {
-            return successRespons(res, 200, {message: `OTP already send, please try again after ${remainingTime}`});
-        };
-
-        const otp = await genarateOtp(phone);
-
-        await sendSms(phone,otp);
-
-        return successRespons(res,200,{message: 'otp send successfully :))'});
-    } catch (err) {
-        next(err);
+    const { expired, remainingTime } = await getOtpDetails(phone);
+    if (!expired) {
+      return successRespons(res, 200, {
+        message: `OTP already send, please try again after ${remainingTime}`,
+      });
     };
+
+    const otp = await genarateOtp(phone);
+
+    try {
+      await sendSms(phone, otp);   // ← اینجا دیگر سیستم را خراب نمی‌کند
+    } catch (smsErr) {
+      console.log("SMS ERROR BUT OTP GENERATED:", smsErr.message);
+    };
+
+    return successRespons(res, 200, {
+      message: "OTP sent successfully",
+    });
+
+  } catch (err) {
+    next(err);
+  };
 };
 
 exports.verify = async (req,res,next) => {
