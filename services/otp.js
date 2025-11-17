@@ -47,9 +47,9 @@ const sendSms = async (phone, otp) => {
     };
 
     console.log('Request Body:', JSON.stringify(requestBody, null, 2));
-    console.log('Sending to: POST https://api.sms.ir/v1/send/verify-code');
+    console.log('Sending to: POST https://api.sms.ir/v1/send/pattern');
 
-    const response = await axios.post('https://api.sms.ir/v1/send/verify-code', requestBody, {
+    const response = await axios.post('https://api.sms.ir/v1/send/pattern', requestBody, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
