@@ -214,6 +214,31 @@ exports.updateCategory = async(req,res,next) => {
 
 exports.removeCategory = async(req,res,next) => {
     try{
+        const { categoryId } = req.params;
+
+        // Validate categoryId
+        if (!isValidObjectId(categoryId)) {
+            return errorResponse(res, 400, 'Invalid category ID');
+        }
+
+        // Find category
+        const category = await Category.findById(categoryId);
+        if (!category) {
+            return errorResponse(res, 404, 'Category not found');
+        }
+
+        // Check if category has subcategories
+        const subcategoriesCount = await Category.countDocuments({ parent: categoryId });
+        if (subcategoriesCount > 0) {
+            return errorResponse(res, 400, 'Cannot delete category with subcategories. Please delete subcategories first');
+        }
+
+        // Delete category
+        await Category.findByIdAndDelete(categoryId);
+
+        return successRespons(res, 200, {
+            message: 'Category deleted successfully'
+        });
 
     } catch (err) {
         next(err);
