@@ -21,7 +21,8 @@ app.get('/', (req, res) => {
         status: "ok",
         endpoints: {
             auth: "/api/v1/auth",
-            user: "/api/v1/user"
+            user: "/api/v1/user",
+            category: "/api/v1/category",
         }
     });
 });
