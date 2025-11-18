@@ -109,12 +109,25 @@ const updateProductValidator = yup.object().shape({
     .string()
     .min(3, "Product name must be at least 3 characters long")
     .max(100, "Product name cannot exceed 100 characters"),
-
   slug: yup
     .string()
     .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-friendly"),
-
   description: yup
     .string()
     .max(1000, "Product description cannot exceed 1000 characters"),
+  positiveFeature: yup
+    .string()
+    .max(255, "Positive feature cannot exceed 255 characters"),
+  category: yup
+    .string()
+    .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+  badge: yup
+    .string()
+    .max(50, "Badge cannot exceed 50 characters"),
+    status: yup
+    .string()
+    .oneOf(["active", "inactive"]),
+    price: yup
+    .number()
+    .min(0, "Price cannot be negative"),
 });
