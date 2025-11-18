@@ -22,7 +22,6 @@ app.get('/', (req, res) => {
         endpoints: {
             auth: "/api/v1/auth",
             user: "/api/v1/user",
-            category: "/api/v1/category",
         }
     });
 });
