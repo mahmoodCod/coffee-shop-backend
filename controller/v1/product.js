@@ -137,7 +137,52 @@ exports.createProduct = async (req,res,next) => {
 
 exports.getAllProduct = async (req,res,next) => {
     try {
+        let { 
+            page = 1, 
+            limit = 10, 
+            status, 
+            category, 
+            type, 
+            minPrice, 
+            maxPrice,
+            inStock,
+            search 
+        } = req.query;
 
+        page = parseInt(page);
+        limit = parseInt(limit);
+
+        const query = {};
+
+        // Filter by status
+        if (status !== undefined) {
+            query.status = status === 'true' || status === 'active' ? 'active' : 'inactive';
+        }
+
+        // Filter by category
+        if (category !== undefined) {
+            if (isValidObjectId(category)) {
+                query.category = category;
+            }
+        }
+
+        // Filter by type
+        if (type !== undefined) {
+            if (['regular', 'discount', 'premium'].includes(type)) {
+                query.type = type;
+            }
+        }
+
+        // Filter by price range
+        if (minPrice !== undefined || maxPrice !== undefined) {
+            query.price = {};
+            if (minPrice !== undefined) {
+                query.price.$gte = parseFloat(minPrice);
+            }
+            if (maxPrice !== undefined) {
+                query.price.$lte = parseFloat(maxPrice);
+            }
+        }
     } catch (err) {
         next(err);
     };
