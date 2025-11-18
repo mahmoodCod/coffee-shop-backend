@@ -1,6 +1,7 @@
 const express = require('express');
 const { auth } = require('../../middleware/auth');
 const roleGuard = require('../../middleware/roleGuard');
+const { multerStorage } = require('../../utils/multerConfigs');
 
 const upload = multerStorage('public/images/products');
 
