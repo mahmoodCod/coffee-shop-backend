@@ -4,6 +4,7 @@ const cors = require('cors');
 
 const authRouter = require('./routes/v1/auth');
 const userRouter = require('./routes/v1/user');
+const categoryRouter = require('./routes/v1/category');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -28,6 +29,7 @@ app.get('/', (req, res) => {
 // Router
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter);
+app.use('/api/v1/category', categoryRouter);
 
 // 404 handler - این باید آخرین route باشه
 app.use((req,res) => {
