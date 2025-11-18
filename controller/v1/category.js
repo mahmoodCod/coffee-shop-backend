@@ -14,17 +14,18 @@ const supportedFormat = [
 ];
 
 exports.getCategory = async(req,res,next) => {
-    try{
+    try {
         let { page = 1, limit = 10, isActive, parent } = req.query;
 
         page = parseInt(page);
         limit = parseInt(limit);
 
-        // Build query
         const query = {};
+
         if (isActive !== undefined) {
             query.isActive = isActive === 'true';
         }
+
         if (parent !== undefined) {
             if (parent === 'null' || parent === null) {
                 query.parent = null;
@@ -35,7 +36,7 @@ exports.getCategory = async(req,res,next) => {
 
         const categories = await Category.find(query)
             .skip((page - 1) * limit)
-            .limit(parseInt(limit))
+            .limit(limit)
             .sort({ order: 1, createdAt: -1 })
             .select('-__v');
 
@@ -43,12 +44,17 @@ exports.getCategory = async(req,res,next) => {
 
         return successRespons(res, 200, {
             categories,
-            pagination: createPaginationData(page, limit, totalCategories, 'Categories'),
+            pagination: {
+                page,
+                limit,
+                total: totalCategories,
+                pages: Math.ceil(totalCategories / limit),
+            },
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.createCategory = async(req,res,next) => {
