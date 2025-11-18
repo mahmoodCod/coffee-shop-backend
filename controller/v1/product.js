@@ -183,6 +183,45 @@ exports.getAllProduct = async (req,res,next) => {
                 query.price.$lte = parseFloat(maxPrice);
             }
         }
+
+        // Filter by stock availability
+        if (inStock !== undefined) {
+            if (inStock === 'true' || inStock === true) {
+                query.stock = { $gt: 0 };
+            }
+        }
+
+        // Search by name or description
+        let searchQuery = query;
+        if (search) {
+            searchQuery = {
+                ...query,
+                $or: [
+                    { name: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } }
+                ]
+            };
+        }
+
+        const products = await Product.find(searchQuery)
+            .populate('category', 'name slug')
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .sort({ createdAt: -1 })
+            .select('-__v');
+
+        const totalProducts = await Product.countDocuments(searchQuery);
+
+        return successRespons(res, 200, {
+            products,
+            pagination: {
+                page,
+                limit,
+                total: totalProducts,
+                pages: Math.ceil(totalProducts / limit),
+            },
+        });
+
     } catch (err) {
         next(err);
     };
