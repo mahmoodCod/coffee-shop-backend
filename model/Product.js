@@ -20,9 +20,19 @@ const productSchema = new mongoose.Schema({
         trime: true,
     },
 
+    positiveFeature: {
+        type: String,
+        required: true,
+    },
+
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
+        required: true,
+    },
+
+    badge: {
+        type: String,
         required: true,
     },
 
@@ -55,6 +65,7 @@ const productSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+
     discount: {
         type: Number,
         default: 0,
