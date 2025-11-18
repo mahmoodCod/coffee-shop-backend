@@ -128,6 +128,16 @@ const productSchema = new mongoose.Schema({
     },
 }, { timestamps: true, toJSON: { virtuals: true },toObject: { virtuals: true } });
 
+// Virtual: price after discount (computed)
+productSchema.virtual('priceAfterDiscount').get(function() {
+    if (!this.discount || this.discount <= 0) return this.price;
+    const p = Math.round(this.price * (1 - (this.discount / 100)));
+    return p;
+  });
+  
+  // Indexes برای جستجوی سریع
+  productSchema.index({ name: 'text', category: 1, badge: 1 });
+
 const product = mongoose.model('Product', productSchema);
 
 module.exports = product;
