@@ -73,4 +73,28 @@ const createProductValidator = yup.object().shape({
     .min(0)
     .max(5)
     .default(0),
+    reviews: yup
+    .number()
+    .min(0)
+    .default(0),
+
+  isPrime: yup
+    .boolean()
+    .default(false),
+
+  isPremium: yup
+    .boolean()
+    .default(false),
+    features: yup
+    .array()
+    .of(yup.string())
+    .default([]),
+    image: yup
+    .string()
+    .default('/images/default-product.jpg'),
+
+  images: yup
+    .array()
+    .of(yup.string())
+    .default([]),
 });
