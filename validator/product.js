@@ -97,4 +97,24 @@ const createProductValidator = yup.object().shape({
     .array()
     .of(yup.string())
     .default([]),
+  seo: yup.object().shape({
+        title: yup.string(),
+        description: yup.string(),
+        keywords: yup.array().of(yup.string()).default([])
+    }).default({}),
+});
+
+const updateProductValidator = yup.object().shape({
+  name: yup
+    .string()
+    .min(3, "Product name must be at least 3 characters long")
+    .max(100, "Product name cannot exceed 100 characters"),
+
+  slug: yup
+    .string()
+    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-friendly"),
+
+  description: yup
+    .string()
+    .max(1000, "Product description cannot exceed 1000 characters"),
 });
