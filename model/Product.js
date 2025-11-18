@@ -22,7 +22,56 @@ const productSchema = new mongoose.Schema({
         ref: "Category",
         required: true,
     },
-    
+    images: {
+        type: [
+            {
+                type: String,
+                required: true
+            },
+        ],
+    },
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "inactive",
+    },
+    price: {
+        type: Number,
+        required: true,
+    },
+    stock: {
+        type: Number,
+        required: true,
+    },
+    originalPrice: {
+        type: Number,
+        default: 0,
+    },
+    discount: {
+        type: Number,
+        default: 0,
+    },
+    type: { 
+        type: String,
+        enum: ['regular','discount','premium'],
+        default: 'regular' 
+    },
+    dealType: { 
+        type: String, 
+        default: '' 
+    },                     
+    timeLeft: { 
+        type: String, 
+        default: '' 
+    },                     
+    soldCount: { 
+        type: Number, 
+        default: 0 
+    },
+    totalCount: { 
+        type: Number, 
+        default: 0 
+    },
 });
 
 const product = mongoose.model('Product', productSchema);
