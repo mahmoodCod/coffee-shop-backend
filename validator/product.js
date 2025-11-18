@@ -51,4 +51,26 @@ const createProductValidator = yup.object().shape({
     .string()
     .oneOf(['regular','discount','premium'])
     .default('regular'),
+    dealType: yup
+    .string()
+    .default(''),
+
+  timeLeft: yup
+    .string()
+    .default(''),
+
+  soldCount: yup
+    .number()
+    .min(0)
+    .default(0),
+    totalCount: yup
+    .number()
+    .min(0)
+    .default(0),
+
+  rating: yup
+    .number()
+    .min(0)
+    .max(5)
+    .default(0),
 });
