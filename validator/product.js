@@ -54,11 +54,9 @@ const createProductValidator = yup.object().shape({
   dealType: yup
     .string()
     .default(''),
-
   timeLeft: yup
     .string()
     .default(''),
-
   soldCount: yup
     .number()
     .min(0)
@@ -67,7 +65,6 @@ const createProductValidator = yup.object().shape({
     .number()
     .min(0)
     .default(0),
-
   rating: yup
     .number()
     .min(0)
@@ -81,7 +78,6 @@ const createProductValidator = yup.object().shape({
   isPrime: yup
     .boolean()
     .default(false),
-
   isPremium: yup
     .boolean()
     .default(false),
@@ -92,7 +88,6 @@ const createProductValidator = yup.object().shape({
   image: yup
     .string()
     .default('/images/default-product.jpg'),
-
   images: yup
     .array()
     .of(yup.string())
@@ -143,4 +138,28 @@ const updateProductValidator = yup.object().shape({
   type: yup
     .string()
     .oneOf(['regular','discount','premium']),
+  dealType: yup
+    .string(),
+  timeLeft: yup
+    .string(),
+  soldCount: yup
+    .number()
+    .min(0),
+  totalCount: yup
+    .number()
+    .min(0),
+  rating: yup
+    .number()
+    .min(0)
+    .max(5),
+  reviews: yup
+    .number()
+    .min(0),
+  isPrime: yup
+    .boolean(),
+  isPremium: yup
+    .boolean(),
+  features: yup
+    .array()
+    .of(yup.string()),
 });
