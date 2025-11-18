@@ -90,7 +90,7 @@ const productSchema = new mongoose.Schema({
         type: Number, 
         default: 0 
     },
-    
+
     reviews: { 
         type: Number, 
         default: 0 
@@ -100,6 +100,7 @@ const productSchema = new mongoose.Schema({
         type: Boolean, 
         default: false 
     },
+
     isPremium: { 
         type: Boolean, 
         default: false 
@@ -109,7 +110,23 @@ const productSchema = new mongoose.Schema({
         type: [String], 
         default: [] 
     },
-});
+
+    image: { 
+        type: String, 
+        default: '/images/default-product.jpg' 
+    },
+
+    images: { 
+        type: [String], 
+        default: [] 
+    },
+
+    seo: {
+        title: { type: String },
+        description: { type: String },
+        keywords: { type: [String], default: [] }
+    },
+}, { timestamps: true, toJSON: { virtuals: true },toObject: { virtuals: true } });
 
 const product = mongoose.model('Product', productSchema);
 
