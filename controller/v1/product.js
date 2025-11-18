@@ -41,6 +41,14 @@ exports.createProduct = async (req,res,next) => {
             seo 
         } = req.body;
 
+        if (req.body.features && typeof req.body.features === 'string') {
+            req.body.features = req.body.features
+              .replace(/["']/g, '')
+              .split(',')
+              .map(f => f.trim())
+              .filter(f => f);
+        }
+
         // Validate request body
         await createProductValidator.validate(req.body, { abortEarly: false });
 
