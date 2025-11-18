@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const { setHeaders } = require('./middleware/headers');
 
 const authRouter = require('./routes/v1/auth');
 const userRouter = require('./routes/v1/user');
@@ -14,6 +15,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json({ limits: "30mb" }));
 app.use(express.urlencoded({limits: '30mb' ,extended: true}));
 app.use(cors());
+app.use(setHeaders);
 
 // Health check route - قبل از بقیه routeها
 app.get('/', (req, res) => {
