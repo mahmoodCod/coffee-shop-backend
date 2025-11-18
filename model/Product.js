@@ -37,13 +37,9 @@ const productSchema = new mongoose.Schema({
     },
 
     images: {
-        type: [
-            {
-                type: String,
-                required: true
-            },
-        ],
-    },
+        type: [String],
+        default: []
+    },    
 
     status: {
         type: String,
@@ -125,11 +121,6 @@ const productSchema = new mongoose.Schema({
     image: { 
         type: String, 
         default: '/images/default-product.jpg' 
-    },
-
-    images: { 
-        type: [String], 
-        default: [] 
     },
 
     seo: {
