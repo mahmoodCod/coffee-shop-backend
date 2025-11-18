@@ -162,4 +162,19 @@ const updateProductValidator = yup.object().shape({
   features: yup
     .array()
     .of(yup.string()),
+  image: yup
+    .string(),
+  images: yup
+    .array()
+    .of(yup.string()),
+  seo: yup.object().shape({
+    title: yup.string(),
+    description: yup.string(),
+    keywords: yup.array().of(yup.string())
+  }),
 });
+
+module.exports = {
+    createProductValidator,
+    updateProductValidator
+};
