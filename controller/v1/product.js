@@ -59,6 +59,61 @@ exports.createProduct = async (req,res,next) => {
             return errorResponse(res, 404, 'Category not found');
         }
 
+        // Handle image uploads
+        let imagePaths = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                // Validate file format
+                if (!supportedFormat.includes(file.mimetype)) {
+                    return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                }
+                imagePaths.push(file.path.replace(/\\/g, '/'));
+            }
+        }
+
+        // Set main image (first uploaded image or default)
+        const mainImage = imagePaths.length > 0 ? imagePaths[0] : (image || '/images/default-product.jpg');
+
+        // Create product object
+        const productData = {
+            name,
+            slug,
+            description: description || '',
+            positiveFeature,
+            category,
+            badge,
+            status: status || 'inactive',
+            price,
+            stock,
+            originalPrice: originalPrice || 0,
+            discount: discount || 0,
+            type: type || 'regular',
+            dealType: dealType || '',
+            timeLeft: timeLeft || '',
+            soldCount: soldCount || 0,
+            totalCount: totalCount || 0,
+            rating: rating || 0,
+            reviews: reviews || 0,
+            isPrime: isPrime || false,
+            isPremium: isPremium || false,
+            features: features || [],
+            image: mainImage,
+            images: imagePaths,
+        };
+
+        // Add SEO data if provided
+        if (seo) {
+            productData.seo = seo;
+        }
+
+        // Create product
+        const newProduct = await Product.create(productData);
+
+        return successRespons(res, 201, {
+            product: newProduct,
+            message: 'Product created successfully'
+        });
+
     } catch (err) {
         // Handle validation errors
         if (err.name === 'ValidationError' && err.inner) {
