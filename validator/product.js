@@ -14,4 +14,20 @@ const createProductValidator = yup.object().shape({
     .string()
     .required("Product description is required")
     .max(1000, "Product description cannot exceed 1000 characters"),
+    positiveFeature: yup
+    .string()
+    .required("Positive feature is required")
+    .max(255, "Positive feature cannot exceed 255 characters"),
+    category: yup
+    .string()
+    .required("Category is required")
+    .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+    badge: yup
+    .string()
+    .required("Badge is required")
+    .max(50, "Badge cannot exceed 50 characters"),
+    status: yup
+    .string()
+    .oneOf(["active", "inactive"])
+    .default("inactive"),
 });
