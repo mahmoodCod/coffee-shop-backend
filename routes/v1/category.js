@@ -20,7 +20,7 @@ const optionalUpload = (req, res, next) => {
 const router = express.Router();
 
 router.route('/')
-    .get(auth, roleGuard('ADMIN'), getCategory)
+    .get(getCategory)
     .post(auth, roleGuard('ADMIN'), optionalUpload, createCategory);
 
 router.route('/tree').get(getCategoryTree);
