@@ -30,4 +30,25 @@ const createProductValidator = yup.object().shape({
     .string()
     .oneOf(["active", "inactive"])
     .default("inactive"),
+    price: yup
+    .number()
+    .required("Price is required")
+    .min(0, "Price cannot be negative"),
+    stock: yup
+    .number()
+    .required("Stock is required")
+    .min(0, "Stock cannot be negative"),
+    originalPrice: yup
+    .number()
+    .min(0, "Original price cannot be negative")
+    .default(0),
+    discount: yup
+    .number()
+    .min(0, "Discount cannot be negative")
+    .max(100, "Discount cannot exceed 100")
+    .default(0),
+    type: yup
+    .string()
+    .oneOf(['regular','discount','premium'])
+    .default('regular'),
 });
