@@ -162,6 +162,79 @@ describe('Product Controller Tests', () => {
     
           expect(response.status).not.toBe(200);
         });
+        
+        test('should return error for invalid category ID', async () => {
+            const response = await request(app)
+              .post('/api/v1/product')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Test Product',
+                slug: 'test-product',
+                description: 'Test description',
+                positiveFeature: 'Test feature',
+                category: 'invalid-category-id',
+                badge: 'New',
+                price: 100,
+                stock: 10
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for negative price', async () => {
+            const response = await request(app)
+              .post('/api/v1/product')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Test Product',
+                slug: 'test-product',
+                description: 'Test description',
+                positiveFeature: 'Test feature',
+                category: '507f1f77bcf86cd799439011',
+                badge: 'New',
+                price: -100,
+                stock: 10
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for negative stock', async () => {
+            const response = await request(app)
+              .post('/api/v1/product')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Test Product',
+                slug: 'test-product',
+                description: 'Test description',
+                positiveFeature: 'Test feature',
+                category: '507f1f77bcf86cd799439011',
+                badge: 'New',
+                price: 100,
+                stock: -10
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for invalid status', async () => {
+            const response = await request(app)
+              .post('/api/v1/product')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Test Product',
+                slug: 'test-product',
+                description: 'Test description',
+                positiveFeature: 'Test feature',
+                category: '507f1f77bcf86cd799439011',
+                badge: 'New',
+                status: 'invalid-status',
+                price: 100,
+                stock: 10
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
     });
     });
     });
