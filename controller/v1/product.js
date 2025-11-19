@@ -326,6 +326,68 @@ exports.updateProduct = async (req,res,next) => {
             }
         }
 
+        // Handle image uploads
+        let imagePaths = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                // Validate file format
+                if (!supportedFormat.includes(file.mimetype)) {
+                    return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                }
+                imagePaths.push(file.path.replace(/\\/g, '/'));
+            }
+        }
+
+        // Build update object (only update provided fields)
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (slug !== undefined) updateData.slug = slug;
+        if (description !== undefined) updateData.description = description;
+        if (positiveFeature !== undefined) updateData.positiveFeature = positiveFeature;
+        if (category !== undefined) updateData.category = category;
+        if (badge !== undefined) updateData.badge = badge;
+        if (status !== undefined) updateData.status = status;
+        if (price !== undefined) updateData.price = price;
+        if (stock !== undefined) updateData.stock = stock;
+        if (originalPrice !== undefined) updateData.originalPrice = originalPrice;
+        if (discount !== undefined) updateData.discount = discount;
+        if (type !== undefined) updateData.type = type;
+        if (dealType !== undefined) updateData.dealType = dealType;
+        if (timeLeft !== undefined) updateData.timeLeft = timeLeft;
+        if (soldCount !== undefined) updateData.soldCount = soldCount;
+        if (totalCount !== undefined) updateData.totalCount = totalCount;
+        if (rating !== undefined) updateData.rating = rating;
+        if (reviews !== undefined) updateData.reviews = reviews;
+        if (isPrime !== undefined) updateData.isPrime = isPrime;
+        if (isPremium !== undefined) updateData.isPremium = isPremium;
+        if (features !== undefined) updateData.features = features;
+        if (seo !== undefined) updateData.seo = seo;
+
+        // Handle images
+        if (imagePaths.length > 0) {
+            // If new images uploaded, add them to existing images or replace
+            updateData.images = [...(product.images || []), ...imagePaths];
+            // Set main image to first uploaded image
+            updateData.image = imagePaths[0];
+        } else if (image !== undefined) {
+            // If image URL provided, set it as main image
+            updateData.image = image;
+        }
+
+        // Update product
+        const updatedProduct = await Product.findByIdAndUpdate(
+            productId,
+            updateData,
+            { new: true, runValidators: true }
+        )
+        .populate('category', 'name slug')
+        .select('-__v');
+
+        return successRespons(res, 200, {
+            product: updatedProduct,
+            message: 'Product updated successfully'
+        });
+
     } catch (err) {
         // Handle validation errors
         if (err.name === 'ValidationError' && err.inner) {
