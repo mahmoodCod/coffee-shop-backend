@@ -1,6 +1,7 @@
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const Comment = require('../../model/Comment');
 const Product = require('../../model/Product');
+const { createPaginationData } = require('../../utils');
 const { createCommentValidator } = require('../../validator/comment');
 
 exports.createComment = async (req,res,next) => {
@@ -52,6 +53,13 @@ exports.getComment = async (req,res,next) => {
         .populate({
         path: "replies",
         populate: { path: "user", select: "-addresses" },
+        });
+
+        const totalComments = await Comment.countDocuments();
+
+        return successRespons(res, 200, {
+          comments,
+          pagination: createPaginationData(page, limit, totalComments, "Comments"),
         });
 
     } catch (err) {
