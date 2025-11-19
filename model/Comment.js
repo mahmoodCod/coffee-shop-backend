@@ -1,5 +1,17 @@
 const mongoose = require('mongoose');
 
+const replySchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    content: {
+        type: String,
+        required: true,
+    },
+}, { timestamps: true });
+
 const commentSchema = new mongoose.Schema({
     content: {
         type: String,
@@ -21,7 +33,7 @@ const commentSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
-    replies: [],
+    replies: [replySchema],
 }, { timestamps: true });
 
 const comment = mongoose.model('Comment', commentSchema);
