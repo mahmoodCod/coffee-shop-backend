@@ -222,6 +222,78 @@ describe('Comment Controller Tests', () => {
         
               expect(response.status).not.toBe(200);
             });
+
+            test('should return error for content exceeding 1000 characters', async () => {
+                const longContent = 'a'.repeat(1001);
+                const response = await request(app)
+                  .patch('/api/v1/comment/507f1f77bcf86cd799439011')
+                  .set('Authorization', 'Bearer invalid.token')
+                  .send({
+                    content: longContent,
+                    rating: 4
+                  });
+          
+                expect(response.status).not.toBe(200);
+              });
+            });
+          
+            describe('DELETE /api/v1/comment/:commentId (Delete Comment - Admin Only)', () => {
+              test('should return 401 for missing token', async () => {
+                const response = await request(app)
+                  .delete('/api/v1/comment/507f1f77bcf86cd799439011');
+          
+                expect(response.status).toBe(401);
+              });
+          
+              test('should return 401 for invalid token', async () => {
+                const response = await request(app)
+                  .delete('/api/v1/comment/507f1f77bcf86cd799439011')
+                  .set('Authorization', 'Bearer invalid.token');
+          
+                expect(response.status).toBe(401);
+              });
+          
+              test('should return 400 for invalid commentId format', async () => {
+                const response = await request(app)
+                  .delete('/api/v1/comment/invalid-id')
+                  .set('Authorization', 'Bearer invalid.token');
+          
+                expect(response.status).not.toBe(200);
+              });
+            });
+          
+            describe('POST /api/v1/comment/:commentId/reply (Create Reply - Admin Only)', () => {
+              test('should return 401 for missing token', async () => {
+                const response = await request(app)
+                  .post('/api/v1/comment/507f1f77bcf86cd799439011/reply')
+                  .send({
+                    content: 'Test reply content'
+                  });
+          
+                expect(response.status).toBe(401);
+              });
+          
+              test('should return 401 for invalid token', async () => {
+                const response = await request(app)
+                  .post('/api/v1/comment/507f1f77bcf86cd799439011/reply')
+                  .set('Authorization', 'Bearer invalid.token')
+                  .send({
+                    content: 'Test reply content'
+                  });
+          
+                expect(response.status).toBe(401);
+              });
+          
+              test('should return 400 for invalid commentId format', async () => {
+                const response = await request(app)
+                  .post('/api/v1/comment/invalid-id/reply')
+                  .set('Authorization', 'Bearer invalid.token')
+                  .send({
+                    content: 'Test reply content'
+                  });
+          
+                expect(response.status).not.toBe(200);
+              });
         
   });
   });
