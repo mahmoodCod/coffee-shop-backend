@@ -403,9 +403,27 @@ exports.updateProduct = async (req,res,next) => {
 
 exports.deleteProduct = async (req,res,next) => {
     try {
+        const { productId } = req.params;
+
+        // Validate productId
+        if (!isValidObjectId(productId)) {
+            return errorResponse(res, 400, 'Invalid product ID');
+        }
+
+        // Find product
+        const product = await Product.findById(productId);
+        if (!product) {
+            return errorResponse(res, 404, 'Product not found');
+        }
+
+        // Delete product
+        await Product.findByIdAndDelete(productId);
+
+        return successRespons(res, 200, {
+            message: 'Product deleted successfully'
+        });
 
     } catch (err) {
         next(err);
     };
 };
-
