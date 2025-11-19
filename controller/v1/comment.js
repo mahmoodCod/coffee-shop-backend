@@ -172,6 +172,23 @@ exports.createReply = async (req,res,next) => {
           content,
         }, { abortEarly: false });
 
+        const reply = await Comment.findByIdAndUpdate(commentId,{
+            $push: {
+                replies: {
+                  content,
+                  user: user._id,
+                },
+              },
+        }, { new: true });
+    
+        if (!reply) {
+            return errorResponse(res,404, 'Comment not found !!');
+        };
+    
+        return successRespons(res, 200, {
+          reply
+        });
+
     } catch (err) {
         next(err);
     };
