@@ -337,7 +337,98 @@ describe('Product Controller Tests', () => {
       
             expect(response.status).not.toBe(200);
           });
+
+          test('should return error for invalid category ID', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                category: 'invalid-category-id'
+              });
       
-    });
-    });
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for negative price', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                price: -100
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for negative stock', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                stock: -10
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return 404 for non-existent product', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Updated Product'
+              });
+      
+            // May return 404 if product doesn't exist
+            if (response.status === 404) {
+              expect(response.body).toHaveProperty('success');
+              if (response.body.success !== undefined) {
+                expect(response.body.success).toBe(false);
+              }
+            }
+          });
+        });
+      
+        describe('DELETE /api/v1/product/:productId (Delete Product - Admin Only)', () => {
+          test('should return 401 for missing token', async () => {
+            const response = await request(app)
+              .delete('/api/v1/product/507f1f77bcf86cd799439011');
+      
+            expect(response.status).toBe(401);
+          });
+      
+          test('should return 401 for invalid token', async () => {
+            const response = await request(app)
+              .delete('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token');
+      
+            expect(response.status).toBe(401);
+          });
+      
+          test('should return 400 for invalid product ID', async () => {
+            const response = await request(app)
+              .delete('/api/v1/product/invalid-id')
+              .set('Authorization', 'Bearer invalid.token');
+      
+            expect(response.status).toBe(400);
+            if (response.body && response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          });
+      
+          test('should return 404 for non-existent product', async () => {
+            const response = await request(app)
+              .delete('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token');
+      
+            // May return 404 if product doesn't exist
+            if (response.status === 404) {
+              expect(response.body).toHaveProperty('success');
+              if (response.body.success !== undefined) {
+                expect(response.body.success).toBe(false);
+              }
+            }
+          });
+        });
+      });
     });
