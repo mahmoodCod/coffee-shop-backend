@@ -178,6 +178,49 @@ exports.updateArticle = async (req,res,next) => {
             updateData.category = category;
         }
 
+        // Handle cover image upload if file exists
+        if (req.file) {
+            // Validate file format
+            if (!supportedFormat.includes(req.file.mimetype)) {
+                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+            }
+            updateData.cover = req.file.path.replace(/\\/g, '/');
+        }
+
+        // Handle href if provided (check for duplicate)
+        if (href !== undefined && href !== existingArticle.href) {
+            const duplicateArticle = await Article.findOne({ href });
+            if (duplicateArticle) {
+                return errorResponse(res, 400, `Article with link "${href}" already exists`);
+            }
+            updateData.href = href;
+        }
+
+        // Add other fields if provided
+        if (title !== undefined) updateData.title = title;
+        if (excerpt !== undefined) updateData.excerpt = excerpt;
+        if (discription !== undefined) updateData.discription = discription;
+        if (body !== undefined) updateData.body = body;
+        if (badge !== undefined) updateData.badge = badge;
+        if (readTime !== undefined) updateData.readTime = readTime;
+        if (author !== undefined) updateData.author = author;
+        if (date !== undefined) updateData.date = new Date(date);
+        if (publish !== undefined) updateData.publish = publish;
+
+        // Update article
+        const updatedArticle = await Article.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        )
+        .populate('category', 'name slug')
+        .populate('creator', 'name email');
+
+        return successRespons(res, 200, {
+            message: 'Article updated successfully :))',
+            article: updatedArticle
+        });
+
     } catch (err) {
         next (err);
     };
