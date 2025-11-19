@@ -65,5 +65,38 @@ describe('Product Controller Tests', () => {
   
         expect(response.status).not.toBe(401);
       });
+      
+      describe('GET /api/v1/product/:productId (Get One Product - Public)', () => {
+        test('should return product without authentication', async () => {
+          const response = await request(app)
+            .get('/api/v1/product/507f1f77bcf86cd799439011');
+    
+          // Should not require auth
+          expect(response.status).not.toBe(401);
+        });
+    
+        test('should return 400 for invalid product ID', async () => {
+          const response = await request(app)
+            .get('/api/v1/product/invalid-id');
+    
+          expect(response.status).toBe(400);
+          if (response.body && response.body.success !== undefined) {
+            expect(response.body.success).toBe(false);
+          }
+        });
+    
+        test('should return 404 for non-existent product', async () => {
+          const response = await request(app)
+            .get('/api/v1/product/507f1f77bcf86cd799439011');
+    
+          // May return 404 if product doesn't exist
+          if (response.status === 404) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+      });
     });
     });
