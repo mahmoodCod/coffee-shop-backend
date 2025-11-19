@@ -30,6 +30,52 @@ exports.createArticle = async (req,res,next) => {
         if (!categoryExists) {
             return errorResponse(res, 404, `Category not found: ${category}`);
         }
+
+        // Handle cover image upload
+        let coverPath = '';
+        if (req.file) {
+            // Validate file format (optional - you can add more validation)
+            const supportedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+            if (!supportedFormats.includes(req.file.mimetype)) {
+                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, WEBP, GIF');
+            }
+            coverPath = req.file.path.replace(/\\/g, '/');
+        } else {
+            return errorResponse(res, 400, 'Cover image is required');
+        }
+
+        // Check if href (link) already exists
+        const existingArticle = await Article.findOne({ href });
+        if (existingArticle) {
+            return errorResponse(res, 400, `Article with link "${href}" already exists`);
+        }
+
+        // Create article
+        const newArticle = await Article.create({
+            title,
+            excerpt,
+            discription,
+            body,
+            cover: coverPath,
+            href,
+            category,
+            creator: user._id,
+            badge: badge || '',
+            readTime: readTime || '',
+            author,
+            date: date ? new Date(date) : new Date(),
+            publish,
+        });
+
+        // Populate category and creator
+        await newArticle.populate('category', 'name slug');
+        await newArticle.populate('creator', 'name email');
+
+        return successRespons(res, 201, {
+            message: 'Article created successfully :))',
+            article: newArticle
+        });
+
     } catch (err) {
         next (err);
     };
