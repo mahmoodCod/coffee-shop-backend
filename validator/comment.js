@@ -34,3 +34,10 @@ const updateReplyValidator = yup.object().shape({
     .string()
     .max(1000, "Reply content cannot exceed 1000 characters"),
 });
+
+module.exports = {
+    createCommentValidator,
+    updateCommentValidator,
+    addReplyValidator,
+    updateReplyValidator,
+};
