@@ -9,6 +9,7 @@ const categoryRouter = require('./routes/v1/category');
 const errorHandler = require('./middleware/errorHandler');
 const productRouter = require('./routes/v1/product');
 const commentRouter = require('./routes/v1/comment');
+const orderRouter = require('./routes/v1/order');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.get('/', (req, res) => {
             category: "/api/v1/category",
             product: "/api/v1/product",
             comment: "/api/v1/comment",
+            order: "/api/v1/order",
         },
     });
 });
@@ -39,7 +41,7 @@ app.use('/api/v1/user', userRouter);
 app.use('/api/v1/category', categoryRouter);
 app.use('/api/v1/product', productRouter);
 app.use('/api/v1/comment', commentRouter);
-
+app.use('/api/v1/order', orderRouter);
 // 404 handler - این باید آخرین route باشه
 app.use((req,res) => {
     console.log('This path is not found :', req.path);
