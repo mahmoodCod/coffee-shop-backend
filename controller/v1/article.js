@@ -119,6 +119,25 @@ exports.getOne = async (req,res,next) => {
 
 exports.deleteArticle = async (req,res,next) => {
     try {
+        const { id } = req.params;
+
+        // Validate article ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid article ID');
+        }
+
+        // Find and delete article
+        const deletedArticle = await Article.findByIdAndDelete(id);
+
+        // Check if article exists
+        if (!deletedArticle) {
+            return errorResponse(res, 404, 'Article not found');
+        }
+
+        return successRespons(res, 200, {
+            message: 'Article deleted successfully :))',
+            article: deletedArticle
+        });
 
     } catch (err) {
         next (err);
