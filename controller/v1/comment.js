@@ -69,6 +69,15 @@ exports.getComment = async (req,res,next) => {
 
 exports.getAllComments = async (req,res,next) => {
     try {
+        const { page = 1 , limit = 10 } = req.query;
+
+        const comments = await Comment.find()
+        .sort({
+          createdAt: "desc",
+        }).skip(( page  - 1 ) * limit).limit(limit).populate('product').populate('user', '-addresses').populate({
+          path: 'replies',
+          populate: { path: "user", select: "-addresses" }
+        });
 
     } catch (err) {
         next(err);
