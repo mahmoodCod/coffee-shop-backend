@@ -4,6 +4,15 @@ const Category = require("../../model/Category");
 const { createArticleValidator } = require('../../validator/article');
 const { isValidObjectId } = require('mongoose');
 
+const supportedFormat = [
+    "image/jpeg",
+    "image/svg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/svg+xml",
+];
+
 exports.getAllArticles = async (req,res,next) => {
     try {
 
@@ -35,8 +44,7 @@ exports.createArticle = async (req,res,next) => {
         let coverPath = '';
         if (req.file) {
             // Validate file format (optional - you can add more validation)
-            const supportedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-            if (!supportedFormats.includes(req.file.mimetype)) {
+            if (!supportedFormat.includes(req.file.mimetype)) {
                 return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, WEBP, GIF');
             }
             coverPath = req.file.path.replace(/\\/g, '/');
