@@ -13,7 +13,7 @@ router.route("/:id")
 .get(auth, getOrderById);
 
 router.route("/admin/all")
-.get(auth, roleGuard('ADMIN'), getAllOrders);
+.get(getAllOrders);
 
 router.route("/admin/:id").patch(auth, roleGuard('ADMIN'), updateOrder);
 
