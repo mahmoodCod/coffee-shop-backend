@@ -162,6 +162,68 @@ describe('Comment Controller Tests', () => {
             expect(response.status).not.toBe(200);
           });
         });
+
+        describe('PATCH /api/v1/comment/:commentId (Update Comment - Auth Required)', () => {
+            test('should return 401 for missing token', async () => {
+              const response = await request(app)
+                .patch('/api/v1/comment/507f1f77bcf86cd799439011')
+                .send({
+                  content: 'Updated comment content',
+                  rating: 4
+                });
+        
+              expect(response.status).toBe(401);
+            });
+        
+            test('should return 401 for invalid token', async () => {
+              const response = await request(app)
+                .patch('/api/v1/comment/507f1f77bcf86cd799439011')
+                .set('Authorization', 'Bearer invalid.token')
+                .send({
+                  content: 'Updated comment content',
+                  rating: 4
+                });
+        
+              expect(response.status).toBe(401);
+            });
+        
+            test('should return 400 for invalid commentId format', async () => {
+              const response = await request(app)
+                .patch('/api/v1/comment/invalid-id')
+                .set('Authorization', 'Bearer invalid.token')
+                .send({
+                  content: 'Updated comment content',
+                  rating: 4
+                });
+        
+              expect(response.status).not.toBe(200);
+            });
+        
+            test('should return error for invalid rating (less than 1)', async () => {
+              const response = await request(app)
+                .patch('/api/v1/comment/507f1f77bcf86cd799439011')
+                .set('Authorization', 'Bearer invalid.token')
+                .send({
+                  content: 'Updated comment content',
+                  rating: 0
+                });
+        
+              expect(response.status).not.toBe(200);
+            });
+        
+            test('should return error for invalid rating (greater than 5)', async () => {
+              const response = await request(app)
+                .patch('/api/v1/comment/507f1f77bcf86cd799439011')
+                .set('Authorization', 'Bearer invalid.token')
+                .send({
+                  content: 'Updated comment content',
+                  rating: 6
+                });
+        
+              expect(response.status).not.toBe(200);
+            });
+        
+  });
   });
   });
 
