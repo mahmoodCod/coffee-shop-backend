@@ -139,6 +139,20 @@ exports.updateComment = async (req,res,next) => {
           return errorResponse(res, 403, "You have not access to this action !!");
         }
 
+        const updatedComment = await Comment.findByIdAndUpdate(
+            commentId,
+            {
+              content,
+              rating,
+            },
+            { new: true }
+        );
+      
+          return successRespons(res, 200, {
+            message: "Comment updated successfully :))",
+            comment: updatedComment,
+        });
+
     } catch (err) {
         next(err);
     };
