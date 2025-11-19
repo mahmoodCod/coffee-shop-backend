@@ -91,6 +91,26 @@ exports.createArticle = async (req,res,next) => {
 
 exports.getOne = async (req,res,next) => {
     try {
+        const { href } = req.params;
+
+        // Find article by href with populate
+        const article = await Article.findOne({ href })
+            .populate('category', 'name slug')
+            .populate('creator', 'name email');
+
+        // Check if article exists
+        if (!article) {
+            return errorResponse(res, 404, 'Article not found');
+        }
+
+        // Check if article is published (publish === 1)
+        if (article.publish !== 1) {
+            return errorResponse(res, 404, 'Article not found');
+        }
+
+        return successRespons(res, 200, {
+            article,
+        });
 
     } catch (err) {
         next (err);
