@@ -58,3 +58,18 @@ const createArticleValidator = yup.object().shape({
         .number()
         .required("Publish status is required"),
 });
+
+const updateArticleValidator = yup.object().shape({
+    title: yup
+        .string()
+        .min(3, "Title must be at least 3 characters long")
+        .max(150, "Title cannot exceed 150 characters"),
+
+    excerpt: yup
+        .string()
+        .max(300, "Excerpt cannot exceed 300 characters"),
+
+    discription: yup
+        .string()
+        .max(500, "Short description cannot exceed 500 characters"),
+});
