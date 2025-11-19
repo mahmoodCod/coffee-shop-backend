@@ -1,11 +1,13 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const { setHeaders } = require('./middleware/headers');
 
 const authRouter = require('./routes/v1/auth');
 const userRouter = require('./routes/v1/user');
 const categoryRouter = require('./routes/v1/category');
 const errorHandler = require('./middleware/errorHandler');
+const productRouter = require('./routes/v1/product');
 
 const app = express();
 
@@ -13,6 +15,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use(express.json({ limits: "30mb" }));
 app.use(express.urlencoded({limits: '30mb' ,extended: true}));
 app.use(cors());
+app.use(setHeaders);
 
 // Health check route - قبل از بقیه routeها
 app.get('/', (req, res) => {
@@ -23,6 +26,7 @@ app.get('/', (req, res) => {
             auth: "/api/v1/auth",
             user: "/api/v1/user",
             category: "/api/v1/category",
+            product: "/api/v1/product",
         },
     });
 });
@@ -31,6 +35,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/category', categoryRouter);
+app.use('/api/v1/product', productRouter);
 
 // 404 handler - این باید آخرین route باشه
 app.use((req,res) => {

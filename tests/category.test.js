@@ -14,32 +14,29 @@ describe('Category Controller Tests', () => {
     return null;
   };
 
-  describe('GET /api/v1/category (Admin Only)', () => {
-    test('should return 401 for missing token', async () => {
+  describe('GET /api/v1/category (Public)', () => {
+    test('should return categories without authentication', async () => {
       const response = await request(app)
         .get('/api/v1/category');
 
-      expect(response.status).toBe(401);
-      if (response.body && response.body.success !== undefined) {
-        expect(response.body.success).toBe(false);
+      // Should not require auth
+      expect(response.status).not.toBe(401);
+      
+      if (response.status === 200) {
+        expect(response.body).toHaveProperty('success');
+        if (response.body.success) {
+          expect(response.body.data).toHaveProperty('categories');
+          expect(Array.isArray(response.body.data.categories)).toBe(true);
+          expect(response.body.data).toHaveProperty('pagination');
+        }
       }
-    });
-
-    test('should return 401 for invalid token', async () => {
-      const response = await request(app)
-        .get('/api/v1/category')
-        .set('Authorization', 'Bearer invalid.token');
-
-      expect(response.status).toBe(401);
     });
 
     test('should accept query parameters', async () => {
       const response = await request(app)
-        .get('/api/v1/category?page=1&limit=10&isActive=true')
-        .set('Authorization', 'Bearer invalid.token');
+        .get('/api/v1/category?page=1&limit=10&isActive=true');
 
-      // Should still return 401, but endpoint should accept query params
-      expect(response.status).toBe(401);
+      expect(response.status).not.toBe(401);
     });
   });
 
