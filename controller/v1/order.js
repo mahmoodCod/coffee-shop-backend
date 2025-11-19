@@ -143,17 +143,29 @@ exports.getMyOrders = async (req,res,next) => {
         const { page = 1, limit = 10 } = req.query;
         const user = req.user;
 
+        // Filter by current user only (even for ADMIN)
         const filters = {
-            ...(user.roles.includes("ADMIN") ? {} : { user: user._id }),
+            user: user._id
         };
 
-        const orders = await Order.find(filters).sort({ createAt: "desc" }).skip(( page - 1 ) * limit).limit(limit).populate('user').populate('items.product');
+        // Parse pagination parameters
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
 
+        // Find orders with pagination and populate
+        const orders = await Order.find(filters)
+            .sort({ createdAt: "desc" })
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum)
+            .populate('user', '-addresses')
+            .populate('items.product');
+
+        // Count total orders
         const totalOrders = await Order.countDocuments(filters);
 
-        return successRespons(res,200, {
+        return successRespons(res, 200, {
             orders,
-            pagination: createPaginationData( page, limit, totalOrders, "Orders"),
+            pagination: createPaginationData(pageNum, limitNum, totalOrders, "Orders"),
         });
 
     } catch (err) {
