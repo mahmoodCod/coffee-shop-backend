@@ -104,3 +104,8 @@ const updateArticleValidator = yup.object().shape({
     publish: yup
         .number(),
 });
+
+module.exports = {
+    createArticleValidator,
+    updateArticleValidator
+};
