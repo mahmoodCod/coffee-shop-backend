@@ -1,6 +1,7 @@
 const express = require('express');
 const { auth } = require('../../middleware/auth');
 const roleGuard = require('../../middleware/roleGuard');
+const { createComment, getComment, getAllComments, removeComment, updateComment, createReply, updateReply, removeReply } = require('../../controller/v1/comment');
 
 const router  = express.Router();
 
