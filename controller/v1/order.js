@@ -93,6 +93,45 @@ exports.getOrderById = async (req,res,next) => {
 
 exports.getAllOrders = async (req,res,next) => {
     try {
+        const { page = 1, limit = 10, status, userId } = req.query;
+        const user = req.user;
+
+        // Build filters
+        const filters = {};
+
+        // Filter by status
+        if (status) {
+            if (['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(status)) {
+                filters.status = status;
+            }
+        }
+
+        // Filter by user ID
+        if (userId) {
+            if (isValidObjectId(userId)) {
+                filters.user = userId;
+            }
+        }
+
+        // Parse pagination parameters
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        // Find orders with filters, pagination, and populate
+        const orders = await Order.find(filters)
+            .sort({ createdAt: "desc" })
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum)
+            .populate('user', '-addresses')
+            .populate('items.product');
+
+        // Count total orders with filters
+        const totalOrders = await Order.countDocuments(filters);
+
+        return successRespons(res, 200, {
+            orders,
+            pagination: createPaginationData(pageNum, limitNum, totalOrders, "Orders"),
+        });
 
     } catch (err) {
         next (err);
