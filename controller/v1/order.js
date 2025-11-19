@@ -94,7 +94,6 @@ exports.getOrderById = async (req,res,next) => {
 exports.getAllOrders = async (req,res,next) => {
     try {
         const { page = 1, limit = 10, status, userId } = req.query;
-        // const user = req.user;
 
         // Build filters
         const filters = {};
@@ -118,18 +117,55 @@ exports.getAllOrders = async (req,res,next) => {
         const limitNum = parseInt(limit);
 
         // Find orders with filters, pagination, and populate
+        // Handle deleted products by filtering them out
         const orders = await Order.find(filters)
             .sort({ createdAt: "desc" })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum)
-            .populate('user', '-addresses')
-            .populate('items.product');
+            .populate({
+                path: 'user',
+                select: '-addresses'
+            })
+            .populate({
+                path: 'items.product',
+                options: { strictPopulate: false }
+            });
+
+        // Filter out items with null/undefined products (deleted products) and convert to JSON
+        const ordersData = orders.map(order => {
+            try {
+                const orderObj = order.toObject({ virtuals: true });
+                
+                // Filter out items with null/undefined products
+                if (orderObj.items && Array.isArray(orderObj.items)) {
+                    orderObj.items = orderObj.items.filter(item => {
+                        return item.product !== null && item.product !== undefined;
+                    });
+                }
+                
+                // Ensure user exists (should always exist, but just in case)
+                if (!orderObj.user) {
+                    orderObj.user = null;
+                }
+                
+                return orderObj;
+            } catch (err) {
+                // If there's an error converting to object, return minimal data
+                console.error('Error converting order to object:', err);
+                return {
+                    _id: order._id,
+                    status: order.status,
+                    createdAt: order.createdAt,
+                    items: []
+                };
+            }
+        });
 
         // Count total orders with filters
         const totalOrders = await Order.countDocuments(filters);
 
         return successRespons(res, 200, {
-            orders,
+            orders: ordersData,
             pagination: createPaginationData(pageNum, limitNum, totalOrders, "Orders"),
         });
 
