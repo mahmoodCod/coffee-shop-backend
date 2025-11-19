@@ -1,7 +1,7 @@
 const { successRespons, errorResponse } = require("../../helpers/responses");
 const Article = require("../../model/Article");
 const Category = require("../../model/Category");
-const { createArticleValidator } = require('../../validator/article');
+const { createArticleValidator, updateArticleValidator } = require('../../validator/article');
 const { isValidObjectId } = require('mongoose');
 
 const supportedFormat = [
@@ -146,6 +146,37 @@ exports.deleteArticle = async (req,res,next) => {
 
 exports.updateArticle = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const { title, excerpt, discription, body, href, category, badge, readTime, author, date, publish } = req.body;
+
+        // Validate article ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid article ID');
+        }
+
+        // Find article
+        const existingArticle = await Article.findById(id);
+        if (!existingArticle) {
+            return errorResponse(res, 404, 'Article not found');
+        }
+
+        // Validate request body
+        await updateArticleValidator.validate(req.body, { abortEarly: false });
+
+        // Build update object (only update provided fields)
+        const updateData = {};
+
+        // Handle category if provided
+        if (category !== undefined) {
+            if (!isValidObjectId(category)) {
+                return errorResponse(res, 400, `Invalid category ID: ${category}`);
+            }
+            const categoryExists = await Category.findById(category);
+            if (!categoryExists) {
+                return errorResponse(res, 404, `Category not found: ${category}`);
+            }
+            updateData.category = category;
+        }
 
     } catch (err) {
         next (err);
