@@ -22,8 +22,8 @@ const createArticleValidator = yup.object().shape({
         .required("Article body is required"),
 
     cover: yup
-        .string()
-        .required("Cover image is required"),
+        .string(),
+        // .required("Cover image is required"),
 
     href: yup
         .string()
