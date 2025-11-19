@@ -106,6 +106,11 @@ exports.removeComment = async (req,res,next) => {
             return errorResponse(res,400, 'Comment not found !!');
         };
 
+        return successRespons(res,200, {
+            message: 'Comment deleted successfully :))',
+            comment: deleteComment
+        });
+
     } catch (err) {
         next(err);
     };
