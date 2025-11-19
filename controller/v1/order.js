@@ -3,7 +3,31 @@ const Order = require("../../model/Order");
 const { createPaginationData } = require("../../utils");
 const { updateOrderValidator } = require('../../validator/order');
 
+exports.createOrder = async (req,res,next) => {
+    try {
+
+    } catch (err) {
+        next (err);
+    };
+};
+
+exports.getOrderById = async (req,res,next) => {
+    try {
+
+    } catch (err) {
+        next (err);
+    };
+};
+
 exports.getAllOrders = async (req,res,next) => {
+    try {
+
+    } catch (err) {
+        next (err);
+    };
+};
+
+exports.getMyOrders = async (req,res,next) => {
     try {
         const { page = 1, limit = 10 } = req.query;
         const user = req.user;
