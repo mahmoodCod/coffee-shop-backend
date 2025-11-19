@@ -65,7 +65,7 @@ describe('Product Controller Tests', () => {
   
         expect(response.status).not.toBe(401);
       });
-      
+
       describe('GET /api/v1/product/:productId (Get One Product - Public)', () => {
         test('should return product without authentication', async () => {
           const response = await request(app)
@@ -98,5 +98,70 @@ describe('Product Controller Tests', () => {
           }
         });
       });
+      describe('POST /api/v1/product (Create Product - Admin Only)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .post('/api/v1/product')
+            .send({
+              name: 'Test Product',
+              slug: 'test-product',
+              description: 'Test description',
+              positiveFeature: 'Test feature',
+              category: '507f1f77bcf86cd799439011',
+              badge: 'New',
+              price: 100,
+              stock: 10
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .post('/api/v1/product')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              name: 'Test Product',
+              slug: 'test-product',
+              description: 'Test description',
+              positiveFeature: 'Test feature',
+              category: '507f1f77bcf86cd799439011',
+              badge: 'New',
+              price: 100,
+              stock: 10
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return error for missing required fields', async () => {
+          const response = await request(app)
+            .post('/api/v1/product')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              name: 'Test Product'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid slug format', async () => {
+          const response = await request(app)
+            .post('/api/v1/product')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              name: 'Test Product',
+              slug: 'Invalid Slug!',
+              description: 'Test description',
+              positiveFeature: 'Test feature',
+              category: '507f1f77bcf86cd799439011',
+              badge: 'New',
+              price: 100,
+              stock: 10
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    });
     });
     });
