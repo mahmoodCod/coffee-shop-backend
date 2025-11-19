@@ -16,10 +16,10 @@ router.route('/:commentId')
 .patch(auth,updateComment);
 
 router.route('/:commentId/reply')
-.post(auth, createReply);
+.post(auth,roleGuard('ADMIN'), createReply);
 
 router.route('/:commentId/reply/:replyId')
-.patch(auth, updateReply)
-.delete(auth, removeReply);
+.patch(auth,roleGuard('ADMIN'), updateReply)
+.delete(auth,roleGuard('ADMIN'), removeReply);
 
 module.exports = router;
