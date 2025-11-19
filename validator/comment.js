@@ -13,3 +13,11 @@ const createCommentValidator = yup.object().shape({
     .string()
     .max(1000, "Comment content cannot exceed 1000 characters"),
 });
+
+const updateCommentValidator = yup.object().shape({
+    content: yup
+      .string()
+      .max(1000, "Comment content cannot exceed 1000 characters"),
+  
+    rating: yup.number().min(1).max(5),
+});
