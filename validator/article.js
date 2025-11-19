@@ -16,4 +16,25 @@ const createArticleValidator = yup.object().shape({
         .string()
         .required("Short description is required")
         .max(500, "Short description cannot exceed 500 characters"),
+    
+    body: yup
+        .string()
+        .required("Article body is required"),
+
+    cover: yup
+        .string()
+        .required("Cover image is required"),
+
+    href: yup
+        .string()
+        .required("Article link is required")
+        .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Link must be URL-friendly"),
+
+    category: yup
+        .string()
+        .required("Category is required"),
+
+    creator: yup
+        .string()
+        .required("Creator ID is required"),
 });
