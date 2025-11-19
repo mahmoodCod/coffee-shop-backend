@@ -162,7 +162,7 @@ describe('Product Controller Tests', () => {
     
           expect(response.status).not.toBe(200);
         });
-        
+
         test('should return error for invalid category ID', async () => {
             const response = await request(app)
               .post('/api/v1/product')
@@ -235,6 +235,109 @@ describe('Product Controller Tests', () => {
       
             expect(response.status).not.toBe(200);
           });
+
+          test('should return error for invalid type', async () => {
+            const response = await request(app)
+              .post('/api/v1/product')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Test Product',
+                slug: 'test-product',
+                description: 'Test description',
+                positiveFeature: 'Test feature',
+                category: '507f1f77bcf86cd799439011',
+                badge: 'New',
+                type: 'invalid-type',
+                price: 100,
+                stock: 10
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for discount over 100', async () => {
+            const response = await request(app)
+              .post('/api/v1/product')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Test Product',
+                slug: 'test-product',
+                description: 'Test description',
+                positiveFeature: 'Test feature',
+                category: '507f1f77bcf86cd799439011',
+                badge: 'New',
+                price: 100,
+                stock: 10,
+                discount: 150
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for rating over 5', async () => {
+            const response = await request(app)
+              .post('/api/v1/product')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Test Product',
+                slug: 'test-product',
+                description: 'Test description',
+                positiveFeature: 'Test feature',
+                category: '507f1f77bcf86cd799439011',
+                badge: 'New',
+                price: 100,
+                stock: 10,
+                rating: 10
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+        });
+      
+        describe('PATCH /api/v1/product/:productId (Update Product - Admin Only)', () => {
+          test('should return 401 for missing token', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/507f1f77bcf86cd799439011')
+              .send({
+                name: 'Updated Product'
+              });
+      
+            expect(response.status).toBe(401);
+          });
+      
+          test('should return 401 for invalid token', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Updated Product'
+              });
+      
+            expect(response.status).toBe(401);
+          });
+      
+          test('should return 400 for invalid product ID', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/invalid-id')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                name: 'Updated Product'
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for invalid slug format', async () => {
+            const response = await request(app)
+              .patch('/api/v1/product/507f1f77bcf86cd799439011')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                slug: 'Invalid Slug!'
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
     });
     });
     });
