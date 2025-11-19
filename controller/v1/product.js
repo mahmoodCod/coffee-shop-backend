@@ -304,6 +304,28 @@ exports.updateProduct = async (req,res,next) => {
               .filter(f => f);
         }
 
+        // Validate request body
+        await updateProductValidator.validate(req.body, { abortEarly: false });
+
+        // Check if slug already exists (if slug is being updated)
+        if (slug && slug !== product.slug) {
+            const existingProduct = await Product.findOne({ slug });
+            if (existingProduct) {
+                return errorResponse(res, 409, 'Product with this slug already exists');
+            }
+        }
+
+        // Validate category if provided
+        if (category !== undefined) {
+            if (!isValidObjectId(category)) {
+                return errorResponse(res, 400, 'Invalid category ID');
+            }
+            const categoryExists = await Category.findById(category);
+            if (!categoryExists) {
+                return errorResponse(res, 404, 'Category not found');
+            }
+        }
+
     } catch (err) {
         // Handle validation errors
         if (err.name === 'ValidationError' && err.inner) {
