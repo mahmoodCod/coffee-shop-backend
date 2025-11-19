@@ -7,13 +7,13 @@ const router = express.Router();
 
 router.route("/")
 .post(auth, createOrder)
-.get(auth, getMyOrders);
+.get(getMyOrders);
 
 router.route("/:id")
 .get(auth, getOrderById);
 
 router.route("/admin/all")
-.get(getAllOrders);
+.get(auth,roleGuard('ADMIN'),getAllOrders);
 
 router.route("/admin/:id").patch(auth, roleGuard('ADMIN'), updateOrder);
 
