@@ -129,6 +129,16 @@ exports.updateComment = async (req,res,next) => {
           }
         );
 
+        const comment = await Comment.findById(commentId);
+    
+        if (!comment) {
+          return errorResponse(res, 404, "Comment not found !!");
+        }
+    
+        if (comment.user.toString() !== user._id.toString()) {
+          return errorResponse(res, 403, "You have not access to this action !!");
+        }
+
     } catch (err) {
         next(err);
     };
