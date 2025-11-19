@@ -1,3 +1,6 @@
+const { successRespons } = require("../../helpers/responses");
+const Order = require("../../model/Order");
+const { createPaginationData } = require("../../utils");
 
 exports.getAllOrders = async (req,res,next) => {
     try {
@@ -5,8 +8,17 @@ exports.getAllOrders = async (req,res,next) => {
         const user = req.user;
 
         const filters = {
-            ...(user.roles.includes("ADMOIN") ? {} : { user: user._id }),
+            ...(user.roles.includes("ADMIN") ? {} : { user: user._id }),
         };
+
+        const orders = await Order.find(filters).sort({ createAt: "desc" }).skip(( page - 1 ) * limit).limit(limit).populate('user').populate('items.product');
+
+        const totalOrders = await Order.countDocuments(filters);
+
+        return successRespons(res,200, {
+            orders,
+            pagination: createPaginationData( page, limit, totalOrders, "Orders"),
+        });
 
     } catch (err) {
         next (err);
