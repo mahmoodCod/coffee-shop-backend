@@ -37,4 +37,24 @@ const createArticleValidator = yup.object().shape({
     creator: yup
         .string()
         .required("Creator ID is required"),
+
+    badge: yup
+        .string()
+        .notRequired(),
+
+    readTime: yup
+        .string()
+        .notRequired(),
+
+    author: yup
+        .string()
+        .required("Author name is required"),
+
+    date: yup
+        .date()
+        .notRequired(),
+
+    publish: yup
+        .number()
+        .required("Publish status is required"),
 });
