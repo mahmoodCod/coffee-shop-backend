@@ -3,6 +3,7 @@ const Article = require("../../model/Article");
 const Category = require("../../model/Category");
 const { createArticleValidator, updateArticleValidator } = require('../../validator/article');
 const { isValidObjectId } = require('mongoose');
+const { createPaginationData } = require('../../utils');
 
 const supportedFormat = [
     "image/jpeg",
@@ -15,7 +16,28 @@ const supportedFormat = [
 
 exports.getAllArticles = async (req,res,next) => {
     try {
+        const { page = 1, limit = 10, category, publish, search } = req.query;
 
+        // Build filters
+        const filters = {};
+
+        // Filter by publish status (default: only published articles - publish === 1)
+        if (publish !== undefined) {
+            const publishNum = parseInt(publish);
+            if (!isNaN(publishNum) && [0, 1].includes(publishNum)) {
+                filters.publish = publishNum;
+            }
+        } else {
+            // Default: only show published articles
+            filters.publish = 1;
+        }
+
+        // Filter by category
+        if (category) {
+            if (isValidObjectId(category)) {
+                filters.category = category;
+            }
+        }
     } catch (err) {
         next (err);
     };
