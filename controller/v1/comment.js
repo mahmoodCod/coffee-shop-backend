@@ -79,6 +79,13 @@ exports.getAllComments = async (req,res,next) => {
           populate: { path: "user", select: "-addresses" }
         });
 
+        const totalComments = await Comment.countDocuments();
+
+        return successRespons(res,200, {
+          comments,
+          pagination: createPaginationData( page, limit, totalComments, 'Comments' )
+        });
+
     } catch (err) {
         next(err);
     };
