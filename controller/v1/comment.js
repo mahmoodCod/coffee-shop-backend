@@ -216,6 +216,22 @@ exports.removeReply = async (req,res,next) => {
           return errorResponse(res, 404, "Comment not found !!");
         }
 
+        const reply = comment.replies.id(replyId);
+        if (!reply) {
+          return errorResponse(res, 404, "Reply not found !!");
+        }
+    
+        if (reply.user.toString() !== user._id.toString()) {
+          return errorResponse(res, 403, "You have not access to this action !!");
+        }
+    
+        comment.replies.pull(replyId);
+        await comment.save();
+    
+        return successRespons(res, 200, {
+          message: "Reply deleted successfully :))",
+        });
+
     } catch (err) {
         next(err);
     };
