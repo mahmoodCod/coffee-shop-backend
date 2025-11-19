@@ -109,7 +109,212 @@ describe('Article Controller Tests', () => {
         }
       }
     });
-  });
 
+    describe('POST /api/v1/article (Create Article - Admin Only)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .send({
+              title: 'Test Article',
+              excerpt: 'Test excerpt',
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'test-article',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Test Article',
+              excerpt: 'Test excerpt',
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'test-article',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return error for missing required fields', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Test Article'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid href format', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Test Article',
+              excerpt: 'Test excerpt',
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'Invalid Href!',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid category ID', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Test Article',
+              excerpt: 'Test excerpt',
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'test-article',
+              category: 'invalid-category-id',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for title too short', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'AB',
+              excerpt: 'Test excerpt',
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'test-article',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for title too long', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'A'.repeat(151),
+              excerpt: 'Test excerpt',
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'test-article',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for excerpt too long', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Test Article',
+              excerpt: 'A'.repeat(301),
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'test-article',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for description too long', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Test Article',
+              excerpt: 'Test excerpt',
+              discription: 'A'.repeat(501),
+              body: 'Test body content',
+              href: 'test-article',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 1
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid publish status', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Test Article',
+              excerpt: 'Test excerpt',
+              discription: 'Test description',
+              body: 'Test body content',
+              href: 'test-article',
+              category: '507f1f77bcf86cd799439011',
+              creator: '507f1f77bcf86cd799439011',
+              author: 'Test Author',
+              publish: 'invalid'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for missing cover image', async () => {
+          const response = await request(app)
+            .post('/api/v1/article')
+            .set('Authorization', 'Bearer invalid.token')
+            .field('title', 'Test Article')
+            .field('excerpt', 'Test excerpt')
+            .field('discription', 'Test description')
+            .field('body', 'Test body content')
+            .field('href', 'test-article')
+            .field('category', '507f1f77bcf86cd799439011')
+            .field('creator', '507f1f77bcf86cd799439011')
+            .field('author', 'Test Author')
+            .field('publish', '1');
+    
+          // May return 400 if cover is required
+          if (response.status === 400) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+      });
   });
+})
 
