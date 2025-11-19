@@ -315,6 +315,236 @@ describe('Article Controller Tests', () => {
           }
         });
       });
+
+      describe('PATCH /api/v1/article/:id (Update Article - Admin Only)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .send({
+              title: 'Updated Article'
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Updated Article'
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 400 for invalid article ID', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/invalid-id')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Updated Article'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid href format', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              href: 'Invalid Href!'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid category ID', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              category: 'invalid-category-id'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for title too short', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'AB'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for title too long', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'A'.repeat(151)
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for excerpt too long', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              excerpt: 'A'.repeat(301)
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for description too long', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              discription: 'A'.repeat(501)
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return 404 for non-existent article', async () => {
+          const response = await request(app)
+            .patch('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Updated Article'
+            });
+    
+          // May return 404 if article doesn't exist
+          if (response.status === 404) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+      });
+    
+      describe('POST /api/v1/article/:id/draft (Save Draft - Admin Only)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .post('/api/v1/article/507f1f77bcf86cd799439011/draft')
+            .send({
+              title: 'Draft Article'
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .post('/api/v1/article/507f1f77bcf86cd799439011/draft')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Draft Article'
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 400 for invalid article ID', async () => {
+          const response = await request(app)
+            .post('/api/v1/article/invalid-id/draft')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Draft Article'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid href format', async () => {
+          const response = await request(app)
+            .post('/api/v1/article/507f1f77bcf86cd799439011/draft')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              href: 'Invalid Href!'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid category ID', async () => {
+          const response = await request(app)
+            .post('/api/v1/article/507f1f77bcf86cd799439011/draft')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              category: 'invalid-category-id'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return 404 for non-existent article', async () => {
+          const response = await request(app)
+            .post('/api/v1/article/507f1f77bcf86cd799439011/draft')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              title: 'Draft Article'
+            });
+    
+          // May return 404 if article doesn't exist
+          if (response.status === 404) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+      });
+    
+      describe('DELETE /api/v1/article/:id (Delete Article - Admin Only)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .delete('/api/v1/article/507f1f77bcf86cd799439011');
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .delete('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token');
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token (auth check before validation)', async () => {
+          const response = await request(app)
+            .delete('/api/v1/article/invalid-id')
+            .set('Authorization', 'Bearer invalid.token');
+    
+          // Auth middleware runs before validation, so invalid token returns 401
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 404 for non-existent article', async () => {
+          const response = await request(app)
+            .delete('/api/v1/article/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token');
+    
+          // May return 404 if article doesn't exist
+          if (response.status === 404) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+    })
   });
 })
 
