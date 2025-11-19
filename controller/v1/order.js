@@ -1,10 +1,56 @@
-const { successRespons } = require("../../helpers/responses");
+const { successRespons, errorResponse } = require("../../helpers/responses");
 const Order = require("../../model/Order");
+const Product = require("../../model/Product");
 const { createPaginationData } = require("../../utils");
-const { updateOrderValidator } = require('../../validator/order');
+const { createOrderValidator, updateOrderValidator } = require('../../validator/order');
+const { isValidObjectId } = require('mongoose');
 
 exports.createOrder = async (req,res,next) => {
     try {
+        const user = req.user;
+        const { items, shippingAddress, authority } = req.body;
+
+        // Validate request body
+        await createOrderValidator.validate(req.body, { abortEarly: false });
+
+        // Validate and check products
+        const orderItems = [];
+        for (const item of items) {
+            if (!isValidObjectId(item.product)) {
+                return errorResponse(res, 400, `Invalid product ID: ${item.product}`);
+            }
+
+            const product = await Product.findById(item.product);
+            if (!product) {
+                return errorResponse(res, 404, `Product not found: ${item.product}`);
+            }
+
+            // Check stock availability
+            if (product.stock < item.quantity) {
+                return errorResponse(res, 400, `Insufficient stock for product: ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`);
+            }
+
+            // Add item with price at time of adding
+            orderItems.push({
+                product: product._id,
+                quantity: item.quantity,
+                priceAtTimeOfAdding: product.price,
+            });
+        }
+
+        // Create order
+        const newOrder = await Order.create({
+            user: user._id,
+            items: orderItems,
+            shippingAddress,
+            authority,
+            status: "PROCESSING",
+        });
+
+        return successRespons(res, 201, {
+            message: 'Order created successfully :))',
+            order: newOrder
+        });
 
     } catch (err) {
         next (err);
