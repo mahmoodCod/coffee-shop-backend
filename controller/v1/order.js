@@ -94,7 +94,7 @@ exports.getOrderById = async (req,res,next) => {
 exports.getAllOrders = async (req,res,next) => {
     try {
         const { page = 1, limit = 10, status, userId } = req.query;
-        const user = req.user;
+        // const user = req.user;
 
         // Build filters
         const filters = {};
