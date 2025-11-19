@@ -72,4 +72,35 @@ const updateArticleValidator = yup.object().shape({
     discription: yup
         .string()
         .max(500, "Short description cannot exceed 500 characters"),
+
+    body: yup
+        .string(),
+
+    cover: yup
+        .string(),
+
+    href: yup
+        .string()
+        .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Link must be URL-friendly"),
+
+    category: yup
+        .string(),
+
+    creator: yup
+        .string(),
+
+    badge: yup
+        .string(),
+
+    readTime: yup
+        .string(),
+
+    author: yup
+        .string(),
+
+    date: yup
+        .date(),
+
+    publish: yup
+        .number(),
 });
