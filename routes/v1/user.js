@@ -5,7 +5,7 @@ const roleGuard = require('../../middleware/roleGuard');
 
 const router = express.Router();
 
-router.route('/').get(auth, getAll);
+router.route('/').get(getAll);
 router.route('/ban/:userId').post(auth,roleGuard('ADMIN'),banUser);
 router.route('/role/:id').put(auth, roleGuard('ADMIN'), changeRole);
 router.route('/me/addresses').post(auth, createAddress);
