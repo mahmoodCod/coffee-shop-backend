@@ -1,4 +1,4 @@
-const { createProductValidator } = require('../../validator/product');
+const { createProductValidator, updateProductValidator } = require('../../validator/product');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const Product = require('../../model/Product');
 const Category = require('../../model/Category');
@@ -257,8 +257,62 @@ exports.getOneProduct = async (req,res,next) => {
 
 exports.updateProduct = async (req,res,next) => {
     try {
+        const { productId } = req.params;
+        const { 
+            name, 
+            slug, 
+            description, 
+            positiveFeature, 
+            category, 
+            badge, 
+            status, 
+            price, 
+            stock, 
+            originalPrice, 
+            discount, 
+            type, 
+            dealType, 
+            timeLeft, 
+            soldCount, 
+            totalCount, 
+            rating, 
+            reviews, 
+            isPrime, 
+            isPremium, 
+            features, 
+            image, 
+            seo 
+        } = req.body;
+
+        // Validate productId
+        if (!isValidObjectId(productId)) {
+            return errorResponse(res, 400, 'Invalid product ID');
+        }
+
+        // Find product
+        const product = await Product.findById(productId);
+        if (!product) {
+            return errorResponse(res, 404, 'Product not found');
+        }
+
+        // Parse features if provided as string
+        if (req.body.features && typeof req.body.features === 'string') {
+            req.body.features = req.body.features
+              .replace(/["']/g, '')
+              .split(',')
+              .map(f => f.trim())
+              .filter(f => f);
+        }
 
     } catch (err) {
+        // Handle validation errors
+        if (err.name === 'ValidationError' && err.inner) {
+            const validationErrors = err.inner.map(e => ({
+                path: e.path,
+                message: e.message
+            }));
+            return errorResponse(res, 400, 'Validation failed', validationErrors);
+        }
         next(err);
     };
 };
