@@ -3,7 +3,7 @@ const { errorResponse, successRespons } = require('../../helpers/responses');
 const Comment = require('../../model/Comment');
 const Product = require('../../model/Product');
 const { createPaginationData } = require('../../utils');
-const { createCommentValidator, updateCommentValidator } = require('../../validator/comment');
+const { createCommentValidator, updateCommentValidator, addReplyValidator } = require('../../validator/comment');
 
 exports.createComment = async (req,res,next) => {
     try {
@@ -160,6 +160,17 @@ exports.updateComment = async (req,res,next) => {
 
 exports.createReply = async (req,res,next) => {
     try {
+        const user = req.user;
+        const { content } = req.body;
+        const { commentId } = req.params;
+
+        if (!isValidObjectId(commentId)) {
+            return errorResponse(res,400, 'Comment id is not valid !!');
+        };
+    
+        await addReplyValidator.validate({
+          content,
+        }, { abortEarly: false });
 
     } catch (err) {
         next(err);
