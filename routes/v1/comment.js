@@ -14,4 +14,11 @@ router.route('/:commentId')
 .delete(auth, roleGuard('ADMIN'), removeComment)
 .patch(auth,updateComment);
 
+router.route('/:commentId/reply')
+.post(auth, createReply);
+
+router.route('/:commentId/reply/:replyId')
+.patch(auth, updateReply)
+.delete(auth, removeReply);
+
 module.exports = router;
