@@ -3,7 +3,7 @@ const { errorResponse, successRespons } = require('../../helpers/responses');
 const Comment = require('../../model/Comment');
 const Product = require('../../model/Product');
 const { createPaginationData } = require('../../utils');
-const { createCommentValidator } = require('../../validator/comment');
+const { createCommentValidator, updateCommentValidator } = require('../../validator/comment');
 
 exports.createComment = async (req,res,next) => {
     try {
@@ -118,6 +118,16 @@ exports.removeComment = async (req,res,next) => {
 
 exports.updateComment = async (req,res,next) => {
     try {
+        const { commentId } = req.params;
+        const { content, rating } = req.body;
+        const user = req.user;
+    
+        await updateCommentValidator.validate(
+          { content, rating },
+          {
+            abortEarly: false,
+          }
+        );
 
     } catch (err) {
         next(err);
