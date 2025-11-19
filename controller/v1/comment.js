@@ -204,6 +204,17 @@ exports.updateReply = async (req,res,next) => {
 
 exports.removeReply = async (req,res,next) => {
     try {
+        const { commentId, replyId } = req.params;
+        const user = req.user;
+    
+        if (!isValidObjectId(commentId) || !isValidObjectId(replyId)) {
+          return errorResponse(res, 400, "Comment or Reply id is not correct !!");
+        }
+    
+        const comment = await Comment.findById(commentId);
+        if (!comment) {
+          return errorResponse(res, 404, "Comment not found !!");
+        }
 
     } catch (err) {
         next(err);
