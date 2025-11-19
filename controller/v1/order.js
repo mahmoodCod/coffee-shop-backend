@@ -59,6 +59,32 @@ exports.createOrder = async (req,res,next) => {
 
 exports.getOrderById = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const user = req.user;
+
+        // Validate order ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid order ID');
+        }
+
+        // Find order by ID with populate
+        const order = await Order.findById(id)
+            .populate('user', '-addresses')
+            .populate('items.product');
+
+        // Check if order exists
+        if (!order) {
+            return errorResponse(res, 404, 'Order not found');
+        }
+
+        // Check if user has access (only owner or ADMIN)
+        if (!user.roles.includes("ADMIN") && order.user._id.toString() !== user._id.toString()) {
+            return errorResponse(res, 403, 'You do not have access to this order');
+        }
+
+        return successRespons(res, 200, {
+            order,
+        });
 
     } catch (err) {
         next (err);
