@@ -1,6 +1,22 @@
+const { errorResponse } = require('../../helpers/responses');
+const Product = require('../../model/Product');
+const { createCommentValidator } = require('../../validator/comment');
 
 exports.createComment = async (req,res,next) => {
     try {
+        const user = req.user;
+        const { content, rating, productId } = req.body;
+
+        await createCommentValidator.validate({
+            content,
+            productId,
+            rating,
+        }, { abortEarly: false});
+        const product = await Product.findOne({ _id: productId });
+
+        if (!product) {
+            return errorResponse(res,404, 'Product not found !!');
+        };
 
     } catch (err) {
         next(err);
