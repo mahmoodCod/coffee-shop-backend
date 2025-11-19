@@ -108,7 +108,60 @@ describe('Comment Controller Tests', () => {
     
           expect(response.status).not.toBe(200);
         });
-  });
+
+        test('should return error for invalid rating (less than 1)', async () => {
+            const response = await request(app)
+              .post('/api/v1/comment')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                content: 'Test comment content',
+                rating: 0,
+                productId: '507f1f77bcf86cd799439011'
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for invalid rating (greater than 5)', async () => {
+            const response = await request(app)
+              .post('/api/v1/comment')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                content: 'Test comment content',
+                rating: 6,
+                productId: '507f1f77bcf86cd799439011'
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for invalid productId format', async () => {
+            const response = await request(app)
+              .post('/api/v1/comment')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                content: 'Test comment content',
+                rating: 5,
+                productId: 'invalid-id'
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+      
+          test('should return error for content exceeding 1000 characters', async () => {
+            const longContent = 'a'.repeat(1001);
+            const response = await request(app)
+              .post('/api/v1/comment')
+              .set('Authorization', 'Bearer invalid.token')
+              .send({
+                content: longContent,
+                rating: 5,
+                productId: '507f1f77bcf86cd799439011'
+              });
+      
+            expect(response.status).not.toBe(200);
+          });
+        });
   });
   });
 
