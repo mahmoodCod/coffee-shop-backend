@@ -1,4 +1,5 @@
 const yup = require('yup');
+const { isValidObjectId } = require('mongoose');
 
 const createCommentValidator = yup.object().shape({
     productId: yup
