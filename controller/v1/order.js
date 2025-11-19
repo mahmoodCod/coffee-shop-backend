@@ -175,17 +175,41 @@ exports.getMyOrders = async (req,res,next) => {
 
 exports.updateOrder = async (req,res,next) => {
     try {
-        const { postTrackingCode, status } = req.body;
         const { id } = req.params;
+        const { postTrackingCode, status } = req.body;
 
+        // Validate order ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid order ID');
+        }
+
+        // Validate request body
         await updateOrderValidator.validate(req.body, { abortEarly: false });
 
-        const order =  await Order.findByIdAndUpdate({
-            postTrackingCode,
-            status
-        },{ new: true });
+        // Build update object with only provided fields
+        const updateData = {};
+        if (status !== undefined) {
+            updateData.status = status;
+        }
+        if (postTrackingCode !== undefined) {
+            updateData.postTrackingCode = postTrackingCode;
+        }
 
-        return successRespons(res,200, { 
+        // Update order
+        const order = await Order.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true }
+        )
+        .populate('user', '-addresses')
+        .populate('items.product');
+
+        // Check if order exists
+        if (!order) {
+            return errorResponse(res, 404, 'Order not found');
+        }
+
+        return successRespons(res, 200, { 
             order,
             message: 'Order updated successfully :))'
         });
