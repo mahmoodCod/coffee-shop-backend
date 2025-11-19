@@ -31,5 +31,39 @@ describe('Product Controller Tests', () => {
         }
       }
     });
-    })
-    })
+    test('should accept query parameters for pagination', async () => {
+        const response = await request(app)
+          .get('/api/v1/product?page=1&limit=10');
+  
+        expect(response.status).not.toBe(401);
+      });
+  
+      test('should accept query parameters for filtering', async () => {
+        const response = await request(app)
+          .get('/api/v1/product?status=active&category=507f1f77bcf86cd799439011&type=regular');
+  
+        expect(response.status).not.toBe(401);
+      });
+  
+      test('should accept query parameters for price range', async () => {
+        const response = await request(app)
+          .get('/api/v1/product?minPrice=100&maxPrice=1000');
+  
+        expect(response.status).not.toBe(401);
+      });
+  
+      test('should accept query parameters for search', async () => {
+        const response = await request(app)
+          .get('/api/v1/product?search=coffee');
+  
+        expect(response.status).not.toBe(401);
+      });
+  
+      test('should accept query parameters for stock filter', async () => {
+        const response = await request(app)
+          .get('/api/v1/product?inStock=true');
+  
+        expect(response.status).not.toBe(401);
+      });
+    });
+    });
