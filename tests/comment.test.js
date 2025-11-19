@@ -45,6 +45,70 @@ describe('Comment Controller Tests', () => {
 
       expect(response.status).not.toBe(401);
     });
+
+    describe('GET /api/v1/comment/all (Get All Comments - Public)', () => {
+        test('should return all comments without authentication', async () => {
+          const response = await request(app)
+            .get('/api/v1/comment/all');
+    
+          // Should not require auth
+          expect(response.status).not.toBe(401);
+          
+          if (response.status === 200) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success) {
+              expect(response.body.data).toHaveProperty('comments');
+              expect(Array.isArray(response.body.data.comments)).toBe(true);
+              expect(response.body.data).toHaveProperty('pagination');
+            }
+          }
+        });
+    
+        test('should accept query parameters for pagination', async () => {
+          const response = await request(app)
+            .get('/api/v1/comment/all?page=1&limit=10');
+    
+          expect(response.status).not.toBe(401);
+        });
+      });
+    
+      describe('POST /api/v1/comment (Create Comment - Auth Required)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .post('/api/v1/comment')
+            .send({
+              content: 'Test comment content',
+              rating: 5,
+              productId: '507f1f77bcf86cd799439011'
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .post('/api/v1/comment')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              content: 'Test comment content',
+              rating: 5,
+              productId: '507f1f77bcf86cd799439011'
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return error for missing required fields', async () => {
+          const response = await request(app)
+            .post('/api/v1/comment')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              content: 'Test comment content'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+  });
   });
   });
 
