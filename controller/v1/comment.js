@@ -3,7 +3,7 @@ const { errorResponse, successRespons } = require('../../helpers/responses');
 const Comment = require('../../model/Comment');
 const Product = require('../../model/Product');
 const { createPaginationData } = require('../../utils');
-const { createCommentValidator, updateCommentValidator, addReplyValidator } = require('../../validator/comment');
+const { createCommentValidator, updateCommentValidator, addReplyValidator, updateReplyValidator } = require('../../validator/comment');
 
 exports.createComment = async (req,res,next) => {
     try {
@@ -196,6 +196,18 @@ exports.createReply = async (req,res,next) => {
 
 exports.updateReply = async (req,res,next) => {
     try {
+        const { commentId, replyId } = req.params;
+        const { content } = req.body;
+        const user = req.user;
+
+        if (!isValidObjectId(commentId) || !isValidObjectId(replyId)) {
+            return errorResponse(res, 400, "Comment or Reply id is not correct !!");
+        }
+
+        await updateReplyValidator.validate(
+            { content },
+            { abortEarly: false }
+        );
 
     } catch (err) {
         next(err);
