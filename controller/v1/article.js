@@ -38,6 +38,37 @@ exports.getAllArticles = async (req,res,next) => {
                 filters.category = category;
             }
         }
+
+        
+        // Search by title, excerpt, or description
+        if (search) {
+            filters.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                { excerpt: { $regex: search, $options: 'i' } },
+                { discription: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Parse pagination parameters
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        // Find articles with filters, pagination, and populate
+        const articles = await Article.find(filters)
+            .sort({ createdAt: "desc" })
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum)
+            .populate('category', 'name slug')
+            .populate('creator', 'name email');
+
+        // Count total articles with filters
+        const totalArticles = await Article.countDocuments(filters);
+
+        return successRespons(res, 200, {
+            articles,
+            pagination: createPaginationData(pageNum, limitNum, totalArticles, "Articles"),
+        });
+
     } catch (err) {
         next (err);
     };
