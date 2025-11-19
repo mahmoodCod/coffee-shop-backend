@@ -8,6 +8,7 @@ const userRouter = require('./routes/v1/user');
 const categoryRouter = require('./routes/v1/category');
 const errorHandler = require('./middleware/errorHandler');
 const productRouter = require('./routes/v1/product');
+const commentRouter = require('./routes/v1/comment');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.get('/', (req, res) => {
             user: "/api/v1/user",
             category: "/api/v1/category",
             product: "/api/v1/product",
+            comment: "/api/v1/comment",
         },
     });
 });
@@ -36,6 +38,7 @@ app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter);
 app.use('/api/v1/category', categoryRouter);
 app.use('/api/v1/product', productRouter);
+app.use('/api/v1/comment', commentRouter);
 
 // 404 handler - این باید آخرین route باشه
 app.use((req,res) => {
