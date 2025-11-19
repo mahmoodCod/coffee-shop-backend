@@ -229,6 +229,26 @@ exports.getAllProduct = async (req,res,next) => {
 
 exports.getOneProduct = async (req,res,next) => {
     try {
+        const { productId } = req.params;
+
+        // Validate productId
+        if (!isValidObjectId(productId)) {
+            return errorResponse(res, 400, 'Invalid product ID');
+        }
+
+        // Find product by ID and populate category
+        const product = await Product.findById(productId)
+            .populate('category', 'name slug')
+            .select('-__v');
+
+        // Check if product exists
+        if (!product) {
+            return errorResponse(res, 404, 'Product not found');
+        }
+
+        return successRespons(res, 200, {
+            product,
+        });
 
     } catch (err) {
         next(err);
