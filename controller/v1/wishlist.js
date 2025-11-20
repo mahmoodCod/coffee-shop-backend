@@ -44,6 +44,16 @@ exports.getWishlist = async (req,res,next) => {
 
 exports.removeFromWishlist = async (req,res,next) => {
     try {
+        const user = req.user._id;
+    const { id } = req.params;
+
+    const removed = await Wishlist.findOneAndDelete({ user, product: id });
+
+    if (!removed) return errorResponse(res, 404, "Item not found");
+
+    return successRespons(res, 200, {
+      message: "Removed from wishlist"
+    });
 
     } catch (err) {
         next(err);
