@@ -1,5 +1,5 @@
 const { successRespons, errorResponse } = require("../../helpers/responses");
-const { addToWishlistValidator } = require('../../validator/wishlist');
+const { addWishlistValidator } = require('../../validator/wishlist');
 const Wishlist = require("../../model/Wishlist");
 const Product = require('../../model/Product');
 
@@ -7,7 +7,7 @@ exports.addToWishlist = async (req,res,next) => {
     try {
         const user = req.user._id;
 
-        await addToWishlistValidator.validate(req.body, { abortEarly: false });
+        await addWishlistValidator.validate(req.body, { abortEarly: false });
 
         const { product } = req.body;
 
