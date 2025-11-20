@@ -48,3 +48,16 @@ const updateDiscountCodeValidator = yup.object().shape({
     isActive: yup
         .boolean(),
 });
+
+const applyDiscountCodeValidator = yup.object().shape({
+    code: yup
+        .string()
+        .trim()
+        .required("Discount code is required"),
+});
+
+module.exports = {
+    createDiscountCodeValidator,
+    updateDiscountCodeValidator,
+    applyDiscountCodeValidator
+};
