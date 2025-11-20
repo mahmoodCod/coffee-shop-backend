@@ -31,6 +31,11 @@ exports.addToWishlist = async (req,res,next) => {
 
 exports.getWishlist = async (req,res,next) => {
     try {
+        const user = req.user._id;
+
+        const list = await Wishlist.find({ user }).populate("product");
+    
+        return successRespons(res, 200, list);
 
     } catch (err) {
         next(err);
