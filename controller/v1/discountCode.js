@@ -1,4 +1,4 @@
-const { createDiscountCodeValidator } = require('../../validator/discountCode');
+const { createDiscountCodeValidator, updateDiscountCodeValidator } = require('../../validator/discountCode');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const DiscountCode = require('../../model/DiscountCode');
 const { createPaginationData } = require('../../utils');
@@ -104,6 +104,25 @@ exports.getOneDiscountCode = async (req,res,next) => {
 
 exports.updateDiscountCode = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const { code, percentage, expiresAt, usageLimit, isActive } = req.body;
+
+        // Validate discount code ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid discount code ID');
+        }
+
+        // Find discount code
+        const existingDiscountCode = await DiscountCode.findById(id);
+        if (!existingDiscountCode) {
+            return errorResponse(res, 404, 'Discount code not found');
+        }
+
+        // Validate request body
+        await updateDiscountCodeValidator.validate(req.body, { abortEarly: false });
+
+        // Build update object (only update provided fields)
+        const updateData = {};
 
     } catch (err) {
         next(err);
