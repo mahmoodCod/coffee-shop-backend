@@ -124,6 +124,35 @@ exports.updateDiscountCode = async (req,res,next) => {
         // Build update object (only update provided fields)
         const updateData = {};
 
+        
+        // Check if code is being updated and if it's duplicate
+        if (code !== undefined && code.trim().toUpperCase() !== existingDiscountCode.code) {
+            const duplicateDiscountCode = await DiscountCode.findOne({ 
+                code: code.trim().toUpperCase() 
+            });
+            if (duplicateDiscountCode) {
+                return errorResponse(res, 409, 'Discount code already exists');
+            }
+            updateData.code = code.trim().toUpperCase();
+        }
+
+        if (percentage !== undefined) updateData.percentage = percentage;
+        if (expiresAt !== undefined) updateData.expiresAt = new Date(expiresAt);
+        if (usageLimit !== undefined) updateData.usageLimit = usageLimit;
+        if (isActive !== undefined) updateData.isActive = isActive;
+
+        // Update discount code
+        const updatedDiscountCode = await DiscountCode.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        );
+
+        return successRespons(res, 200, {
+            discountCode: updatedDiscountCode,
+            message: 'Discount code updated successfully'
+        });
+
     } catch (err) {
         next(err);
     };
