@@ -2,6 +2,7 @@ const { createDiscountCodeValidator } = require('../../validator/discountCode');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const DiscountCode = require('../../model/DiscountCode');
 const { createPaginationData } = require('../../utils');
+const { isValidObjectId } = require('mongoose');
 
 exports.createDiscountCode = async (req,res,next) => {
     try {
@@ -77,6 +78,24 @@ exports.getAllDiscountCode = async (req,res,next) => {
 
 exports.getOneDiscountCode = async (req,res,next) => {
     try {
+        const { id } = req.params;
+
+        // Validate discount code ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid discount code ID');
+        }
+
+        // Find discount code by ID
+        const discountCode = await DiscountCode.findById(id);
+
+        // Check if discount code exists
+        if (!discountCode) {
+            return errorResponse(res, 404, 'Discount code not found');
+        }
+
+        return successRespons(res, 200, {
+            discountCode,
+        });
 
     } catch (err) {
         next(err);
