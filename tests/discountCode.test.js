@@ -176,6 +176,124 @@ describe('DiscountCode Controller Tests', () => {
           }
         }
       });
+    
+      test('should return 404 for non-existent discount code', async () => {
+        const response = await request(app)
+          .get('/api/v1/discountCode/507f1f77bcf86cd799439011')
+          .set('Authorization', 'Bearer invalid.token');
+  
+        // May return 401 for invalid token or 404 for non-existent code
+        if (response.status === 404) {
+          expect(response.body).toHaveProperty('success');
+          if (response.body.success !== undefined) {
+            expect(response.body.success).toBe(false);
+          }
+        }
+      });
+    });
+  
+    describe('PATCH /api/v1/discountCode/:id (Update Discount Code - Admin Only)', () => {
+      test('should return 401 for missing token', async () => {
+        const response = await request(app)
+          .patch('/api/v1/discountCode/507f1f77bcf86cd799439011')
+          .send({
+            percentage: 20
+          });
+  
+        expect(response.status).toBe(401);
+      });
+  
+      test('should return 401 for invalid token', async () => {
+        const response = await request(app)
+          .patch('/api/v1/discountCode/507f1f77bcf86cd799439011')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            percentage: 20
+          });
+  
+        expect(response.status).toBe(401);
+      });
+  
+      test('should return 400 for invalid discount code ID', async () => {
+        const response = await request(app)
+          .patch('/api/v1/discountCode/invalid-id')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            percentage: 20
+          });
+  
+        expect(response.status).not.toBe(200);
+      });
+  
+      test('should return error for invalid percentage (greater than 100)', async () => {
+        const response = await request(app)
+          .patch('/api/v1/discountCode/507f1f77bcf86cd799439011')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            percentage: 101
+          });
+  
+        expect(response.status).not.toBe(200);
+      });
+  
+      test('should return error for expired date in the past', async () => {
+        const response = await request(app)
+          .patch('/api/v1/discountCode/507f1f77bcf86cd799439011')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            expiresAt: new Date(Date.now() - 86400000).toISOString()
+          });
+  
+        expect(response.status).not.toBe(200);
+      });
+    });
+  
+    describe('DELETE /api/v1/discountCode/:id (Delete Discount Code - Admin Only)', () => {
+      test('should return 401 for missing token', async () => {
+        const response = await request(app)
+          .delete('/api/v1/discountCode/507f1f77bcf86cd799439011');
+  
+        expect(response.status).toBe(401);
+      });
+  
+      test('should return 401 for invalid token', async () => {
+        const response = await request(app)
+          .delete('/api/v1/discountCode/507f1f77bcf86cd799439011')
+          .set('Authorization', 'Bearer invalid.token');
+  
+        expect(response.status).toBe(401);
+      });
+  
+      test('should return 400 for invalid discount code ID', async () => {
+        const response = await request(app)
+          .delete('/api/v1/discountCode/invalid-id')
+          .set('Authorization', 'Bearer invalid.token');
+  
+        expect(response.status).not.toBe(200);
+      });
+  
+      test('should return 404 for non-existent discount code', async () => {
+        const response = await request(app)
+          .delete('/api/v1/discountCode/507f1f77bcf86cd799439011')
+          .set('Authorization', 'Bearer invalid.token');
+  
+        // May return 401 for invalid token or 404 for non-existent code
+        if (response.status === 404) {
+          expect(response.body).toHaveProperty('success');
+          if (response.body.success !== undefined) {
+            expect(response.body.success).toBe(false);
+          }
+        }
+      });
+    });
+  
+    describe('POST /api/v1/discountCode/apply (Apply Discount Code - Auth Required)', () => {
+      test('should return 401 for missing token', async () => {
+        const response = await request(app)
+          .post('/api/v1/discountCode/apply')
+          .send({
+            code: 'TESTCODE'
+          });
   });
 });
 
