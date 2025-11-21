@@ -1,4 +1,4 @@
-const { createDiscountCodeValidator, updateDiscountCodeValidator } = require('../../validator/discountCode');
+const { createDiscountCodeValidator, updateDiscountCodeValidator, applyDiscountCodeValidator } = require('../../validator/discountCode');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const DiscountCode = require('../../model/DiscountCode');
 const { createPaginationData } = require('../../utils');
@@ -187,6 +187,44 @@ exports.deleteDiscountCode = async (req,res,next) => {
 
 exports.applyDiscountCode = async (req,res,next) => {
     try {
+        const { code } = req.body;
+
+        // Validate request body
+        await applyDiscountCodeValidator.validate(req.body, { abortEarly: false });
+
+        // Find discount code (case-insensitive)
+        const discountCode = await DiscountCode.findOne({ 
+            code: code.trim().toUpperCase() 
+        });
+
+        // Check if discount code exists
+        if (!discountCode) {
+            return errorResponse(res, 404, 'Discount code not found');
+        }
+
+        // Check if discount code is active
+        if (!discountCode.isActive) {
+            return errorResponse(res, 400, 'Discount code is not active');
+        }
+
+        // Check if discount code has expired
+        if (new Date() > discountCode.expiresAt) {
+            return errorResponse(res, 400, 'Discount code has expired');
+        }
+
+        // Check if usage limit has been reached
+        if (discountCode.usedCount >= discountCode.usageLimit) {
+            return errorResponse(res, 400, 'Discount code usage limit has been reached');
+        }
+
+        return successRespons(res, 200, {
+            discountCode: {
+                code: discountCode.code,
+                percentage: discountCode.percentage,
+                expiresAt: discountCode.expiresAt,
+            },
+            message: 'Discount code is valid'
+        });
 
     } catch (err) {
         next(err);
