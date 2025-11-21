@@ -160,6 +160,25 @@ exports.updateDiscountCode = async (req,res,next) => {
 
 exports.deleteDiscountCode = async (req,res,next) => {
     try {
+        const { id } = req.params;
+
+        // Validate discount code ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid discount code ID');
+        }
+
+        // Find and delete discount code
+        const deletedDiscountCode = await DiscountCode.findByIdAndDelete(id);
+
+        // Check if discount code exists
+        if (!deletedDiscountCode) {
+            return errorResponse(res, 404, 'Discount code not found');
+        }
+
+        return successRespons(res, 200, {
+            message: 'Discount code deleted successfully',
+            discountCode: deletedDiscountCode
+        });
 
     } catch (err) {
         next(err);
