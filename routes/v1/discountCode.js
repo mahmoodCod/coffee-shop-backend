@@ -1,6 +1,7 @@
 const express = require('express');
 const { auth } = require('../../middleware/auth');
 const roleGuard = require('../../middleware/roleGuard');
+const { createDiscountCode, getAllDiscountCode, getOneDiscountCode, updateDiscountCode, deleteDiscountCode, applyDiscountCode } = require('../../controller/v1/discountCode');
 
 const router = express.Router();
 
