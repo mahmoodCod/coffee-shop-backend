@@ -52,6 +52,7 @@ exports.createProduct = async (req,res,next) => {
             warrantyDescription,
             userReviews,
             recommended,
+            relatedProducts,
             isPrime, 
             isPremium, 
             features, 
@@ -129,6 +130,7 @@ exports.createProduct = async (req,res,next) => {
             warrantyDescription: warrantyDescription || '',
             userReviews: userReviews || [],
             recommended: recommended || false,
+            relatedProducts: relatedProducts || [],
             isPrime: isPrime || false,
             isPremium: isPremium || false,
             features: features || [],
@@ -322,6 +324,7 @@ exports.updateProduct = async (req,res,next) => {
             warrantyDescription,
             userReviews,
             recommended,
+            relatedProducts,
             isPrime, 
             isPremium, 
             features, 
@@ -412,6 +415,7 @@ exports.updateProduct = async (req,res,next) => {
         if (warrantyDescription !== undefined) updateData.warrantyDescription = warrantyDescription;
         if (userReviews !== undefined) updateData.userReviews = userReviews;
         if (recommended !== undefined) updateData.recommended = recommended;
+        if (relatedProducts !== undefined) updateData.relatedProducts = relatedProducts;
         if (isPrime !== undefined) updateData.isPrime = isPrime;
         if (isPremium !== undefined) updateData.isPremium = isPremium;
         if (features !== undefined) updateData.features = features;
