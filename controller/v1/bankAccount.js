@@ -118,9 +118,35 @@ exports.getAllBankAccount = async (req,res,next) => {
 
 exports.getOneBankAccount = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const user = req.user;
+
+        // Validate BankAccount ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid BankAccount ID');
+        }
+
+        // Find BankAccount by ID and populate user
+        const bankAccount = await BankAccount.findById(id)
+            .populate('user', 'name email phone')
+            .select('-__v');
+
+        // Check if BankAccount exists
+        if (!bankAccount) {
+            return errorResponse(res, 404, 'BankAccount not found');
+        }
+
+        // Check if user has access (only owner or ADMIN)
+        if (!user.roles.includes("ADMIN") && bankAccount.user._id.toString() !== user._id.toString()) {
+            return errorResponse(res, 403, 'You do not have access to this bank account');
+        }
+
+        return successRespons(res, 200, {
+            bankAccount,
+        });
 
     } catch (err) {
-        next (err);
+        next(err);
     };
 };
 
