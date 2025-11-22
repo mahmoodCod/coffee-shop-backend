@@ -23,6 +23,28 @@ exports.createProduct = async (req,res,next) => {
                 return errorResponse(res, 400, 'userReviews must be a valid JSON array');
             }
         }
+
+        if (req.body.relatedProducts) {
+            if (typeof req.body.relatedProducts === 'string') {
+              try {
+                const clean = req.body.relatedProducts.replace(/^"|"$/g, '');
+                req.body.relatedProducts = JSON.parse(clean);
+              } catch (err) {
+                return errorResponse(res, 400, 'relatedProducts must be a valid JSON array');
+              }
+            }
+          
+            // حالا مطمئن شو که هر آیتم آرایه یک ObjectId معتبر است
+            const invalidIds = req.body.relatedProducts.filter(id => !isValidObjectId(id));
+            if (invalidIds.length > 0) {
+              return errorResponse(res, 400, `Invalid ObjectId(s): ${invalidIds.join(', ')}`);
+            }
+          }
+          
+          
+          
+          
+          
         
         const { 
             name, 
