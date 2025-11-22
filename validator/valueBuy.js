@@ -29,3 +29,34 @@ const createValueBuyValidator  = yup.object().shape({
 
     isActive: yup.boolean(),
 });
+
+const updateValueBuyValidator = yup.object().shape({
+    product: yup
+        .string()
+        .notRequired()
+        .test("is-objectid", "Invalid Product ID", (value) => {
+            if (!value) return true;
+            return isValidObjectId(value);
+        }),
+
+    features: yup.object({
+        recommended: yup.boolean(),
+        specialDiscount: yup.boolean(),
+        lowStock: yup.boolean(),
+        rareDeal: yup.boolean(),
+        }),
+
+    filters: yup.object({
+        economicChoice: yup.boolean(),
+        bestValue: yup.boolean(),
+        topSelling: yup.boolean(),
+        freeShipping: yup.boolean(),
+        }),
+
+    isActive: yup.boolean(),
+});
+
+module.exports = {
+    createValueBuyValidator,
+    updateValueBuyValidator
+};
