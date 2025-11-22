@@ -15,12 +15,22 @@ const supportedFormat = [
 
 exports.createProduct = async (req,res,next) => {
     try {
+
+        if (req.body.userReviews) {
+            try {
+                req.body.userReviews = JSON.parse(req.body.userReviews);
+            } catch (err) {
+                return errorResponse(res, 400, 'userReviews must be a valid JSON array');
+            }
+        }
+        
         const { 
             name, 
             slug, 
             description, 
             positiveFeature, 
             category, 
+            brand,
             badge, 
             status, 
             price, 
@@ -33,7 +43,14 @@ exports.createProduct = async (req,res,next) => {
             soldCount, 
             totalCount, 
             rating, 
-            reviews, 
+            weight,
+            ingredients,
+            benefits,
+            howToUse,
+            hasWarranty,
+            warrantyDuration,
+            warrantyDescription,
+            userReviews,
             isPrime, 
             isPremium, 
             features, 
@@ -89,7 +106,8 @@ exports.createProduct = async (req,res,next) => {
             description: description || '',
             positiveFeature,
             category,
-            badge,
+            brand,
+            badge: badge || '',
             status: status || 'inactive',
             price,
             stock,
@@ -101,7 +119,14 @@ exports.createProduct = async (req,res,next) => {
             soldCount: soldCount || 0,
             totalCount: totalCount || 0,
             rating: rating || 0,
-            reviews: reviews || 0,
+            weight: weight || 0,
+            ingredients: ingredients || '',
+            benefits: benefits || '',
+            howToUse: howToUse || '',
+            hasWarranty: hasWarranty || false,
+            warrantyDuration: warrantyDuration || 0,
+            warrantyDescription: warrantyDescription || '',
+            userReviews: userReviews || [],
             isPrime: isPrime || false,
             isPremium: isPremium || false,
             features: features || [],
@@ -116,6 +141,7 @@ exports.createProduct = async (req,res,next) => {
 
         // Create product
         const newProduct = await Product.create(productData);
+        await newProduct.populate('category', 'name slug');
 
         return successRespons(res, 201, {
             product: newProduct,
@@ -142,6 +168,7 @@ exports.getAllProduct = async (req,res,next) => {
             limit = 10, 
             status, 
             category, 
+            brand,
             type, 
             minPrice, 
             maxPrice,
@@ -164,6 +191,11 @@ exports.getAllProduct = async (req,res,next) => {
             if (isValidObjectId(category)) {
                 query.category = category;
             }
+        }
+
+        // Filter by brand
+        if (brand !== undefined) {
+            query.brand = { $regex: brand, $options: 'i' };
         }
 
         // Filter by type
@@ -191,14 +223,15 @@ exports.getAllProduct = async (req,res,next) => {
             }
         }
 
-        // Search by name or description
+        // Search by name, description, or brand
         let searchQuery = query;
         if (search) {
             searchQuery = {
                 ...query,
                 $or: [
                     { name: { $regex: search, $options: 'i' } },
-                    { description: { $regex: search, $options: 'i' } }
+                    { description: { $regex: search, $options: 'i' } },
+                    { brand: { $regex: search, $options: 'i' } }
                 ]
             };
         }
@@ -236,9 +269,10 @@ exports.getOneProduct = async (req,res,next) => {
             return errorResponse(res, 400, 'Invalid product ID');
         }
 
-        // Find product by ID and populate category
+        // Find product by ID and populate category and userReviews
         const product = await Product.findById(productId)
             .populate('category', 'name slug')
+            .populate('userReviews.user', 'name email')
             .select('-__v');
 
         // Check if product exists
@@ -264,6 +298,7 @@ exports.updateProduct = async (req,res,next) => {
             description, 
             positiveFeature, 
             category, 
+            brand,
             badge, 
             status, 
             price, 
@@ -276,7 +311,14 @@ exports.updateProduct = async (req,res,next) => {
             soldCount, 
             totalCount, 
             rating, 
-            reviews, 
+            weight,
+            ingredients,
+            benefits,
+            howToUse,
+            hasWarranty,
+            warrantyDuration,
+            warrantyDescription,
+            userReviews,
             isPrime, 
             isPremium, 
             features, 
@@ -345,6 +387,7 @@ exports.updateProduct = async (req,res,next) => {
         if (description !== undefined) updateData.description = description;
         if (positiveFeature !== undefined) updateData.positiveFeature = positiveFeature;
         if (category !== undefined) updateData.category = category;
+        if (brand !== undefined) updateData.brand = brand;
         if (badge !== undefined) updateData.badge = badge;
         if (status !== undefined) updateData.status = status;
         if (price !== undefined) updateData.price = price;
@@ -357,7 +400,14 @@ exports.updateProduct = async (req,res,next) => {
         if (soldCount !== undefined) updateData.soldCount = soldCount;
         if (totalCount !== undefined) updateData.totalCount = totalCount;
         if (rating !== undefined) updateData.rating = rating;
-        if (reviews !== undefined) updateData.reviews = reviews;
+        if (weight !== undefined) updateData.weight = weight;
+        if (ingredients !== undefined) updateData.ingredients = ingredients;
+        if (benefits !== undefined) updateData.benefits = benefits;
+        if (howToUse !== undefined) updateData.howToUse = howToUse;
+        if (hasWarranty !== undefined) updateData.hasWarranty = hasWarranty;
+        if (warrantyDuration !== undefined) updateData.warrantyDuration = warrantyDuration;
+        if (warrantyDescription !== undefined) updateData.warrantyDescription = warrantyDescription;
+        if (userReviews !== undefined) updateData.userReviews = userReviews;
         if (isPrime !== undefined) updateData.isPrime = isPrime;
         if (isPremium !== undefined) updateData.isPremium = isPremium;
         if (features !== undefined) updateData.features = features;
@@ -381,6 +431,7 @@ exports.updateProduct = async (req,res,next) => {
             { new: true, runValidators: true }
         )
         .populate('category', 'name slug')
+        .populate('userReviews.user', 'name email')
         .select('-__v');
 
         return successRespons(res, 200, {

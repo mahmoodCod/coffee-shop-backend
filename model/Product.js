@@ -17,7 +17,7 @@ const productSchema = new mongoose.Schema({
     description: {
         type: String,
         required: true,
-        trime: true,
+        trim: true,
     },
 
     positiveFeature: {
@@ -33,7 +33,7 @@ const productSchema = new mongoose.Schema({
 
     badge: {
         type: String,
-        required: true,
+        default: ""
     },
 
     images: {
@@ -98,11 +98,6 @@ const productSchema = new mongoose.Schema({
         default: 0 
     },
 
-    reviews: { 
-        type: Number, 
-        default: 0 
-    },
-
     isPrime: { 
         type: Boolean, 
         default: false 
@@ -128,6 +123,58 @@ const productSchema = new mongoose.Schema({
         description: { type: String },
         keywords: { type: [String], default: [] }
     },
+
+    weight: {
+        type: Number,
+        default: 0
+    },
+
+    ingredients: {
+        type: String,
+        default: ""
+    },
+
+    benefits: {
+        type: String,
+        default: ""
+    },
+
+    howToUse: {
+        type: String,
+        default: ""
+    },
+
+    hasWarranty: {
+        type: Boolean,
+        default: false,
+    },
+
+    warrantyDuration: {
+        type: Number,
+        default: 0,
+    },
+
+    warrantyDescription: {
+        type: String,
+        default: ""
+    },
+
+    userReviews: [
+        {
+            user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+            rating: { type: Number, min: 1, max: 5, required: true },
+            comment: { type: String, trim: true },
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
+
+    brand: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    
+
 }, { timestamps: true, toJSON: { virtuals: true },toObject: { virtuals: true } });
 
 // Virtual: price after discount (computed)

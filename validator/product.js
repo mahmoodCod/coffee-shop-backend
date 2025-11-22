@@ -22,10 +22,14 @@ const createProductValidator = yup.object().shape({
     .string()
     .required("Category is required")
     .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+  brand: yup
+    .string()
+    .required("Brand is required")
+    .trim(),
   badge: yup
     .string()
-    .required("Badge is required")
-    .max(50, "Badge cannot exceed 50 characters"),
+    .max(50, "Badge cannot exceed 50 characters")
+    .default(""),
   status: yup
     .string()
     .oneOf(["active", "inactive"])
@@ -70,11 +74,38 @@ const createProductValidator = yup.object().shape({
     .min(0)
     .max(5)
     .default(0),
-  reviews: yup
+  weight: yup
     .number()
-    .min(0)
+    .min(0, "Weight cannot be negative")
     .default(0),
-
+  ingredients: yup
+    .string()
+    .default(""),
+  benefits: yup
+    .string()
+    .default(""),
+  howToUse: yup
+    .string()
+    .default(""),
+  hasWarranty: yup
+    .boolean()
+    .default(false),
+  warrantyDuration: yup
+    .number()
+    .min(0, "Warranty duration cannot be negative")
+    .default(0),
+  warrantyDescription: yup
+    .string()
+    .default(""),
+  userReviews: yup
+    .array()
+    .of(yup.object().shape({
+      user: yup.string().required("User is required"),
+      rating: yup.number().min(1).max(5).required("Rating is required"),
+      comment: yup.string(),
+      createdAt: yup.date().default(() => new Date())
+    }))
+    .default([]),
   isPrime: yup
     .boolean()
     .default(false),
@@ -116,6 +147,9 @@ const updateProductValidator = yup.object().shape({
   category: yup
     .string()
     .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+  brand: yup
+    .string()
+    .trim(),
   badge: yup
     .string()
     .max(50, "Badge cannot exceed 50 characters"),
@@ -152,9 +186,30 @@ const updateProductValidator = yup.object().shape({
     .number()
     .min(0)
     .max(5),
-  reviews: yup
+  weight: yup
     .number()
-    .min(0),
+    .min(0, "Weight cannot be negative"),
+  ingredients: yup
+    .string(),
+  benefits: yup
+    .string(),
+  howToUse: yup
+    .string(),
+  hasWarranty: yup
+    .boolean(),
+  warrantyDuration: yup
+    .number()
+    .min(0, "Warranty duration cannot be negative"),
+  warrantyDescription: yup
+    .string(),
+  userReviews: yup
+    .array()
+    .of(yup.object().shape({
+      user: yup.string(),
+      rating: yup.number().min(1).max(5),
+      comment: yup.string(),
+      createdAt: yup.date()
+    })),
   isPrime: yup
     .boolean(),
   isPremium: yup
