@@ -13,6 +13,7 @@ const orderRouter = require('./routes/v1/order');
 const articleRouter = require('./routes/v1/article');
 const wishlistRouter = require('./routes/v1/wishlist');
 const discountCodeRouter = require('./routes/v1/discountCode');
+const valueBuyRouter = require('./routes/v1/valueBuy');
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.get('/', (req, res) => {
             article: "/api/v1/article",
             wishlist: "/api/v1/wishlist",
             discountCode: "/api/v1/discountCode",
+            valueBuy: "/api/v1/valueBuy",
         },
     });
 });
@@ -51,6 +53,7 @@ app.use('/api/v1/order', orderRouter);
 app.use('/api/v1/article', articleRouter);
 app.use('/api/v1/wishlist', wishlistRouter);
 app.use('/api/v1/discountCode', discountCodeRouter);
+app.use('/api/v1/valueBuy', valueBuyRouter);
 // 404 handler - این باید آخرین route باشه
 app.use((req,res) => {
     console.log('This path is not found :', req.path);
