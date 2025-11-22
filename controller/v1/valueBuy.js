@@ -173,7 +173,7 @@ exports.getOneValueBuy = async (req,res,next) => {
 exports.updateValueBuy = async (req,res,next) => {
     try {
         const { id } = req.params;
-        const { product, features, filters, isActive } = req.body;
+        const { product, features,isActive } = req.body;
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
@@ -220,14 +220,6 @@ exports.updateValueBuy = async (req,res,next) => {
             updateData.features = {
                 ...existingValueBuy.features,
                 ...features
-            };
-        }
-
-        // Update filters if provided
-        if (filters !== undefined) {
-            updateData.filters = {
-                ...existingValueBuy.filters,
-                ...filters
             };
         }
 
