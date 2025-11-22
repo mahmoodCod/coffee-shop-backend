@@ -3,6 +3,7 @@ const { errorResponse, successRespons } = require('../../helpers/responses');
 const ValueBuy = require('../../model/ValueBuy');
 const Product = require('../../model/Product');
 const { isValidObjectId } = require('mongoose');
+const { createPaginationData } = require('../../utils');
 
 exports.createValueBuy = async (req,res,next) => {
     try {
@@ -51,6 +52,83 @@ exports.createValueBuy = async (req,res,next) => {
 
 exports.getAllValueBuy = async (req,res,next) => {
     try {
+        const { 
+            page = 1, 
+            limit = 10, 
+            isActive,
+            recommended,
+            specialDiscount,
+            lowStock,
+            rareDeal,
+            economicChoice,
+            bestValue,
+            topSelling,
+            freeShipping,
+            product
+        } = req.query;
+
+        // Build filters
+        const filters = {};
+
+        // Filter by isActive status
+        if (isActive !== undefined) {
+            filters.isActive = isActive === 'true' || isActive === true;
+        }
+
+        // Filter by product ID
+        if (product !== undefined) {
+            if (isValidObjectId(product)) {
+                filters.product = product;
+            }
+        }
+
+        // Filter by features
+        if (recommended !== undefined) {
+            filters['features.recommended'] = recommended === 'true' || recommended === true;
+        }
+        if (specialDiscount !== undefined) {
+            filters['features.specialDiscount'] = specialDiscount === 'true' || specialDiscount === true;
+        }
+        if (lowStock !== undefined) {
+            filters['features.lowStock'] = lowStock === 'true' || lowStock === true;
+        }
+        if (rareDeal !== undefined) {
+            filters['features.rareDeal'] = rareDeal === 'true' || rareDeal === true;
+        }
+
+        // Filter by filters
+        if (economicChoice !== undefined) {
+            filters['filters.economicChoice'] = economicChoice === 'true' || economicChoice === true;
+        }
+        if (bestValue !== undefined) {
+            filters['filters.bestValue'] = bestValue === 'true' || bestValue === true;
+        }
+        if (topSelling !== undefined) {
+            filters['filters.topSelling'] = topSelling === 'true' || topSelling === true;
+        }
+        if (freeShipping !== undefined) {
+            filters['filters.freeShipping'] = freeShipping === 'true' || freeShipping === true;
+        }
+
+        // Parse pagination parameters
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        // Find ValueBuy items with filters, pagination, and populate product
+        const valueBuys = await ValueBuy.find(filters)
+            .populate('product', 'name slug price image stock brand category')
+            .sort({ createdAt: 'desc' })
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum)
+            .select('-__v');
+
+        // Count total ValueBuy items with filters
+        const totalValueBuys = await ValueBuy.countDocuments(filters);
+
+        return successRespons(res, 200, {
+            valueBuys,
+            pagination: createPaginationData(pageNum, limitNum, totalValueBuys, 'ValueBuys'),
+        });
 
     } catch (err) {
         next(err);
