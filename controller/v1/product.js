@@ -15,6 +15,15 @@ const supportedFormat = [
 
 exports.createProduct = async (req,res,next) => {
     try {
+
+        if (req.body.userReviews) {
+            try {
+                req.body.userReviews = JSON.parse(req.body.userReviews);
+            } catch (err) {
+                return errorResponse(res, 400, 'userReviews must be a valid JSON array');
+            }
+        }
+        
         const { 
             name, 
             slug, 
