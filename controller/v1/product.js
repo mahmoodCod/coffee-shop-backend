@@ -158,6 +158,7 @@ exports.getAllProduct = async (req,res,next) => {
             limit = 10, 
             status, 
             category, 
+            brand,
             type, 
             minPrice, 
             maxPrice,
@@ -180,6 +181,11 @@ exports.getAllProduct = async (req,res,next) => {
             if (isValidObjectId(category)) {
                 query.category = category;
             }
+        }
+
+        // Filter by brand
+        if (brand !== undefined) {
+            query.brand = { $regex: brand, $options: 'i' };
         }
 
         // Filter by type
@@ -207,14 +213,15 @@ exports.getAllProduct = async (req,res,next) => {
             }
         }
 
-        // Search by name or description
+        // Search by name, description, or brand
         let searchQuery = query;
         if (search) {
             searchQuery = {
                 ...query,
                 $or: [
                     { name: { $regex: search, $options: 'i' } },
-                    { description: { $regex: search, $options: 'i' } }
+                    { description: { $regex: search, $options: 'i' } },
+                    { brand: { $regex: search, $options: 'i' } }
                 ]
             };
         }
