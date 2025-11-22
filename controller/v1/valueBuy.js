@@ -137,6 +137,26 @@ exports.getAllValueBuy = async (req,res,next) => {
 
 exports.getOneValueBuy = async (req,res,next) => {
     try {
+        const { id } = req.params;
+
+        // Validate ValueBuy ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid ValueBuy ID');
+        }
+
+        // Find ValueBuy by ID and populate product
+        const valueBuy = await ValueBuy.findById(id)
+            .populate('product', 'name slug price image stock brand category description')
+            .select('-__v');
+
+        // Check if ValueBuy exists
+        if (!valueBuy) {
+            return errorResponse(res, 404, 'ValueBuy not found');
+        }
+
+        return successRespons(res, 200, {
+            valueBuy,
+        });
 
     } catch (err) {
         next(err);
