@@ -106,6 +106,9 @@ const createProductValidator = yup.object().shape({
       createdAt: yup.date().default(() => new Date())
     }))
     .default([]),
+  recommended: yup
+    .boolean()
+    .default(false),
   isPrime: yup
     .boolean()
     .default(false),
@@ -210,6 +213,8 @@ const updateProductValidator = yup.object().shape({
       comment: yup.string(),
       createdAt: yup.date()
     })),
+  recommended: yup
+    .boolean(),
   isPrime: yup
     .boolean(),
   isPremium: yup
