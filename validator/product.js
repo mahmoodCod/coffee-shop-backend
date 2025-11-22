@@ -109,6 +109,10 @@ const createProductValidator = yup.object().shape({
   recommended: yup
     .boolean()
     .default(false),
+  relatedProducts: yup
+    .array()
+    .of(yup.string().matches(/^[0-9a-fA-F]{24}$/, "Related product must be a valid ObjectId"))
+    .default([]),
   isPrime: yup
     .boolean()
     .default(false),
@@ -215,6 +219,9 @@ const updateProductValidator = yup.object().shape({
     })),
   recommended: yup
     .boolean(),
+  relatedProducts: yup
+    .array()
+    .of(yup.string().matches(/^[0-9a-fA-F]{24}$/, "Related product must be a valid ObjectId")),
   isPrime: yup
     .boolean(),
   isPremium: yup
