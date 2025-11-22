@@ -168,6 +168,13 @@ const productSchema = new mongoose.Schema({
         }
     ],
 
+    brand: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    
+
 }, { timestamps: true, toJSON: { virtuals: true },toObject: { virtuals: true } });
 
 // Virtual: price after discount (computed)
