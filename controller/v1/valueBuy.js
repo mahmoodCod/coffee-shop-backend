@@ -1,4 +1,4 @@
-const { createValueBuyValidator } = require('../../validator/valueBuy');
+const { createValueBuyValidator, updateValueBuyValidator } = require('../../validator/valueBuy');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const ValueBuy = require('../../model/ValueBuy');
 const Product = require('../../model/Product');
@@ -165,6 +165,83 @@ exports.getOneValueBuy = async (req,res,next) => {
 
 exports.updateValueBuy = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const { product, features, filters, isActive } = req.body;
+
+        // Validate ValueBuy ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid ValueBuy ID');
+        }
+
+        // Find ValueBuy
+        const existingValueBuy = await ValueBuy.findById(id);
+        if (!existingValueBuy) {
+            return errorResponse(res, 404, 'ValueBuy not found');
+        }
+
+        // Validate request body
+        await updateValueBuyValidator.validate(req.body, { abortEarly: false });
+
+        // Build update object (only update provided fields)
+        const updateData = {};
+
+        // Check if product is being updated
+        if (product !== undefined) {
+            // Validate product ID
+            if (!isValidObjectId(product)) {
+                return errorResponse(res, 400, 'Invalid product ID');
+            }
+
+            // Check if product exists
+            const productExists = await Product.findById(product);
+            if (!productExists) {
+                return errorResponse(res, 404, 'Product not found');
+            }
+
+            // Check if this product already exists in another ValueBuy
+            if (product !== existingValueBuy.product.toString()) {
+                const duplicateValueBuy = await ValueBuy.findOne({ product });
+                if (duplicateValueBuy) {
+                    return errorResponse(res, 409, 'This product already exists in another ValueBuy');
+                }
+            }
+            updateData.product = product;
+        }
+
+        // Update features if provided
+        if (features !== undefined) {
+            updateData.features = {
+                ...existingValueBuy.features,
+                ...features
+            };
+        }
+
+        // Update filters if provided
+        if (filters !== undefined) {
+            updateData.filters = {
+                ...existingValueBuy.filters,
+                ...filters
+            };
+        }
+
+        // Update isActive if provided
+        if (isActive !== undefined) {
+            updateData.isActive = isActive;
+        }
+
+        // Update ValueBuy
+        const updatedValueBuy = await ValueBuy.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        )
+        .populate('product', 'name slug price image stock brand category description')
+        .select('-__v');
+
+        return successRespons(res, 200, {
+            valueBuy: updatedValueBuy,
+            message: 'ValueBuy updated successfully'
+        });
 
     } catch (err) {
         next(err);
