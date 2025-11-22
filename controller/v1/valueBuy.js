@@ -250,6 +250,25 @@ exports.updateValueBuy = async (req,res,next) => {
 
 exports.deleteValueBuy = async (req,res,next) => {
     try {
+        const { id } = req.params;
+
+        // Validate ValueBuy ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid ValueBuy ID');
+        }
+
+        // Find and delete ValueBuy
+        const deletedValueBuy = await ValueBuy.findByIdAndDelete(id);
+
+        // Check if ValueBuy exists
+        if (!deletedValueBuy) {
+            return errorResponse(res, 404, 'ValueBuy not found');
+        }
+
+        return successRespons(res, 200, {
+            message: 'ValueBuy deleted successfully',
+            valueBuy: deletedValueBuy
+        });
 
     } catch (err) {
         next(err);
