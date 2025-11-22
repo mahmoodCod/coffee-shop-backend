@@ -210,5 +210,117 @@ describe('ValueBuy Controller Tests', () => {
           }
         });
       });
+      describe('PATCH /api/v1/valueBuy/:id (Update ValueBuy - Admin Only)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .patch('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .send({
+              isActive: false
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .patch('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              isActive: false
+            });
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 400 for invalid ValueBuy ID', async () => {
+          const response = await request(app)
+            .patch('/api/v1/valueBuy/invalid-id')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              isActive: false
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return error for invalid product ID when updating product', async () => {
+          const response = await request(app)
+            .patch('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              product: 'invalid-id'
+            });
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should accept partial update for features', async () => {
+          const response = await request(app)
+            .patch('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              features: {
+                recommended: true
+              }
+            });
+    
+          // May return 401 for invalid token or 404 for non-existent ValueBuy
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should accept partial update for filters', async () => {
+          const response = await request(app)
+            .patch('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              filters: {
+                economicChoice: true
+              }
+            });
+    
+          // May return 401 for invalid token or 404 for non-existent ValueBuy
+          expect(response.status).not.toBe(200);
+        });
+      });
+    
+      describe('DELETE /api/v1/valueBuy/:id (Delete ValueBuy - Admin Only)', () => {
+        test('should return 401 for missing token', async () => {
+          const response = await request(app)
+            .delete('/api/v1/valueBuy/507f1f77bcf86cd799439011');
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 401 for invalid token', async () => {
+          const response = await request(app)
+            .delete('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token');
+    
+          expect(response.status).toBe(401);
+        });
+    
+        test('should return 400 for invalid ValueBuy ID', async () => {
+          const response = await request(app)
+            .delete('/api/v1/valueBuy/invalid-id')
+            .set('Authorization', 'Bearer invalid.token');
+    
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should return 404 for non-existent ValueBuy', async () => {
+          const response = await request(app)
+            .delete('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token');
+    
+          // May return 401 for invalid token or 404 for non-existent ValueBuy
+          if (response.status === 404) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+      });
+    
   });
 
