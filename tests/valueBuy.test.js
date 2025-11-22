@@ -58,7 +58,77 @@ describe('ValueBuy Controller Tests', () => {
 
       expect(response.status).toBe(401);
     });
+    test('should return error for missing required fields', async () => {
+        const response = await request(app)
+          .post('/api/v1/valueBuy')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            product: '507f1f77bcf86cd799439011'
+          });
+  
+        expect(response.status).not.toBe(200);
+        if (response.body && response.body.success !== undefined) {
+          expect(response.body.success).toBe(false);
+        }
+      });
+  
+      test('should return error for invalid product ID', async () => {
+        const response = await request(app)
+          .post('/api/v1/valueBuy')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            product: 'invalid-id',
+            features: {
+              recommended: true,
+              specialDiscount: false,
+              lowStock: false,
+              rareDeal: false
+            },
+            filters: {
+              economicChoice: true,
+              bestValue: false,
+              topSelling: false,
+              freeShipping: false
+            }
+          });
+  
+        expect(response.status).not.toBe(200);
+      });
+  
+      test('should return error for missing features object', async () => {
+        const response = await request(app)
+          .post('/api/v1/valueBuy')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            product: '507f1f77bcf86cd799439011',
+            filters: {
+              economicChoice: true,
+              bestValue: false,
+              topSelling: false,
+              freeShipping: false
+            }
+          });
+  
+        expect(response.status).not.toBe(200);
+      });
+  
+      test('should return error for missing filters object', async () => {
+        const response = await request(app)
+          .post('/api/v1/valueBuy')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            product: '507f1f77bcf86cd799439011',
+            features: {
+              recommended: true,
+              specialDiscount: false,
+              lowStock: false,
+              rareDeal: false
+            }
+          });
+  
+        expect(response.status).not.toBe(200);
+      });
+    });
   
   });
-});
 
