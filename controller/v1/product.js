@@ -259,9 +259,10 @@ exports.getOneProduct = async (req,res,next) => {
             return errorResponse(res, 400, 'Invalid product ID');
         }
 
-        // Find product by ID and populate category
+        // Find product by ID and populate category and userReviews
         const product = await Product.findById(productId)
             .populate('category', 'name slug')
+            .populate('userReviews.user', 'name email')
             .select('-__v');
 
         // Check if product exists
