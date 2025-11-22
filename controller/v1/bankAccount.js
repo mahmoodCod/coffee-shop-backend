@@ -247,8 +247,36 @@ exports.updateBankAccount = async (req,res,next) => {
 
 exports.deleteBankAccount = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const user = req.user;
+
+        // Validate BankAccount ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid BankAccount ID');
+        }
+
+        // Find BankAccount
+        const bankAccount = await BankAccount.findById(id);
+
+        // Check if BankAccount exists
+        if (!bankAccount) {
+            return errorResponse(res, 404, 'BankAccount not found');
+        }
+
+        // Check if user has access (only owner or ADMIN)
+        if (!user.roles.includes("ADMIN") && bankAccount.user.toString() !== user._id.toString()) {
+            return errorResponse(res, 403, 'You do not have access to this bank account');
+        }
+
+        // Delete BankAccount
+        const deletedBankAccount = await BankAccount.findByIdAndDelete(id);
+
+        return successRespons(res, 200, {
+            message: 'Bank account deleted successfully',
+            bankAccount: deletedBankAccount
+        });
 
     } catch (err) {
-        next (err);
+        next(err);
     };
 };
