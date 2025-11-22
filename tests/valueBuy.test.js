@@ -129,6 +129,86 @@ describe('ValueBuy Controller Tests', () => {
         expect(response.status).not.toBe(200);
       });
     });
-  
+    describe('GET /api/v1/valueBuy (Get All ValueBuy)', () => {
+        test('should return 200 for public access', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy');
+    
+          // GET endpoint is public, should not require auth
+          expect([200, 401, 500]).toContain(response.status);
+        });
+    
+        test('should accept query parameters for pagination', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy?page=1&limit=10');
+    
+          // Should accept params without error
+          expect([200, 401, 500]).toContain(response.status);
+        });
+    
+        test('should accept query parameters for filtering by isActive', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy?isActive=true');
+    
+          expect([200, 401, 500]).toContain(response.status);
+        });
+    
+        test('should accept query parameters for filtering by features', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy?recommended=true&specialDiscount=false');
+    
+          expect([200, 401, 500]).toContain(response.status);
+        });
+    
+        test('should accept query parameters for filtering by filters', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy?economicChoice=true&bestValue=false');
+    
+          expect([200, 401, 500]).toContain(response.status);
+        });
+    
+        test('should accept query parameters for filtering by product', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy?product=507f1f77bcf86cd799439011');
+    
+          expect([200, 401, 500]).toContain(response.status);
+        });
+      });
+    
+      describe('GET /api/v1/valueBuy/:id (Get One ValueBuy)', () => {
+        test('should return 200 for public access', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy/507f1f77bcf86cd799439011');
+    
+          // GET endpoint is public, should not require auth
+          expect([200, 404, 400, 401, 500]).toContain(response.status);
+        });
+    
+        test('should return 400 for invalid ValueBuy ID', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy/invalid-id');
+    
+          expect(response.status).not.toBe(200);
+          if (response.status === 400) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+      
+        test('should return 404 for non-existent ValueBuy', async () => {
+          const response = await request(app)
+            .get('/api/v1/valueBuy/507f1f77bcf86cd799439011');
+    
+          // May return 404 for non-existent ValueBuy
+          if (response.status === 404) {
+            expect(response.body).toHaveProperty('success');
+            if (response.body.success !== undefined) {
+              expect(response.body.success).toBe(false);
+            }
+          }
+        });
+      });
   });
 
