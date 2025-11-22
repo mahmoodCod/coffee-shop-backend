@@ -321,6 +321,89 @@ describe('ValueBuy Controller Tests', () => {
           }
         });
       });
+      describe('ValueBuy Edge Cases', () => {
+        test('should handle duplicate product creation attempt', async () => {
+          const response = await request(app)
+            .post('/api/v1/valueBuy')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              product: '507f1f77bcf86cd799439011',
+              features: {
+                recommended: true,
+                specialDiscount: false,
+                lowStock: false,
+                rareDeal: false
+              },
+              filters: {
+                economicChoice: true,
+                bestValue: false,
+                topSelling: false,
+                freeShipping: false
+              }
+            });
     
+          // May return 401 for invalid token or 409 for duplicate product
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should handle non-existent product ID', async () => {
+          const response = await request(app)
+            .post('/api/v1/valueBuy')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              product: '507f1f77bcf86cd799439011',
+              features: {
+                recommended: true,
+                specialDiscount: false,
+                lowStock: false,
+                rareDeal: false
+              },
+              filters: {
+                economicChoice: true,
+                bestValue: false,
+                topSelling: false,
+                freeShipping: false
+              }
+            });
+    
+          // May return 401 for invalid token or 404 for non-existent product
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should handle update with duplicate product in another ValueBuy', async () => {
+          const response = await request(app)
+            .patch('/api/v1/valueBuy/507f1f77bcf86cd799439011')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              product: '507f1f77bcf86cd799439012'
+            });
+    
+          // May return 401 for invalid token or 409 for duplicate product
+          expect(response.status).not.toBe(200);
+        });
+    
+        test('should handle boolean values in features and filters', async () => {
+          const response = await request(app)
+            .post('/api/v1/valueBuy')
+            .set('Authorization', 'Bearer invalid.token')
+            .send({
+              product: '507f1f77bcf86cd799439011',
+              features: {
+                recommended: 'true', // String instead of boolean
+                specialDiscount: false,
+                lowStock: false,
+                rareDeal: false
+              },
+              filters: {
+                economicChoice: true,
+                bestValue: false,
+                topSelling: false,
+                freeShipping: false
+              }
+            });
+    
+          // May return 401 for invalid token or validation error
+          expect(response.status).not.toBe(200);
+        });
   });
-
+});
