@@ -288,6 +288,7 @@ exports.updateProduct = async (req,res,next) => {
             description, 
             positiveFeature, 
             category, 
+            brand,
             badge, 
             status, 
             price, 
@@ -300,7 +301,14 @@ exports.updateProduct = async (req,res,next) => {
             soldCount, 
             totalCount, 
             rating, 
-            reviews, 
+            weight,
+            ingredients,
+            benefits,
+            howToUse,
+            hasWarranty,
+            warrantyDuration,
+            warrantyDescription,
+            userReviews,
             isPrime, 
             isPremium, 
             features, 
@@ -369,6 +377,7 @@ exports.updateProduct = async (req,res,next) => {
         if (description !== undefined) updateData.description = description;
         if (positiveFeature !== undefined) updateData.positiveFeature = positiveFeature;
         if (category !== undefined) updateData.category = category;
+        if (brand !== undefined) updateData.brand = brand;
         if (badge !== undefined) updateData.badge = badge;
         if (status !== undefined) updateData.status = status;
         if (price !== undefined) updateData.price = price;
@@ -381,7 +390,14 @@ exports.updateProduct = async (req,res,next) => {
         if (soldCount !== undefined) updateData.soldCount = soldCount;
         if (totalCount !== undefined) updateData.totalCount = totalCount;
         if (rating !== undefined) updateData.rating = rating;
-        if (reviews !== undefined) updateData.reviews = reviews;
+        if (weight !== undefined) updateData.weight = weight;
+        if (ingredients !== undefined) updateData.ingredients = ingredients;
+        if (benefits !== undefined) updateData.benefits = benefits;
+        if (howToUse !== undefined) updateData.howToUse = howToUse;
+        if (hasWarranty !== undefined) updateData.hasWarranty = hasWarranty;
+        if (warrantyDuration !== undefined) updateData.warrantyDuration = warrantyDuration;
+        if (warrantyDescription !== undefined) updateData.warrantyDescription = warrantyDescription;
+        if (userReviews !== undefined) updateData.userReviews = userReviews;
         if (isPrime !== undefined) updateData.isPrime = isPrime;
         if (isPremium !== undefined) updateData.isPremium = isPremium;
         if (features !== undefined) updateData.features = features;
@@ -405,6 +421,7 @@ exports.updateProduct = async (req,res,next) => {
             { new: true, runValidators: true }
         )
         .populate('category', 'name slug')
+        .populate('userReviews.user', 'name email')
         .select('-__v');
 
         return successRespons(res, 200, {
