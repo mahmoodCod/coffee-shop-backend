@@ -23,6 +23,28 @@ exports.createProduct = async (req,res,next) => {
                 return errorResponse(res, 400, 'userReviews must be a valid JSON array');
             }
         }
+
+        if (req.body.relatedProducts) {
+            if (typeof req.body.relatedProducts === 'string') {
+              try {
+                const clean = req.body.relatedProducts.replace(/^"|"$/g, '');
+                req.body.relatedProducts = JSON.parse(clean);
+              } catch (err) {
+                return errorResponse(res, 400, 'relatedProducts must be a valid JSON array');
+              }
+            }
+          
+            // حالا مطمئن شو که هر آیتم آرایه یک ObjectId معتبر است
+            const invalidIds = req.body.relatedProducts.filter(id => !isValidObjectId(id));
+            if (invalidIds.length > 0) {
+              return errorResponse(res, 400, `Invalid ObjectId(s): ${invalidIds.join(', ')}`);
+            }
+          }
+          
+          
+          
+          
+          
         
         const { 
             name, 
@@ -51,6 +73,8 @@ exports.createProduct = async (req,res,next) => {
             warrantyDuration,
             warrantyDescription,
             userReviews,
+            recommended,
+            relatedProducts,
             isPrime, 
             isPremium, 
             features, 
@@ -127,6 +151,8 @@ exports.createProduct = async (req,res,next) => {
             warrantyDuration: warrantyDuration || 0,
             warrantyDescription: warrantyDescription || '',
             userReviews: userReviews || [],
+            recommended: recommended || false,
+            relatedProducts: relatedProducts || [],
             isPrime: isPrime || false,
             isPremium: isPremium || false,
             features: features || [],
@@ -319,6 +345,8 @@ exports.updateProduct = async (req,res,next) => {
             warrantyDuration,
             warrantyDescription,
             userReviews,
+            recommended,
+            relatedProducts,
             isPrime, 
             isPremium, 
             features, 
@@ -408,6 +436,8 @@ exports.updateProduct = async (req,res,next) => {
         if (warrantyDuration !== undefined) updateData.warrantyDuration = warrantyDuration;
         if (warrantyDescription !== undefined) updateData.warrantyDescription = warrantyDescription;
         if (userReviews !== undefined) updateData.userReviews = userReviews;
+        if (recommended !== undefined) updateData.recommended = recommended;
+        if (relatedProducts !== undefined) updateData.relatedProducts = relatedProducts;
         if (isPrime !== undefined) updateData.isPrime = isPrime;
         if (isPremium !== undefined) updateData.isPremium = isPremium;
         if (features !== undefined) updateData.features = features;

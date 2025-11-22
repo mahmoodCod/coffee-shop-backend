@@ -174,6 +174,14 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     
+    recommended: {
+        type: Boolean,
+        default: false
+    },
+
+    relatedProducts: [
+        { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }
+    ]      
 
 }, { timestamps: true, toJSON: { virtuals: true },toObject: { virtuals: true } });
 
