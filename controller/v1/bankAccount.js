@@ -1,4 +1,4 @@
-const { createBankAccountValidator } = require('../../validator/bankAccount');
+const { createBankAccountValidator, updateBankAccountValidator } = require('../../validator/bankAccount');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const BankAccount = require('../../model/BankAccount');
 const User = require('../../model/User');
@@ -152,9 +152,96 @@ exports.getOneBankAccount = async (req,res,next) => {
 
 exports.updateBankAccount = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const user = req.user;
+        const { bankName, cardNumber, shebaNumber, accountType, isActive } = req.body;
+
+        // Validate BankAccount ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid BankAccount ID');
+        }
+
+        // Find BankAccount
+        const existingBankAccount = await BankAccount.findById(id);
+        if (!existingBankAccount) {
+            return errorResponse(res, 404, 'BankAccount not found');
+        }
+
+        // Check if user has access (only owner or ADMIN)
+        if (!user.roles.includes("ADMIN") && existingBankAccount.user.toString() !== user._id.toString()) {
+            return errorResponse(res, 403, 'You do not have access to this bank account');
+        }
+
+        // Validate request body
+        await updateBankAccountValidator.validate(req.body, { abortEarly: false });
+
+        // Build update object (only update provided fields)
+        const updateData = {};
+
+        // Update bankName if provided
+        if (bankName !== undefined) {
+            updateData.bankName = bankName.trim();
+        }
+
+        // Check if cardNumber is being updated
+        if (cardNumber !== undefined) {
+            const trimmedCardNumber = cardNumber.trim();
+            
+            // Check if cardNumber already exists (excluding current bank account)
+            if (trimmedCardNumber !== existingBankAccount.cardNumber) {
+                const existingCardNumber = await BankAccount.findOne({ cardNumber: trimmedCardNumber });
+                if (existingCardNumber) {
+                    return errorResponse(res, 409, 'Card number already exists');
+                }
+            }
+            updateData.cardNumber = trimmedCardNumber;
+        }
+
+        // Check if shebaNumber is being updated
+        if (shebaNumber !== undefined) {
+            const trimmedShebaNumber = shebaNumber.trim();
+            
+            // Check if shebaNumber already exists (excluding current bank account)
+            if (trimmedShebaNumber !== existingBankAccount.shebaNumber) {
+                const existingShebaNumber = await BankAccount.findOne({ shebaNumber: trimmedShebaNumber });
+                if (existingShebaNumber) {
+                    return errorResponse(res, 409, 'Sheba number already exists');
+                }
+            }
+            updateData.shebaNumber = trimmedShebaNumber;
+        }
+
+        // Update accountType if provided
+        if (accountType !== undefined) {
+            updateData.accountType = accountType;
+        }
+
+        // Update isActive if provided
+        if (isActive !== undefined) {
+            updateData.isActive = isActive;
+        }
+
+        // Check if there's anything to update
+        if (Object.keys(updateData).length === 0) {
+            return errorResponse(res, 400, 'No fields to update');
+        }
+
+        // Update BankAccount
+        const updatedBankAccount = await BankAccount.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        )
+            .populate('user', 'name email phone')
+            .select('-__v');
+
+        return successRespons(res, 200, {
+            bankAccount: updatedBankAccount,
+            message: 'Bank account updated successfully'
+        });
 
     } catch (err) {
-        next (err);
+        next(err);
     };
 };
 
