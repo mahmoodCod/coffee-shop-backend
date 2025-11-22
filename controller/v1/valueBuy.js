@@ -27,13 +27,31 @@ exports.createValueBuy = async (req,res,next) => {
         const existingValueBuy = await ValueBuy.findOne({ product });
         if (existingValueBuy) {
             return errorResponse(res, 409, 'This product already exists in ValueBuy');
-        }
+        };
+
+        // Allowed keys for features and filters
+        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
+        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
+
+        // Filter only allowed features
+        const filteredFeatures = {};
+        allowedFeatures.forEach(key => {
+            if (features && features[key] !== undefined) {
+                filteredFeatures[key] = features[key];
+            }
+        });
+
+        // Keep filters fixed (from model defaults) and ignore any input from admin
+        const filteredFilters = {};
+        allowedFilters.forEach(key => {
+            filteredFilters[key] = filters && filters[key] !== undefined ? filters[key] : false;
+        });
 
         // Create ValueBuy
         const newValueBuy = await ValueBuy.create({
             product,
-            features: features || {},
-            filters: filters || {},
+            features: filteredFeatures,
+            filters: filteredFilters,
             isActive: isActive !== undefined ? isActive : true,
         });
 

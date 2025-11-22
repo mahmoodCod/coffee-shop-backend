@@ -22,6 +22,6 @@ const valueBuySchema = new mongoose.Schema({
     },
 
     isActive: { type: Boolean, default: true }
-}, { timestamps: true });
+}, { timestamps: true , strict: true});
 
 module.exports = mongoose.model('ValueBuy', valueBuySchema);
