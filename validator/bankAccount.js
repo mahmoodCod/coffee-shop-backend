@@ -33,3 +33,32 @@ const createBankAccountValidator = yup.object().shape({
 
     isActive: yup.boolean().default(true)
 });
+
+const updateBankAccountValidator = yup.object().shape({
+    bankName: yup
+        .string()
+        .min(2, "bankName must be at least 2 characters")
+        .optional(),
+
+    cardNumber: yup
+        .string()
+        .matches(cardNumberRegex, "cardNumber must be exactly 16 digits")
+        .optional(),
+
+    shebaNumber: yup
+        .string()
+        .matches(shebaRegex, "shebaNumber must start with IR and contain 24 digits after it")
+        .optional(),
+
+    accountType: yup
+        .string()
+        .oneOf(['حساب جاری', 'پس‌انداز', 'دیگر'], "Invalid accountType")
+        .optional(),
+
+    isActive: yup.boolean().optional()
+});
+
+module.exports = {
+    createBankAccountValidator,
+    updateBankAccountValidator
+};
