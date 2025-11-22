@@ -174,6 +174,10 @@ const productSchema = new mongoose.Schema({
         trim: true
     },
     
+    recommended: {
+        type: Boolean,
+        default: false
+    }    
 
 }, { timestamps: true, toJSON: { virtuals: true },toObject: { virtuals: true } });
 
