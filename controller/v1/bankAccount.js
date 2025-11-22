@@ -3,6 +3,7 @@ const { errorResponse, successRespons } = require('../../helpers/responses');
 const BankAccount = require('../../model/BankAccount');
 const User = require('../../model/User');
 const { isValidObjectId } = require('mongoose');
+const { createPaginationData } = require('../../utils');
 
 exports.createBankAccount = async (req,res,next) => {
     try {
@@ -61,9 +62,57 @@ exports.createBankAccount = async (req,res,next) => {
 
 exports.getAllBankAccount = async (req,res,next) => {
     try {
+        const user = req.user._id;
+        const { 
+            page = 1, 
+            limit = 10, 
+            isActive,
+            accountType,
+            bankName
+        } = req.query;
+
+        // Build filters - only get current user's bank accounts
+        const filters = { user };
+
+        // Filter by isActive status
+        if (isActive !== undefined) {
+            filters.isActive = isActive === 'true' || isActive === true;
+        }
+
+        // Filter by accountType
+        if (accountType !== undefined) {
+            if (['حساب جاری', 'پس‌انداز', 'دیگر'].includes(accountType)) {
+                filters.accountType = accountType;
+            }
+        }
+
+        // Filter by bankName (case-insensitive search)
+        if (bankName !== undefined) {
+            filters.bankName = { $regex: bankName, $options: 'i' };
+        }
+
+        // Parse pagination parameters
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        // Find bank accounts with filters, pagination, and populate user
+        const bankAccounts = await BankAccount.find(filters)
+            .populate('user', 'name email phone')
+            .sort({ createdAt: 'desc' })
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum)
+            .select('-__v');
+
+        // Count total bank accounts with filters
+        const totalBankAccounts = await BankAccount.countDocuments(filters);
+
+        return successRespons(res, 200, {
+            bankAccounts,
+            pagination: createPaginationData(pageNum, limitNum, totalBankAccounts, 'BankAccounts'),
+        });
 
     } catch (err) {
-        next (err);
+        next(err);
     };
 };
 
