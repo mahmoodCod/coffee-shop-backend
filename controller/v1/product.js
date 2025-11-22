@@ -141,6 +141,7 @@ exports.createProduct = async (req,res,next) => {
 
         // Create product
         const newProduct = await Product.create(productData);
+        await newProduct.populate('category', 'name slug');
 
         return successRespons(res, 201, {
             product: newProduct,
