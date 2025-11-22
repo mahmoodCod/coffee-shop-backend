@@ -100,34 +100,23 @@ exports.getAllValueBuy = async (req,res,next) => {
             }
         }
 
-        // Filter by features
-        if (recommended !== undefined) {
-            filters['features.recommended'] = recommended === 'true' || recommended === true;
-        }
-        if (specialDiscount !== undefined) {
-            filters['features.specialDiscount'] = specialDiscount === 'true' || specialDiscount === true;
-        }
-        if (lowStock !== undefined) {
-            filters['features.lowStock'] = lowStock === 'true' || lowStock === true;
-        }
-        if (rareDeal !== undefined) {
-            filters['features.rareDeal'] = rareDeal === 'true' || rareDeal === true;
-        }
+        // Allowed features and filters
+        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
+        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
 
-        // Filter by filters
-        if (economicChoice !== undefined) {
-            filters['filters.economicChoice'] = economicChoice === 'true' || economicChoice === true;
-        }
-        if (bestValue !== undefined) {
-            filters['filters.bestValue'] = bestValue === 'true' || bestValue === true;
-        }
-        if (topSelling !== undefined) {
-            filters['filters.topSelling'] = topSelling === 'true' || topSelling === true;
-        }
-        if (freeShipping !== undefined) {
-            filters['filters.freeShipping'] = freeShipping === 'true' || freeShipping === true;
-        }
+        // Apply feature filters if provided
+        allowedFeatures.forEach(key => {
+            if (req.query[key] !== undefined) {
+                filters[`features.${key}`] = req.query[key] === 'true' || req.query[key] === true;
+            }
+        });
 
+        // Apply filters (fixed) if provided
+        allowedFilters.forEach(key => {
+            if (req.query[key] !== undefined) {
+                filters[`filters.${key}`] = req.query[key] === 'true' || req.query[key] === true;
+            }
+        });
         // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
