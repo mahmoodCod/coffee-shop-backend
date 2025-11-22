@@ -27,13 +27,31 @@ exports.createValueBuy = async (req,res,next) => {
         const existingValueBuy = await ValueBuy.findOne({ product });
         if (existingValueBuy) {
             return errorResponse(res, 409, 'This product already exists in ValueBuy');
-        }
+        };
+
+        // Allowed keys for features and filters
+        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
+        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
+
+        // Filter only allowed features
+        const filteredFeatures = {};
+        allowedFeatures.forEach(key => {
+            if (features && features[key] !== undefined) {
+                filteredFeatures[key] = features[key];
+            }
+        });
+
+        // Keep filters fixed (from model defaults) and ignore any input from admin
+        const filteredFilters = {};
+        allowedFilters.forEach(key => {
+            filteredFilters[key] = filters && filters[key] !== undefined ? filters[key] : false;
+        });
 
         // Create ValueBuy
         const newValueBuy = await ValueBuy.create({
             product,
-            features: features || {},
-            filters: filters || {},
+            features: filteredFeatures,
+            filters: filteredFilters,
             isActive: isActive !== undefined ? isActive : true,
         });
 
@@ -82,34 +100,23 @@ exports.getAllValueBuy = async (req,res,next) => {
             }
         }
 
-        // Filter by features
-        if (recommended !== undefined) {
-            filters['features.recommended'] = recommended === 'true' || recommended === true;
-        }
-        if (specialDiscount !== undefined) {
-            filters['features.specialDiscount'] = specialDiscount === 'true' || specialDiscount === true;
-        }
-        if (lowStock !== undefined) {
-            filters['features.lowStock'] = lowStock === 'true' || lowStock === true;
-        }
-        if (rareDeal !== undefined) {
-            filters['features.rareDeal'] = rareDeal === 'true' || rareDeal === true;
-        }
+        // Allowed features and filters
+        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
+        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
 
-        // Filter by filters
-        if (economicChoice !== undefined) {
-            filters['filters.economicChoice'] = economicChoice === 'true' || economicChoice === true;
-        }
-        if (bestValue !== undefined) {
-            filters['filters.bestValue'] = bestValue === 'true' || bestValue === true;
-        }
-        if (topSelling !== undefined) {
-            filters['filters.topSelling'] = topSelling === 'true' || topSelling === true;
-        }
-        if (freeShipping !== undefined) {
-            filters['filters.freeShipping'] = freeShipping === 'true' || freeShipping === true;
-        }
+        // Apply feature filters if provided
+        allowedFeatures.forEach(key => {
+            if (req.query[key] !== undefined) {
+                filters[`features.${key}`] = req.query[key] === 'true' || req.query[key] === true;
+            }
+        });
 
+        // Apply filters (fixed) if provided
+        allowedFilters.forEach(key => {
+            if (req.query[key] !== undefined) {
+                filters[`filters.${key}`] = req.query[key] === 'true' || req.query[key] === true;
+            }
+        });
         // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
@@ -166,7 +173,7 @@ exports.getOneValueBuy = async (req,res,next) => {
 exports.updateValueBuy = async (req,res,next) => {
     try {
         const { id } = req.params;
-        const { product, features, filters, isActive } = req.body;
+        const { product, features,isActive } = req.body;
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
@@ -213,14 +220,6 @@ exports.updateValueBuy = async (req,res,next) => {
             updateData.features = {
                 ...existingValueBuy.features,
                 ...features
-            };
-        }
-
-        // Update filters if provided
-        if (filters !== undefined) {
-            updateData.filters = {
-                ...existingValueBuy.filters,
-                ...filters
             };
         }
 

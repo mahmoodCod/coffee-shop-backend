@@ -16,6 +16,7 @@ const createValueBuyValidator  = yup.object().shape({
           lowStock: yup.boolean(),
           rareDeal: yup.boolean(),
         })
+        .noUnknown(true, "Unknown feature key")
         .required("Features object is required"),
     
     filters: yup
@@ -25,6 +26,7 @@ const createValueBuyValidator  = yup.object().shape({
           topSelling: yup.boolean(),
           freeShipping: yup.boolean(),
         })
+        .noUnknown(true, "Unknown feature key")
         .required("Filters object is required"),
 
     isActive: yup.boolean(),

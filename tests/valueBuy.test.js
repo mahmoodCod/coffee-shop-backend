@@ -268,7 +268,7 @@ describe('ValueBuy Controller Tests', () => {
           expect(response.status).not.toBe(200);
         });
     
-        test('should accept partial update for filters', async () => {
+        test('should not accept filters in update (filters are not updatable)', async () => {
           const response = await request(app)
             .patch('/api/v1/valueBuy/507f1f77bcf86cd799439011')
             .set('Authorization', 'Bearer invalid.token')
@@ -277,8 +277,8 @@ describe('ValueBuy Controller Tests', () => {
                 economicChoice: true
               }
             });
-    
-          // May return 401 for invalid token or 404 for non-existent ValueBuy
+
+          // Filters are not updatable, may return 401 for invalid token or validation error
           expect(response.status).not.toBe(200);
         });
       });
