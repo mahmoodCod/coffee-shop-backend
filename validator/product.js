@@ -22,6 +22,10 @@ const createProductValidator = yup.object().shape({
     .string()
     .required("Category is required")
     .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+  brand: yup
+    .string()
+    .required("Brand is required")
+    .trim(),
   badge: yup
     .string()
     .max(50, "Badge cannot exceed 50 characters")
@@ -143,6 +147,9 @@ const updateProductValidator = yup.object().shape({
   category: yup
     .string()
     .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+  brand: yup
+    .string()
+    .trim(),
   badge: yup
     .string()
     .max(50, "Badge cannot exceed 50 characters"),
