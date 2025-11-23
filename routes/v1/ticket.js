@@ -1,16 +1,23 @@
 const express = require('express');
 const { auth } = require('../../middleware/auth');
-const { createTicket, getAllTicket, getOneTicket, updateTicket, deleteTicket } = require('../../controller/v1/ticket');
+const { createTicket, getAllTicket, getOneTicket, updateTicket, deleteTicket, getMyTickets, replyTicket, closeTicket } = require('../../controller/v1/ticket');
+const roleGuard = require('../../middleware/roleGuard');
 
 const router = express.Router();
 
 router.route('/')
     .post(auth, createTicket)
-    .get(auth, getAllTicket);
+    .get(auth,roleGuard('ADMIN'), getAllTicket);
 
 router.route('/:id')
     .get(auth, getOneTicket)
     .patch(auth, updateTicket)
-    .delete(auth, deleteTicket);
+    .delete(auth,roleGuard('ADMIN'), deleteTicket);
+
+router.get('/user/my-tickets', auth, getMyTickets);
+
+router.post('/:id/reply', auth, roleGuard('ADMIN'), replyTicket);
+
+router.patch('/:id/close', auth, roleGuard('ADMIN'), closeTicket);
 
 module.exports = router;
