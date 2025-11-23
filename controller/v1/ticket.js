@@ -232,6 +232,146 @@ exports.getOneTicket = async (req,res,next) => {
 
 exports.updateTicket = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const user = req.user;
+        const { departmentId, departmentSubId, priority, title, body, product, parent, isAnswered, status } = req.body;
+
+        // Validate Ticket ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid Ticket ID');
+        }
+
+        // Find Ticket
+        const existingTicket = await Ticket.findById(id);
+        if (!existingTicket) {
+            return errorResponse(res, 404, 'Ticket not found');
+        }
+
+        // Check if user has access (only owner or ADMIN)
+        const isAdmin = user.roles && user.roles.includes("ADMIN");
+        const isOwner = existingTicket.user.toString() === user._id.toString();
+        
+        if (!isAdmin && !isOwner) {
+            return errorResponse(res, 403, 'You do not have access to this ticket');
+        }
+
+        // Validate request body
+        await updateTicketValidator.validate(req.body, { abortEarly: false });
+
+        // Build update object (only update provided fields)
+        const updateData = {};
+
+        // Update departmentId if provided
+        if (departmentId !== undefined) {
+            if (!isValidObjectId(departmentId)) {
+                return errorResponse(res, 400, 'Invalid departmentId');
+            }
+            const departmentExists = await Department.findById(departmentId);
+            if (!departmentExists) {
+                return errorResponse(res, 404, 'Department not found');
+            }
+            updateData.departmentId = departmentId;
+        }
+
+        // Update departmentSubId if provided
+        if (departmentSubId !== undefined) {
+            if (!isValidObjectId(departmentSubId)) {
+                return errorResponse(res, 400, 'Invalid departmentSubId');
+            }
+            const departmentSubExists = await DepartmentSub.findById(departmentSubId);
+            if (!departmentSubExists) {
+                return errorResponse(res, 404, 'DepartmentSub not found');
+            }
+            updateData.departmentSubId = departmentSubId;
+        }
+
+        // Update priority if provided
+        if (priority !== undefined) {
+            if (['low', 'medium', 'high'].includes(priority)) {
+                updateData.priority = priority;
+            } else {
+                return errorResponse(res, 400, 'Invalid priority value');
+            }
+        }
+
+        // Update title if provided
+        if (title !== undefined) {
+            updateData.title = title.trim();
+        }
+
+        // Update body if provided
+        if (body !== undefined) {
+            updateData.body = body.trim();
+        }
+
+        // Update product if provided
+        if (product !== undefined) {
+            if (product === null || product === '') {
+                updateData.product = undefined;
+            } else {
+                if (!isValidObjectId(product)) {
+                    return errorResponse(res, 400, 'Invalid product ID');
+                }
+                const productExists = await Product.findById(product);
+                if (!productExists) {
+                    return errorResponse(res, 404, 'Product not found');
+                }
+                updateData.product = product;
+            }
+        }
+
+        // Update parent if provided
+        if (parent !== undefined) {
+            if (parent === null || parent === '') {
+                updateData.parent = undefined;
+            } else {
+                if (!isValidObjectId(parent)) {
+                    return errorResponse(res, 400, 'Invalid parent ticket ID');
+                }
+                const parentTicketExists = await Ticket.findById(parent);
+                if (!parentTicketExists) {
+                    return errorResponse(res, 404, 'Parent ticket not found');
+                }
+                updateData.parent = parent;
+            }
+        }
+
+        // Update isAnswered if provided
+        if (isAnswered !== undefined) {
+            updateData.isAnswered = isAnswered;
+        }
+
+        // Update status if provided
+        if (status !== undefined) {
+            if (['open', 'answered', 'closed'].includes(status)) {
+                updateData.status = status;
+            } else {
+                return errorResponse(res, 400, 'Invalid status value');
+            }
+        }
+
+        // Check if there's anything to update
+        if (Object.keys(updateData).length === 0) {
+            return errorResponse(res, 400, 'No fields to update');
+        }
+
+        // Update Ticket
+        const updatedTicket = await Ticket.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, runValidators: true }
+        )
+        .populate('departmentId', 'title')
+        .populate('departmentSubId', 'title')
+        .populate('user', 'name email phone')
+        .populate('product', 'name slug')
+        .populate('parent', 'title status')
+        .select('-__v');
+
+        return successRespons(res, 200, {
+            ticket: updatedTicket,
+            message: 'Ticket updated successfully'
+        });
 
     } catch (err) {
         next(err);
