@@ -419,6 +419,84 @@ exports.deleteTicket = async (req,res,next) => {
 
 exports.getMyTickets = async (req,res,next) => {
     try {
+        const user = req.user._id;
+        const { 
+            page = 1, 
+            limit = 10, 
+            status,
+            priority,
+            departmentId,
+            departmentSubId,
+            product,
+            isAnswered
+        } = req.query;
+
+        // Build filters - only get current user's tickets
+        const filters = { user };
+
+        // Filter by status
+        if (status !== undefined) {
+            if (['open', 'answered', 'closed'].includes(status)) {
+                filters.status = status;
+            }
+        }
+
+        // Filter by priority
+        if (priority !== undefined) {
+            if (['low', 'medium', 'high'].includes(priority)) {
+                filters.priority = priority;
+            }
+        }
+
+        // Filter by departmentId
+        if (departmentId !== undefined) {
+            if (isValidObjectId(departmentId)) {
+                filters.departmentId = departmentId;
+            }
+        }
+
+        // Filter by departmentSubId
+        if (departmentSubId !== undefined) {
+            if (isValidObjectId(departmentSubId)) {
+                filters.departmentSubId = departmentSubId;
+            }
+        }
+
+        // Filter by product
+        if (product !== undefined) {
+            if (isValidObjectId(product)) {
+                filters.product = product;
+            }
+        }
+
+        // Filter by isAnswered
+        if (isAnswered !== undefined) {
+            filters.isAnswered = isAnswered === 'true' || isAnswered === true;
+        }
+
+        // Parse pagination parameters
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        // Find tickets with filters, pagination, and populate related fields
+        const tickets = await Ticket.find(filters)
+            .populate('departmentId', 'title')
+            .populate('departmentSubId', 'title')
+            .populate('user', 'name email phone')
+            .populate('product', 'name slug')
+            .populate('parent', 'title status')
+            .sort({ createdAt: 'desc' })
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum)
+            .select('-__v');
+
+        // Count total tickets with filters
+        const totalTickets = await Ticket.countDocuments(filters);
+
+        return successRespons(res, 200, {
+            tickets,
+            pagination: createPaginationData(pageNum, limitNum, totalTickets, 'Tickets'),
+        });
 
     } catch (err) {
         next(err);
