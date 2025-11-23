@@ -1,6 +1,9 @@
 const yup = require('yup');
 const { isValidObjectId } = require('mongoose');
 
+const allowedFeatures = ["recommended", "specialDiscount", "lowStock", "rareDeal"];
+const allowedFilters = ["economicChoice", "bestValue", "topSelling", "freeShipping"];
+
 const createValueBuyValidator  = yup.object().shape({
     product: yup
         .string()
@@ -10,26 +13,18 @@ const createValueBuyValidator  = yup.object().shape({
         ),
 
     features: yup
-        .object({
-          recommended: yup.boolean(),
-          specialDiscount: yup.boolean(),
-          lowStock: yup.boolean(),
-          rareDeal: yup.boolean(),
-        })
-        .noUnknown(true, "Unknown feature key")
-        .required("Features object is required"),
-    
-    filters: yup
-        .object({
-          economicChoice: yup.boolean(),
-          bestValue: yup.boolean(),
-          topSelling: yup.boolean(),
-          freeShipping: yup.boolean(),
-        })
-        .noUnknown(true, "Unknown feature key")
-        .required("Filters object is required"),
+        .array()
+        .of(yup.string().oneOf(allowedFeatures))
+        .required("Features array is required")
+        .default([]),
 
-    isActive: yup.boolean(),
+    filters: yup
+        .array()
+        .of(yup.string().oneOf(allowedFilters))
+        .required("Filters array is required")
+        .default([]),
+
+    isActive: yup.boolean().default(true),
 });
 
 const updateValueBuyValidator = yup.object().shape({
@@ -41,21 +36,17 @@ const updateValueBuyValidator = yup.object().shape({
             return isValidObjectId(value);
         }),
 
-    features: yup.object({
-        recommended: yup.boolean(),
-        specialDiscount: yup.boolean(),
-        lowStock: yup.boolean(),
-        rareDeal: yup.boolean(),
-        }),
+    features: yup
+        .array()
+        .of(yup.string().oneOf(allowedFeatures))
+        .notRequired(),
 
-    filters: yup.object({
-        economicChoice: yup.boolean(),
-        bestValue: yup.boolean(),
-        topSelling: yup.boolean(),
-        freeShipping: yup.boolean(),
-        }),
+    filters: yup
+        .array()
+        .of(yup.string().oneOf(allowedFilters))
+        .notRequired(),
 
-    isActive: yup.boolean(),
+    isActive: yup.boolean().notRequired(),
 });
 
 module.exports = {
