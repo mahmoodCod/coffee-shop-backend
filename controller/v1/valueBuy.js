@@ -239,7 +239,7 @@ exports.deleteValueBuy = async (req,res,next) => {
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid ValueBuy ID');
+            return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
         }
 
         // Find and delete ValueBuy
@@ -247,15 +247,15 @@ exports.deleteValueBuy = async (req,res,next) => {
 
         // Check if ValueBuy exists
         if (!deletedValueBuy) {
-            return errorResponse(res, 404, 'ValueBuy not found');
+            return errorResponse(res, 404, 'ValueBuy یافت نشد');
         }
 
         return successRespons(res, 200, {
-            message: 'ValueBuy deleted successfully',
+            message: 'ValueBuy با موفقیت حذف شد',
             valueBuy: deletedValueBuy
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
