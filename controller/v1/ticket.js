@@ -505,6 +505,72 @@ exports.getMyTickets = async (req,res,next) => {
 
 exports.replyTicket = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const adminUser = req.user._id;
+        const { title, body } = req.body;
+
+        // Validate Ticket ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid Ticket ID');
+        }
+
+        // Find parent ticket
+        const parentTicket = await Ticket.findById(id);
+        if (!parentTicket) {
+            return errorResponse(res, 404, 'Ticket not found');
+        }
+
+        // Check if ticket is already closed
+        if (parentTicket.status === 'closed') {
+            return errorResponse(res, 400, 'Cannot reply to a closed ticket');
+        }
+
+        // Validate request body
+        if (!title || title.trim().length < 3) {
+            return errorResponse(res, 400, 'Title is required and must be at least 3 characters');
+        }
+
+        if (!body || body.trim().length < 5) {
+            return errorResponse(res, 400, 'Body is required and must be at least 5 characters');
+        }
+
+        // Create reply ticket
+        const replyTicket = await Ticket.create({
+            departmentId: parentTicket.departmentId,
+            departmentSubId: parentTicket.departmentSubId,
+            priority: parentTicket.priority,
+            title: title.trim(),
+            body: body.trim(),
+            user: adminUser,
+            product: parentTicket.product || undefined,
+            parent: parentTicket._id,
+            isAnswered: false,
+            status: 'open'
+        });
+
+        // Update parent ticket status to 'answered' and set isAnswered to true
+        await Ticket.findByIdAndUpdate(
+            id,
+            {
+                status: 'answered',
+                isAnswered: true
+            },
+            { new: true }
+        );
+
+        // Populate related fields
+        await replyTicket.populate('departmentId', 'title');
+        await replyTicket.populate('departmentSubId', 'title');
+        await replyTicket.populate('user', 'name email phone');
+        if (replyTicket.product) {
+            await replyTicket.populate('product', 'name slug');
+        }
+        await replyTicket.populate('parent', 'title status');
+
+        return successRespons(res, 201, {
+            ticket: replyTicket,
+            message: 'Reply ticket created successfully'
+        });
 
     } catch (err) {
         next(err);
