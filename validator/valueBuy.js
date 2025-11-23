@@ -16,13 +16,13 @@ const createValueBuyValidator  = yup.object().shape({
         .array()
         .of(yup.string().oneOf(allowedFeatures))
         .required("Features array is required")
-        .default([]),
+        .default(["پیشنهاد شده"]),
 
     filters: yup
         .array()
         .of(yup.string().oneOf(allowedFilters))
         .required("Filters array is required")
-        .default([]),
+        .default(["انتخاب اقتصادی"]),
 
     isActive: yup.boolean().default(true),
 });
