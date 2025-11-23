@@ -158,54 +158,55 @@ exports.getOneValueBuy = async (req,res,next) => {
 exports.updateValueBuy = async (req,res,next) => {
     try {
         const { id } = req.params;
-        const { product, features,isActive } = req.body;
+        const { product, features, filters, isActive } = req.body;
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid ValueBuy ID');
+            return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
         }
 
         // Find ValueBuy
         const existingValueBuy = await ValueBuy.findById(id);
         if (!existingValueBuy) {
-            return errorResponse(res, 404, 'ValueBuy not found');
+            return errorResponse(res, 404, 'ValueBuy یافت نشد');
         }
 
         // Validate request body
         await updateValueBuyValidator.validate(req.body, { abortEarly: false });
 
-        // Build update object (only update provided fields)
+        // Build update object
         const updateData = {};
 
-        // Check if product is being updated
+        // Update product if provided
         if (product !== undefined) {
-            // Validate product ID
             if (!isValidObjectId(product)) {
-                return errorResponse(res, 400, 'Invalid product ID');
+                return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
             }
-
-            // Check if product exists
             const productExists = await Product.findById(product);
             if (!productExists) {
-                return errorResponse(res, 404, 'Product not found');
+                return errorResponse(res, 404, 'محصول یافت نشد');
             }
-
-            // Check if this product already exists in another ValueBuy
             if (product !== existingValueBuy.product.toString()) {
                 const duplicateValueBuy = await ValueBuy.findOne({ product });
                 if (duplicateValueBuy) {
-                    return errorResponse(res, 409, 'This product already exists in another ValueBuy');
+                    return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy دیگری ثبت شده است');
                 }
             }
             updateData.product = product;
         }
 
+        // Allowed features and filters (Persian)
+        const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
+        const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
+
         // Update features if provided
-        if (features !== undefined) {
-            updateData.features = {
-                ...existingValueBuy.features,
-                ...features
-            };
+        if (Array.isArray(features)) {
+            updateData.features = features.filter(f => allowedFeatures.includes(f));
+        }
+
+        // Update filters if provided
+        if (Array.isArray(filters)) {
+            updateData.filters = filters.filter(f => allowedFilters.includes(f));
         }
 
         // Update isActive if provided
@@ -224,12 +225,12 @@ exports.updateValueBuy = async (req,res,next) => {
 
         return successRespons(res, 200, {
             valueBuy: updatedValueBuy,
-            message: 'ValueBuy updated successfully'
+            message: 'ValueBuy با موفقیت بروزرسانی شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.deleteValueBuy = async (req,res,next) => {
