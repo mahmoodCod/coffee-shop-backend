@@ -5,6 +5,7 @@ const Department = require('../../model/Department');
 const DepartmentSub = require('../../model/Department-sub');
 const Product = require('../../model/Product');
 const { isValidObjectId } = require('mongoose');
+const { createPaginationData } = require('../../utils');
 
 exports.createTicket = async (req,res,next) => {
     try {
@@ -97,6 +98,91 @@ exports.createTicket = async (req,res,next) => {
 
 exports.getAllTicket = async (req,res,next) => {
     try {
+        const { 
+            page = 1, 
+            limit = 10, 
+            status,
+            priority,
+            departmentId,
+            departmentSubId,
+            user,
+            product,
+            isAnswered
+        } = req.query;
+
+        // Build filters
+        const filters = {};
+
+        // Filter by status
+        if (status !== undefined) {
+            if (['open', 'answered', 'closed'].includes(status)) {
+                filters.status = status;
+            }
+        }
+
+        // Filter by priority
+        if (priority !== undefined) {
+            if (['low', 'medium', 'high'].includes(priority)) {
+                filters.priority = priority;
+            }
+        }
+
+        // Filter by departmentId
+        if (departmentId !== undefined) {
+            if (isValidObjectId(departmentId)) {
+                filters.departmentId = departmentId;
+            }
+        }
+
+        // Filter by departmentSubId
+        if (departmentSubId !== undefined) {
+            if (isValidObjectId(departmentSubId)) {
+                filters.departmentSubId = departmentSubId;
+            }
+        }
+
+        // Filter by user
+        if (user !== undefined) {
+            if (isValidObjectId(user)) {
+                filters.user = user;
+            }
+        }
+
+        // Filter by product
+        if (product !== undefined) {
+            if (isValidObjectId(product)) {
+                filters.product = product;
+            }
+        }
+
+        // Filter by isAnswered
+        if (isAnswered !== undefined) {
+            filters.isAnswered = isAnswered === 'true' || isAnswered === true;
+        }
+
+        // Parse pagination parameters
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+
+        // Find tickets with filters, pagination, and populate related fields
+        const tickets = await Ticket.find(filters)
+            .populate('departmentId', 'title')
+            .populate('departmentSubId', 'title')
+            .populate('user', 'name email phone')
+            .populate('product', 'name slug')
+            .populate('parent', 'title status')
+            .sort({ createdAt: 'desc' })
+            .skip((pageNum - 1) * limitNum)
+            .limit(limitNum)
+            .select('-__v');
+
+        // Count total tickets with filters
+        const totalTickets = await Ticket.countDocuments(filters);
+
+        return successRespons(res, 200, {
+            tickets,
+            pagination: createPaginationData(pageNum, limitNum, totalTickets, 'Tickets'),
+        });
 
     } catch (err) {
         next(err);
