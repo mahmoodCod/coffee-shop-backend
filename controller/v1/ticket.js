@@ -191,6 +191,39 @@ exports.getAllTicket = async (req,res,next) => {
 
 exports.getOneTicket = async (req,res,next) => {
     try {
+        const { id } = req.params;
+        const user = req.user;
+
+        // Validate Ticket ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid Ticket ID');
+        }
+
+        // Find Ticket by ID and populate related fields
+        const ticket = await Ticket.findById(id)
+            .populate('departmentId', 'title')
+            .populate('departmentSubId', 'title')
+            .populate('user', 'name email phone')
+            .populate('product', 'name slug')
+            .populate('parent', 'title status')
+            .select('-__v');
+
+        // Check if Ticket exists
+        if (!ticket) {
+            return errorResponse(res, 404, 'Ticket not found');
+        }
+
+        // Check if user has access (only owner or ADMIN)
+        const isAdmin = user.roles && user.roles.includes("ADMIN");
+        const isOwner = ticket.user._id.toString() === user._id.toString();
+        
+        if (!isAdmin && !isOwner) {
+            return errorResponse(res, 403, 'You do not have access to this ticket');
+        }
+
+        return successRespons(res, 200, {
+            ticket,
+        });
 
     } catch (err) {
         next(err);
