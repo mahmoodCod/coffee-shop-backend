@@ -70,72 +70,56 @@ exports.getAllValueBuy = async (req,res,next) => {
             page = 1, 
             limit = 10, 
             isActive,
-            recommended,
-            specialDiscount,
-            lowStock,
-            rareDeal,
-            economicChoice,
-            bestValue,
-            topSelling,
-            freeShipping,
+            features,
+            filters,
             product
         } = req.query;
 
         // Build filters
-        const filters = {};
+        const queryFilters = {};
 
-        // Filter by isActive status
         if (isActive !== undefined) {
-            filters.isActive = isActive === 'true' || isActive === true;
+            queryFilters.isActive = isActive === 'true' || isActive === true;
         }
 
-        // Filter by product ID
-        if (product !== undefined) {
-            if (isValidObjectId(product)) {
-                filters.product = product;
-            }
+        if (product !== undefined && isValidObjectId(product)) {
+            queryFilters.product = product;
         }
 
-        // Allowed features and filters
-        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
-        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
+        // Filter by features (comma-separated list)
+        if (features) {
+            const featureArray = features.split(',');
+            queryFilters.features = { $all: featureArray };
+        }
 
-        // Apply feature filters if provided
-        allowedFeatures.forEach(key => {
-            if (req.query[key] !== undefined) {
-                filters[`features.${key}`] = req.query[key] === 'true' || req.query[key] === true;
-            }
-        });
+        // Filter by filters (comma-separated list)
+        if (filters) {
+            const filterArray = filters.split(',');
+            queryFilters.filters = { $all: filterArray };
+        }
 
-        // Apply filters (fixed) if provided
-        allowedFilters.forEach(key => {
-            if (req.query[key] !== undefined) {
-                filters[`filters.${key}`] = req.query[key] === 'true' || req.query[key] === true;
-            }
-        });
         // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Find ValueBuy items with filters, pagination, and populate product
-        const valueBuys = await ValueBuy.find(filters)
+        // Query ValueBuy collection
+        const valueBuys = await ValueBuy.find(queryFilters)
             .populate('product', 'name slug price image stock brand category')
-            .sort({ createdAt: 'desc' })
+            .sort({ createdAt: -1 })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum)
             .select('-__v');
 
-        // Count total ValueBuy items with filters
-        const totalValueBuys = await ValueBuy.countDocuments(filters);
+        const totalValueBuys = await ValueBuy.countDocuments(queryFilters);
 
         return successRespons(res, 200, {
             valueBuys,
-            pagination: createPaginationData(pageNum, limitNum, totalValueBuys, 'ValueBuys'),
+            pagination: createPaginationData(pageNum, limitNum, totalValueBuys, 'ValueBuys')
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getOneValueBuy = async (req,res,next) => {
