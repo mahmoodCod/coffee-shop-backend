@@ -14,38 +14,34 @@ exports.createValueBuy = async (req,res,next) => {
 
         // Validate product ID
         if (!isValidObjectId(product)) {
-            return errorResponse(res, 400, 'Invalid product ID');
+            return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
         }
 
         // Check if product exists
         const productExists = await Product.findById(product);
         if (!productExists) {
-            return errorResponse(res, 404, 'Product not found');
+            return errorResponse(res, 404, 'محصول یافت نشد');
         }
 
         // Check if this product already exists in ValueBuy
         const existingValueBuy = await ValueBuy.findOne({ product });
         if (existingValueBuy) {
-            return errorResponse(res, 409, 'This product already exists in ValueBuy');
-        };
+            return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy ثبت شده است');
+        }
 
-        // Allowed keys for features and filters
-        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
-        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
+        // Allowed features and filters (Persian)
+        const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
+        const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
 
         // Filter only allowed features
-        const filteredFeatures = {};
-        allowedFeatures.forEach(key => {
-            if (features && features[key] !== undefined) {
-                filteredFeatures[key] = features[key];
-            }
-        });
+        const filteredFeatures = Array.isArray(features)
+            ? features.filter(f => allowedFeatures.includes(f))
+            : [];
 
-        // Keep filters fixed (from model defaults) and ignore any input from admin
-        const filteredFilters = {};
-        allowedFilters.forEach(key => {
-            filteredFilters[key] = filters && filters[key] !== undefined ? filters[key] : false;
-        });
+        // Filter only allowed filters
+        const filteredFilters = Array.isArray(filters)
+            ? filters.filter(f => allowedFilters.includes(f))
+            : [];
 
         // Create ValueBuy
         const newValueBuy = await ValueBuy.create({
@@ -60,12 +56,12 @@ exports.createValueBuy = async (req,res,next) => {
 
         return successRespons(res, 201, {
             valueBuy: newValueBuy,
-            message: 'ValueBuy created successfully'
+            message: 'ValueBuy با موفقیت ایجاد شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getAllValueBuy = async (req,res,next) => {
