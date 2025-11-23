@@ -8,17 +8,15 @@ const valueBuySchema = new mongoose.Schema({
     },
 
     features: {
-        recommended: { type: Boolean, default: false },
-        specialDiscount: { type: Boolean, default: false },
-        lowStock: { type: Boolean, default: false },
-        rareDeal: { type: Boolean, default: false }
+        type: [String],
+        enum: ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"],
+        default: ["پیشنهاد شده"]
     },
-
+    
     filters: {
-        economicChoice: { type: Boolean, default: false },
-        bestValue: { type: Boolean, default: false },
-        topSelling: { type: Boolean, default: false },
-        freeShipping: { type: Boolean, default: false }
+        type: [String],
+        enum: ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"],
+        default: ["انتخاب اقتصادی"]
     },
 
     isActive: { type: Boolean, default: true }
