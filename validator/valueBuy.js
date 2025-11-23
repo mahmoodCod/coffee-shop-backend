@@ -1,8 +1,8 @@
 const yup = require('yup');
 const { isValidObjectId } = require('mongoose');
 
-const allowedFeatures = ["recommended", "specialDiscount", "lowStock", "rareDeal"];
-const allowedFilters = ["economicChoice", "bestValue", "topSelling", "freeShipping"];
+const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
+const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
 
 const createValueBuyValidator  = yup.object().shape({
     product: yup
