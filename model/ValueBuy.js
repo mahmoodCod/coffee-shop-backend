@@ -8,17 +8,15 @@ const valueBuySchema = new mongoose.Schema({
     },
 
     features: {
-        recommended: { type: Boolean, default: false },
-        specialDiscount: { type: Boolean, default: false },
-        lowStock: { type: Boolean, default: false },
-        rareDeal: { type: Boolean, default: false }
+        type: [String],
+        enum: ["recommended", "specialDiscount", "lowStock", "rareDeal"],
+        default: []
     },
-
+    
     filters: {
-        economicChoice: { type: Boolean, default: false },
-        bestValue: { type: Boolean, default: false },
-        topSelling: { type: Boolean, default: false },
-        freeShipping: { type: Boolean, default: false }
+        type: [String],
+        enum: ["economicChoice", "bestValue", "topSelling", "freeShipping"],
+        default: []
     },
 
     isActive: { type: Boolean, default: true }
