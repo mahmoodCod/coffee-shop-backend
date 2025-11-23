@@ -130,6 +130,98 @@ describe('Ticket Controller Tests', () => {
   
         expect(response.status).not.toBe(200);
     });
+
+    test('should return error for invalid departmentSubId format', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: 'invalid-id',
+            priority: 'medium',
+            title: 'Test Ticket',
+            body: 'This is a test ticket body'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for invalid priority value', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'invalid',
+            title: 'Test Ticket',
+            body: 'This is a test ticket body'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for title too short (less than 3 characters)', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            title: 'Te',
+            body: 'This is a test ticket body'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for body too short (less than 5 characters)', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            title: 'Test Ticket',
+            body: 'Test'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for invalid product ID format', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            title: 'Test Ticket',
+            body: 'This is a test ticket body',
+            product: 'invalid-id'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for invalid parent ticket ID format', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            title: 'Test Ticket',
+            body: 'This is a test ticket body',
+            parent: 'invalid-id'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+    });
   });
-});
 
