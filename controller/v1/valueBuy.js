@@ -44,15 +44,20 @@ exports.createValueBuy = async (req,res,next) => {
         }
 
         // Filter only allowed filters
-        const filteredFilters = Array.isArray(filters)
+        let filteredFilters = Array.isArray(filters)
             ? filters.filter(f => allowedFilters.includes(f))
             : [];
+
+        // Ensure at least one filter exists
+        if (filteredFilters.length === 0) {
+            filteredFilters.push("انتخاب اقتصادی");
+        }
 
         // Create ValueBuy
         const newValueBuy = await ValueBuy.create({
             product,
             features: filteredFeatures,
-            filters: filteredFilters.length > 0 ? filteredFilters : ["انتخاب اقتصادی"],
+            filters: filteredFilters,
             isActive: isActive !== undefined ? isActive : true,
         });
 
