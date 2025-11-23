@@ -34,9 +34,14 @@ exports.createValueBuy = async (req,res,next) => {
         const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
 
         // Filter only allowed features
-        const filteredFeatures = Array.isArray(features)
+        let filteredFeatures = Array.isArray(features)
             ? features.filter(f => allowedFeatures.includes(f))
             : [];
+
+        // Ensure at least one feature exists
+        if (filteredFeatures.length === 0) {
+            filteredFeatures.push("پیشنهاد شده");
+        }
 
         // Filter only allowed filters
         const filteredFilters = Array.isArray(filters)
@@ -47,7 +52,7 @@ exports.createValueBuy = async (req,res,next) => {
         const newValueBuy = await ValueBuy.create({
             product,
             features: filteredFeatures,
-            filters: filteredFilters,
+            filters: filteredFilters.length > 0 ? filteredFilters : ["انتخاب اقتصادی"],
             isActive: isActive !== undefined ? isActive : true,
         });
 
