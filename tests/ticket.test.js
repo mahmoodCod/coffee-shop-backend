@@ -59,6 +59,77 @@ describe('Ticket Controller Tests', () => {
         expect(response.body.success).toBe(false);
       }
     });
+
+    test('should return error for missing departmentId', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            title: 'Test Ticket',
+            body: 'This is a test ticket body'
+          });
+  
+        expect(response.status).not.toBe(200);
+      });
+  
+    test('should return error for missing departmentSubId', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            priority: 'medium',
+            title: 'Test Ticket',
+            body: 'This is a test ticket body'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for missing title', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            body: 'This is a test ticket body'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for missing body', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: '507f1f77bcf86cd799439011',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            title: 'Test Ticket'
+        });
+  
+        expect(response.status).not.toBe(200);
+    });
+  
+    test('should return error for invalid departmentId format', async () => {
+        const response = await request(app)
+          .post('/api/v1/ticket')
+          .set('Authorization', 'Bearer invalid.token')
+          .send({
+            departmentId: 'invalid-id',
+            departmentSubId: '507f1f77bcf86cd799439012',
+            priority: 'medium',
+            title: 'Test Ticket',
+            body: 'This is a test ticket body'
+          });
+  
+        expect(response.status).not.toBe(200);
+    });
   });
 });
 
