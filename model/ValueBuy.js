@@ -10,13 +10,13 @@ const valueBuySchema = new mongoose.Schema({
     features: {
         type: [String],
         enum: ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"],
-        default: []
+        default: ["پیشنهاد شده"]
     },
     
     filters: {
         type: [String],
         enum: ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"],
-        default: []
+        default: ["انتخاب اقتصادی"]
     },
 
     isActive: { type: Boolean, default: true }
