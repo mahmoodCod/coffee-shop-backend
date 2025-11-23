@@ -133,7 +133,7 @@ exports.getOneValueBuy = async (req,res,next) => {
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid ValueBuy ID');
+            return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
         }
 
         // Find ValueBuy by ID and populate product
@@ -143,7 +143,7 @@ exports.getOneValueBuy = async (req,res,next) => {
 
         // Check if ValueBuy exists
         if (!valueBuy) {
-            return errorResponse(res, 404, 'ValueBuy not found');
+            return errorResponse(res, 404, 'ValueBuy یافت نشد');
         }
 
         return successRespons(res, 200, {
@@ -152,7 +152,7 @@ exports.getOneValueBuy = async (req,res,next) => {
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.updateValueBuy = async (req,res,next) => {
