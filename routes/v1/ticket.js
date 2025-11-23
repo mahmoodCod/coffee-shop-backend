@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.route('/')
     .post(auth, createTicket)
-    .get(auth,roleGuard('ADMIN'), getAllTicket);
+    .get(getAllTicket); // admin
 
 router.route('/:id')
     .get(auth, getOneTicket)
