@@ -7,6 +7,6 @@ const schema = mongoose.Schema({
     },
 }, { timestamps: true });
 
-const model = mongoose.model('department', schema);
+const model = mongoose.model('Department', schema);
 
 module.exports = model;
