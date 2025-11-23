@@ -579,6 +579,43 @@ exports.replyTicket = async (req,res,next) => {
 
 exports.closeTicket = async (req,res,next) => {
     try {
+        const { id } = req.params;
+
+        // Validate Ticket ID
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, 'Invalid Ticket ID');
+        }
+
+        // Find Ticket
+        const ticket = await Ticket.findById(id);
+        if (!ticket) {
+            return errorResponse(res, 404, 'Ticket not found');
+        }
+
+        // Check if ticket is already closed
+        if (ticket.status === 'closed') {
+            return errorResponse(res, 400, 'Ticket is already closed');
+        }
+
+        // Update ticket status to closed
+        const closedTicket = await Ticket.findByIdAndUpdate(
+            id,
+            {
+                status: 'closed'
+            },
+            { new: true, runValidators: true }
+        )
+        .populate('departmentId', 'title')
+        .populate('departmentSubId', 'title')
+        .populate('user', 'name email phone')
+        .populate('product', 'name slug')
+        .populate('parent', 'title status')
+        .select('-__v');
+
+        return successRespons(res, 200, {
+            ticket: closedTicket,
+            message: 'Ticket closed successfully'
+        });
 
     } catch (err) {
         next(err);
