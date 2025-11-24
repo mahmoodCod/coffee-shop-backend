@@ -26,4 +26,10 @@ const cartSchema = new mongoose.Schema({
     items: [cartItemSchema],
 }, { timestamps: true });
 
+cartSchema.virtual("totalPrice").get(function() {
+    return this.items.reduce((total, item) => {
+        return total + item.priceAtTimeOfAdding * item.quantity;
+    }, 0);
+});
+
 module.exports = cartSchema;
