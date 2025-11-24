@@ -1,5 +1,5 @@
 const { errorResponse, successRespons } = require('../../helpers/responses');
-const {addToCartValidator} = require('../../validator/cart');
+const {addToCartValidator, removeFromCartValidator} = require('../../validator/cart');
 const Product = require('../../model/Product');
 const Cart = require('../../model/Cart');
 
@@ -98,10 +98,40 @@ exports.addCart = async (req,res,next) => {
 
 exports.removeCart = async (req,res,next) => {
     try {
+        await removeFromCartValidator.validate(req.body, { abortEarly: false });
+
+        const userId = req.user._id;
+        const { productId } = req.body;
+
+        if (!isValidObjectId(productId)) {
+            return errorResponse(res, 400, 'Product ID is not valid');
+        }
+
+        const cart = await Cart.findOne({ user: userId });
+
+        if (!cart) {
+            return errorResponse(res, 404, 'Cart not found');
+        }
+
+        const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
+
+        if (itemIndex === -1) {
+            return errorResponse(res, 404, 'Product not found in cart');
+        }
+
+        cart.items.splice(itemIndex, 1);
+
+        await cart.save();
+
+        return successRespons(res, 200, {
+            message: 'Product removed from cart successfully',
+            cart,
+            totalPrice: cart.totalPrice
+        });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.updateCart = async (req,res,next) => {
