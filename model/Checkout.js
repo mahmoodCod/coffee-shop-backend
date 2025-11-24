@@ -15,7 +15,7 @@ const checkoutItemSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-});
+}, { timestamps: true });
 
 const checkoutAddressSchema = new mongoose.Schema({
     name: {
@@ -38,7 +38,7 @@ const checkoutAddressSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-});
+}, { timestamps: true });
 
 const checkoutSchema = new mongoose.Schema({
     user: {
@@ -47,7 +47,7 @@ const checkoutSchema = new mongoose.Schema({
         required: true,
     },
 
-    items: [],
+    items: [checkoutItemSchema],
 
     shippingAddress: {
         type: checkoutAddressSchema,
@@ -66,3 +66,11 @@ const checkoutSchema = new mongoose.Schema({
         default: () => Date.now() + 30 * 60 * 1000, // 30 دقیقه
     },
 }, { timestamps: true });
+
+checkoutSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+checkoutSchema.virtual("totalPrice").get(function () {
+    return this.items.reduce((total, item) => {
+        return total + item.priceAtTimeOfPurchase * item.quantity;
+    }, 0);
+});
