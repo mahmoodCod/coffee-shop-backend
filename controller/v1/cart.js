@@ -5,10 +5,31 @@ const Cart = require('../../model/Cart');
 
 exports.getCart = async (req,res,next) => {
     try {
+        const userId = req.user._id;
+
+        let cart = await Cart.findOne({ user: userId }).populate('items.product');
+
+        if (!cart) {
+            return successRespons(res, 200,{
+                message: "Cart is empty",
+                cart: {
+                    items: [],
+                    totalPrice: 0
+                }
+            });
+        }
+
+        return successRespons(res,200,{
+            message: "Cart retrieved successfully",
+            cart: {
+                items: cart.items,
+                totalPrice: cart.totalPrice
+            }
+        });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.addCart = async (req,res,next) => {
@@ -59,7 +80,6 @@ exports.addCart = async (req,res,next) => {
 
         if (existingItem) {
             existingItem.quantity += quantity;
-            // existingItem.priceAtTimeOfAdding += priceAtTimeOfAdding;
         } else {
             cart.items.push({
                 product: productId,
