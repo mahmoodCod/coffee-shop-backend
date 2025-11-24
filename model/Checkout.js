@@ -1,5 +1,28 @@
 const { default: mongoose } = require("mongoose");
 
+const checkoutAddressSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    postalCode: {
+        type: String,
+        required: true,
+    },
+    province: {
+        type: String,
+        required: true,
+    },
+    city: {
+        type: String,
+        required: true,
+    },
+    street: {
+        type: String,
+        required: true,
+    },
+});
+
 const checkoutSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
