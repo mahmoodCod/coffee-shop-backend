@@ -32,4 +32,4 @@ cartSchema.virtual("totalPrice").get(function() {
     }, 0);
 });
 
-module.exports = cartSchema;
+module.exports = mongoose.model('Cart', cartSchema);
