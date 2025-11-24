@@ -178,8 +178,33 @@ exports.updateCart = async (req,res,next) => {
 
 exports.clearCart = async (req,res,next) => {
     try {
+        const userId = req.user._id;
+
+        const cart = await Cart.findOne({ user: userId });
+
+        if (!cart) {
+            return successRespons(res, 200, {
+                message: 'Cart is already empty',
+                cart: {
+                    items: [],
+                    totalPrice: 0
+                }
+            });
+        }
+
+        cart.items = [];
+
+        await cart.save();
+
+        return successRespons(res, 200, {
+            message: 'Cart cleared successfully',
+            cart: {
+                items: [],
+                totalPrice: 0
+            }
+        });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
