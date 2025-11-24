@@ -17,6 +17,7 @@ const valueBuyRouter = require('./routes/v1/valueBuy');
 const searchRouter = require('./routes/v1/search');
 const bankAccountRouter = require('./routes/v1/bankAccount');
 const ticketRouter = require('./routes/v1/ticket');
+const cartRouter = require('./routes/v1/cart');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.get('/', (req, res) => {
             search: "/api/v1/search",
             bankAccount: "/api/v1/bankAccount",
             ticket: "/api/v1/ticket",
+            cart: "/api/v1/cart",
         },
     });
 });
@@ -63,6 +65,7 @@ app.use('/api/v1/valueBuy', valueBuyRouter);
 app.use('/api/v1/search', searchRouter);
 app.use('/api/v1/bankAccount', bankAccountRouter);
 app.use('/api/v1/ticket', ticketRouter);
+app.use('/api/v1/cart', cartRouter);
 // 404 handler - این باید آخرین route باشه
 app.use((req,res) => {
     console.log('This path is not found :', req.path);
