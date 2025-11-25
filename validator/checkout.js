@@ -24,20 +24,24 @@ const checkoutItemValidator = yup.object().shape({
 const createCheckoutValidator = yup.object().shape({
     user: yup
         .string()
-        .required("user is required")
         .test("is-objectid", "Invalid user ID", objectIdValidation),
 
     items: yup
         .array()
         .of(checkoutItemValidator)
-        .min(1, "Checkout must have at least 1 item")
-        .required("items are required"),
+        .min(1, "Checkout must have at least 1 item"),
+        // .required("items are required"),
 
-    shippingAddress: checkoutItemValidator.required(),
+    // shippingAddress: checkoutItemValidator.required(),
+
+    shippingAddressId: yup
+        .string()
+        .required("Shipping address is required")
+        .test("is-objectid", "Invalid address ID", objectIdValidation),
 
     authority: yup
         .string()
-        .required("authority is required")
+        // .required("authority is required")
         .min(5, "authority must be at least 5 characters"),
 
     discountCode: yup

@@ -1,4 +1,4 @@
-
+require('dotenv').config();
 exports.createPayment = async function ({ amountInRial, description, mobile }) {
     try {
         const response = await fetch(`${process.env.ZARINPAL_API_BASE_URL}/request.json`, {

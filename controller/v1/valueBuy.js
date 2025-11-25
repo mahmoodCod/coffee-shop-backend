@@ -14,44 +14,38 @@ exports.createValueBuy = async (req,res,next) => {
 
         // Validate product ID
         if (!isValidObjectId(product)) {
-            return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
+            return errorResponse(res, 400, 'Invalid product ID');
         }
 
         // Check if product exists
         const productExists = await Product.findById(product);
         if (!productExists) {
-            return errorResponse(res, 404, 'محصول یافت نشد');
+            return errorResponse(res, 404, 'Product not found');
         }
 
         // Check if this product already exists in ValueBuy
         const existingValueBuy = await ValueBuy.findOne({ product });
         if (existingValueBuy) {
-            return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy ثبت شده است');
-        }
+            return errorResponse(res, 409, 'This product already exists in ValueBuy');
+        };
 
-        // Allowed features and filters (Persian)
-        const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
-        const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
+        // Allowed keys for features and filters
+        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
+        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
 
         // Filter only allowed features
-        let filteredFeatures = Array.isArray(features)
-            ? features.filter(f => allowedFeatures.includes(f))
-            : [];
+        const filteredFeatures = {};
+        allowedFeatures.forEach(key => {
+            if (features && features[key] !== undefined) {
+                filteredFeatures[key] = features[key];
+            }
+        });
 
-        // Ensure at least one feature exists
-        if (filteredFeatures.length === 0) {
-            filteredFeatures.push("پیشنهاد شده");
-        }
-
-        // Filter only allowed filters
-        let filteredFilters = Array.isArray(filters)
-            ? filters.filter(f => allowedFilters.includes(f))
-            : [];
-
-        // Ensure at least one filter exists
-        if (filteredFilters.length === 0) {
-            filteredFilters.push("انتخاب اقتصادی");
-        }
+        // Keep filters fixed (from model defaults) and ignore any input from admin
+        const filteredFilters = {};
+        allowedFilters.forEach(key => {
+            filteredFilters[key] = filters && filters[key] !== undefined ? filters[key] : false;
+        });
 
         // Create ValueBuy
         const newValueBuy = await ValueBuy.create({
@@ -66,12 +60,12 @@ exports.createValueBuy = async (req,res,next) => {
 
         return successRespons(res, 201, {
             valueBuy: newValueBuy,
-            message: 'ValueBuy با موفقیت ایجاد شد'
+            message: 'ValueBuy created successfully'
         });
 
     } catch (err) {
         next(err);
-    }
+    };
 };
 
 exports.getAllValueBuy = async (req,res,next) => {
@@ -80,56 +74,72 @@ exports.getAllValueBuy = async (req,res,next) => {
             page = 1, 
             limit = 10, 
             isActive,
-            features,
-            filters,
+            recommended,
+            specialDiscount,
+            lowStock,
+            rareDeal,
+            economicChoice,
+            bestValue,
+            topSelling,
+            freeShipping,
             product
         } = req.query;
 
         // Build filters
-        const queryFilters = {};
+        const filters = {};
 
+        // Filter by isActive status
         if (isActive !== undefined) {
-            queryFilters.isActive = isActive === 'true' || isActive === true;
+            filters.isActive = isActive === 'true' || isActive === true;
         }
 
-        if (product !== undefined && isValidObjectId(product)) {
-            queryFilters.product = product;
+        // Filter by product ID
+        if (product !== undefined) {
+            if (isValidObjectId(product)) {
+                filters.product = product;
+            }
         }
 
-        // Filter by features (comma-separated list)
-        if (features) {
-            const featureArray = features.split(',');
-            queryFilters.features = { $all: featureArray };
-        }
+        // Allowed features and filters
+        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
+        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
 
-        // Filter by filters (comma-separated list)
-        if (filters) {
-            const filterArray = filters.split(',');
-            queryFilters.filters = { $all: filterArray };
-        }
+        // Apply feature filters if provided
+        allowedFeatures.forEach(key => {
+            if (req.query[key] !== undefined) {
+                filters[`features.${key}`] = req.query[key] === 'true' || req.query[key] === true;
+            }
+        });
 
+        // Apply filters (fixed) if provided
+        allowedFilters.forEach(key => {
+            if (req.query[key] !== undefined) {
+                filters[`filters.${key}`] = req.query[key] === 'true' || req.query[key] === true;
+            }
+        });
         // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Query ValueBuy collection
-        const valueBuys = await ValueBuy.find(queryFilters)
+        // Find ValueBuy items with filters, pagination, and populate product
+        const valueBuys = await ValueBuy.find(filters)
             .populate('product', 'name slug price image stock brand category')
-            .sort({ createdAt: -1 })
+            .sort({ createdAt: 'desc' })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum)
             .select('-__v');
 
-        const totalValueBuys = await ValueBuy.countDocuments(queryFilters);
+        // Count total ValueBuy items with filters
+        const totalValueBuys = await ValueBuy.countDocuments(filters);
 
         return successRespons(res, 200, {
             valueBuys,
-            pagination: createPaginationData(pageNum, limitNum, totalValueBuys, 'ValueBuys')
+            pagination: createPaginationData(pageNum, limitNum, totalValueBuys, 'ValueBuys'),
         });
 
     } catch (err) {
         next(err);
-    }
+    };
 };
 
 exports.getOneValueBuy = async (req,res,next) => {
@@ -138,7 +148,7 @@ exports.getOneValueBuy = async (req,res,next) => {
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
+            return errorResponse(res, 400, 'Invalid ValueBuy ID');
         }
 
         // Find ValueBuy by ID and populate product
@@ -148,7 +158,7 @@ exports.getOneValueBuy = async (req,res,next) => {
 
         // Check if ValueBuy exists
         if (!valueBuy) {
-            return errorResponse(res, 404, 'ValueBuy یافت نشد');
+            return errorResponse(res, 404, 'ValueBuy not found');
         }
 
         return successRespons(res, 200, {
@@ -157,61 +167,60 @@ exports.getOneValueBuy = async (req,res,next) => {
 
     } catch (err) {
         next(err);
-    }
+    };
 };
 
 exports.updateValueBuy = async (req,res,next) => {
     try {
         const { id } = req.params;
-        const { product, features, filters, isActive } = req.body;
+        const { product, features,isActive } = req.body;
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
+            return errorResponse(res, 400, 'Invalid ValueBuy ID');
         }
 
         // Find ValueBuy
         const existingValueBuy = await ValueBuy.findById(id);
         if (!existingValueBuy) {
-            return errorResponse(res, 404, 'ValueBuy یافت نشد');
+            return errorResponse(res, 404, 'ValueBuy not found');
         }
 
         // Validate request body
         await updateValueBuyValidator.validate(req.body, { abortEarly: false });
 
-        // Build update object
+        // Build update object (only update provided fields)
         const updateData = {};
 
-        // Update product if provided
+        // Check if product is being updated
         if (product !== undefined) {
+            // Validate product ID
             if (!isValidObjectId(product)) {
-                return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
+                return errorResponse(res, 400, 'Invalid product ID');
             }
+
+            // Check if product exists
             const productExists = await Product.findById(product);
             if (!productExists) {
-                return errorResponse(res, 404, 'محصول یافت نشد');
+                return errorResponse(res, 404, 'Product not found');
             }
+
+            // Check if this product already exists in another ValueBuy
             if (product !== existingValueBuy.product.toString()) {
                 const duplicateValueBuy = await ValueBuy.findOne({ product });
                 if (duplicateValueBuy) {
-                    return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy دیگری ثبت شده است');
+                    return errorResponse(res, 409, 'This product already exists in another ValueBuy');
                 }
             }
             updateData.product = product;
         }
 
-        // Allowed features and filters (Persian)
-        const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
-        const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
-
         // Update features if provided
-        if (Array.isArray(features)) {
-            updateData.features = features.filter(f => allowedFeatures.includes(f));
-        }
-
-        // Update filters if provided
-        if (Array.isArray(filters)) {
-            updateData.filters = filters.filter(f => allowedFilters.includes(f));
+        if (features !== undefined) {
+            updateData.features = {
+                ...existingValueBuy.features,
+                ...features
+            };
         }
 
         // Update isActive if provided
@@ -230,12 +239,12 @@ exports.updateValueBuy = async (req,res,next) => {
 
         return successRespons(res, 200, {
             valueBuy: updatedValueBuy,
-            message: 'ValueBuy با موفقیت بروزرسانی شد'
+            message: 'ValueBuy updated successfully'
         });
 
     } catch (err) {
         next(err);
-    }
+    };
 };
 
 exports.deleteValueBuy = async (req,res,next) => {
@@ -244,7 +253,7 @@ exports.deleteValueBuy = async (req,res,next) => {
 
         // Validate ValueBuy ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
+            return errorResponse(res, 400, 'Invalid ValueBuy ID');
         }
 
         // Find and delete ValueBuy
@@ -252,15 +261,15 @@ exports.deleteValueBuy = async (req,res,next) => {
 
         // Check if ValueBuy exists
         if (!deletedValueBuy) {
-            return errorResponse(res, 404, 'ValueBuy یافت نشد');
+            return errorResponse(res, 404, 'ValueBuy not found');
         }
 
         return successRespons(res, 200, {
-            message: 'ValueBuy با موفقیت حذف شد',
+            message: 'ValueBuy deleted successfully',
             valueBuy: deletedValueBuy
         });
 
     } catch (err) {
         next(err);
-    }
+    };
 };
