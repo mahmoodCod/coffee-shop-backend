@@ -89,3 +89,5 @@ checkoutSchema.virtual("totalPrice").get(function () {
         return total + item.priceAtTimeOfPurchase * item.quantity;
     }, 0);
 });
+
+module.exports = mongoose.model('Checkout', checkoutSchema);
