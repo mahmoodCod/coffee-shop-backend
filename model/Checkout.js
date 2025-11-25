@@ -60,6 +60,21 @@ const checkoutSchema = new mongoose.Schema({
         required: true,
     },
 
+    discountCode: {
+        type: String,
+        default: null,
+    },
+
+    discount: {
+        percentage: { type: Number, default: 0 },
+        amount: { type: Number, default: 0 },
+    },
+
+    totalPriceAfterDiscount: {
+        type: Number,
+        default: 0,
+    },
+
     expiresAt: {
         type: Date,
         required: true,
