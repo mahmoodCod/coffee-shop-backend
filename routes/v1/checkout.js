@@ -1,17 +1,13 @@
 const express = require('express');
 const {auth} = require('../../middleware/auth');
 const roleGuard = require('../../middleware/roleGuard');
-const { createCheckout, getAllCheckouts, getCheckout, updateCheckout, removeCheckout } = require('../../controller/v1/checkout');
+const { createCheckout, verifyCheckout } = require('../../controller/v1/checkout');
 
 const router = express.Router();
 
-router.route('/')
-    .post(auth, createCheckout)
-    .get(auth, roleGuard('ADMIN'), getAllCheckouts);
+router.post('/', auth, createCheckout);
 
-router.route('/:checkoutId')
-    .get(auth, getCheckout)
-    .patch(auth, updateCheckout)
-    .delete(auth, roleGuard('ADMIN'), removeCheckout);
+router.get('/:verify', auth, verifyCheckout);
+    
 
 module.exports = router;
