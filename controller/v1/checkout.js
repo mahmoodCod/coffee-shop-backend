@@ -1,8 +1,10 @@
-const { createPayment } = require('../../services/zarinpal');
+const { createPayment, verifyPayment } = require('../../services/zarinpal');
 const { createCheckoutValidator } = require('../../validator/checkout');
 const { errorResponse, successRespons } = require('../../helpers/responses');
 const Cart = require('../../model/Cart');
 const Checkout = require('../../model/Checkout');
+const Order = require('../../model/Order');
+const Product = require('../../model/Product');
 
 exports.createCheckout = async (req,res,next) => {
     try {
@@ -63,8 +65,52 @@ exports.createCheckout = async (req,res,next) => {
 
 exports.verifyCheckout = async (req,res,next) => {
     try {
+        const { Authority: authority } = req.query;
 
+        const alreadyCreateOrder = await Order.findOne({ authority });
+        if (alreadyCreateOrder) {
+            return errorResponse(res, 400, 'Payment already verified!');
+        }
+
+        const checkout = await Checkout.findOne({ authority });
+        if (!checkout) {
+            return errorResponse(res, 404, 'Checkout not found!');
+        }
+
+        const payment = await verifyPayment({
+            authority,
+            amountInRial: checkout.totalPrice,
+        });
+
+        if (![100, 101].includes(payment.data.code)) {
+            return errorResponse(res, 400, 'Payment not verified!');
+        }
+
+        const order = new Order({
+            user: checkout.user,
+            authority: checkout.authority,
+            items: checkout.items,
+            shippingAddress: checkout.shippingAddress
+        });
+
+        await order.save();
+
+        for (const item of checkout.items) {
+            const product = await Product.findById(item.product);
+            if (product) {
+                product.stock -= item.quantity;
+                await product.save();
+            }
+        }
+
+        await Cart.findOneAndUpdate({ user: checkout.user }, { items: [] });
+        await checkout.deleteOne();
+
+        return successRespons(res, 200, {
+            message: "Payment verified successfully!",
+            order,
+        });
     } catch (err) {
         next(err);
-    };
+    }
 };
