@@ -1,4 +1,3 @@
-const fetch = require('node-fetch');
 
 exports.createPayment = async function ({ amountInRial, description, mobile }) {
     try {
