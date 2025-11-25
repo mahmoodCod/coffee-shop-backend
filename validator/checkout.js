@@ -20,3 +20,42 @@ const checkoutItemValidator = yup.object().shape({
         .required("priceAtTimeOfPurchase is required")
         .min(0, "priceAtTimeOfPurchase must be >= 0"),
 });
+
+const createCheckoutValidator = yup.object().shape({
+    user: yup
+        .string()
+        .required("user is required")
+        .test("is-objectid", "Invalid user ID", objectIdValidation),
+
+    items: yup
+        .array()
+        .of(checkoutItemValidator)
+        .min(1, "Checkout must have at least 1 item")
+        .required("items are required"),
+
+    shippingAddress: checkoutAddressValidator.required(),
+
+    authority: yup
+        .string()
+        .required("authority is required")
+        .min(5, "authority must be at least 5 characters"),
+
+    discountCode: yup
+        .string()
+        .nullable()
+        .notRequired(),
+
+    discount: yup.object().shape({
+        percentage: yup.number().min(0).max(100).notRequired(),
+        amount: yup.number().min(0).notRequired(),
+    }),
+
+    totalPriceAfterDiscount: yup
+        .number()
+        .min(0)
+        .notRequired(),
+
+    expiresAt: yup
+        .date()
+        .notRequired(),
+});
