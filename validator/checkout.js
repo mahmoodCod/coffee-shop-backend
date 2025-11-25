@@ -59,3 +59,41 @@ const createCheckoutValidator = yup.object().shape({
         .date()
         .notRequired(),
 });
+
+const updateCheckoutValidator = yup.object().shape({
+    items: yup
+        .array()
+        .of(checkoutItemValidator)
+        .notRequired(),
+
+    shippingAddress: checkoutAddressValidator.notRequired(),
+
+    authority: yup
+        .string()
+        .min(5, "authority must be at least 5 characters")
+        .notRequired(),
+
+    discountCode: yup
+        .string()
+        .nullable()
+        .notRequired(),
+
+    discount: yup.object().shape({
+        percentage: yup.number().min(0).max(100).notRequired(),
+        amount: yup.number().min(0).notRequired(),
+    }).notRequired(),
+
+    totalPriceAfterDiscount: yup
+        .number()
+        .min(0)
+        .notRequired(),
+
+    expiresAt: yup
+        .date()
+        .notRequired(),
+});
+
+module.exports = {
+    createCheckoutValidator,
+    updateCheckoutValidator,
+};
