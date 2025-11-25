@@ -33,7 +33,7 @@ const createCheckoutValidator = yup.object().shape({
         .min(1, "Checkout must have at least 1 item")
         .required("items are required"),
 
-    shippingAddress: checkoutAddressValidator.required(),
+    shippingAddress: checkoutItemValidator.required(),
 
     authority: yup
         .string()
@@ -66,7 +66,7 @@ const updateCheckoutValidator = yup.object().shape({
         .of(checkoutItemValidator)
         .notRequired(),
 
-    shippingAddress: checkoutAddressValidator.notRequired(),
+    shippingAddress: checkoutItemValidator.notRequired(),
 
     authority: yup
         .string()
