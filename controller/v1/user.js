@@ -208,3 +208,25 @@ exports.updateMe = async (req, res, next) => {
         next(err);
     }
 };
+
+exports.getUserById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, "Invalid user id !!");
+        }
+
+        const user = await User.findById(id);
+
+        if (!user) {
+            return errorResponse(res, 404, "User not found !!");
+        }
+
+        return successRespons(res, 200, { user });
+        
+    } catch (err) {
+        next(err);
+    }
+};
+
