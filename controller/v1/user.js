@@ -171,3 +171,40 @@ exports.updateAddress = async(req,res,next) => {
     };
 };
 
+exports.updateMe = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
+            return errorResponse(res, 400, "Invalid user id !!");
+        }
+
+        const { username, phone } = req.body;
+
+        // اگر هیچ فیلدی ارسال نشود
+        if (!username && !phone) {
+            return errorResponse(res, 400, "No data provided to update !!");
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            id,
+            {
+                username: username || undefined,
+                phone: phone || undefined,
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return errorResponse(res, 404, "User not found !!");
+        }
+
+        return successRespons(res, 200, {
+            user: updatedUser,
+            message: "User updated successfully :))",
+        });
+
+    } catch (err) {
+        next(err);
+    }
+};
