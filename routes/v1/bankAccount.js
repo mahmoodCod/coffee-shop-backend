@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.route('/')
     .post(auth, createBankAccount)
-    .get(getAllBankAccount); // auth
+    .get(auth, getAllBankAccount);
 
 router.route('/:id')
     .get(auth, getOneBankAccount)
