@@ -62,7 +62,7 @@ exports.createBankAccount = async (req,res,next) => {
 
 exports.getAllBankAccount = async (req,res,next) => {
     try {
-        const user = req.user._id;
+        // const user = req.user._id;
         const { 
             page = 1, 
             limit = 10, 
@@ -72,7 +72,7 @@ exports.getAllBankAccount = async (req,res,next) => {
         } = req.query;
 
         // Build filters - only get current user's bank accounts
-        const filters = { user };
+        const filters = {}; // user
 
         // Filter by isActive status
         if (isActive !== undefined) {
