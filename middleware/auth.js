@@ -14,53 +14,53 @@ try {
   console.log('User model not found - auth middleware will not work');
 }
 
-exports.auth = async (req,res,next) => {
+exports.auth = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization;
+
+    if (!token) {
+      return errorResponse(res, 401, "توکن ارسال نشده است!");
+    }
+
+    const tokenArray = token.split(" ");
+    const tokenValue = tokenArray[1];
+
+    if (tokenArray[0] !== "Bearer") {
+      return errorResponse(
+        res,
+        401,
+        "لطفاً عبارت [Bearer ] را در ابتدای توکن قرار دهید"
+      );
+    }
+
+    let decoded;
     try {
-        const token = req.headers.authorization;
+      decoded = jwt.verify(tokenValue, process.env.JWT_SECRET);
+    } catch (e) {
+      return errorResponse(res, 401, "توکن معتبر نیست یا منقضی شده است!");
+    }
 
-        if (!token) {
-            return errorResponse(res, 401, "Token not provided !!");
-        };
+    if (!decoded) {
+      return errorResponse(res, 401, "توکن معتبر نیست!");
+    }
 
-        const tokenArray = token.split(" ");
-        const tokenValue = tokenArray[1];
+    const userId = decoded.userId;
 
-        if (tokenArray[0] !== "Bearer") {
-            return errorResponse(
-              res,
-              401,
-              "Write [Bearer ] at the start ot the token"
-            );
-        };
+    // Check if User model is available
+    if (!User) {
+      return errorResponse(res, 500, "مدل User موجود نیست. لطفاً مدل User را ایجاد کنید.");
+    }
 
-        let decoded;
-        try {
-            decoded = jwt.verify(tokenValue, process.env.JWT_SECRET);
-        } catch (e) {
-            return errorResponse(res, 401, "Token is not valid or expired !!");
-        };
+    const user = await User.findOne({ _id: userId });
 
-        if (!decoded) {
-            return errorResponse(res, 401, "Token is not valid !!");
-        };
+    if (!user) {
+      return errorResponse(res, 404, "کاربر یافت نشد!");
+    }
 
-        const userId = decoded.userId;
+    req.user = user;
 
-        // Check if User model is available
-        if (!User) {
-          return errorResponse(res, 500, "User model not available. Please create User model.");
-        }
-
-        const user = await User.findOne({ _id: userId });
-
-        if (!user) {
-          return errorResponse(res, 404, "User not found !!");
-        }
-
-        req.user = user;
-
-        next();
-    } catch (err) {
-        next(err);
-    };
+    next();
+  } catch (err) {
+    next(err);
+  }
 };

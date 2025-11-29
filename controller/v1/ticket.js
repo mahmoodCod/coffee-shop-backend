@@ -12,56 +12,29 @@ exports.createTicket = async (req,res,next) => {
         const user = req.user._id;
         const { departmentId, departmentSubId, priority, title, body, product, parent } = req.body;
 
-        // Prepare validation data (user from req.user, not from body)
-        const validationData = {
-            ...req.body,
-            user: user.toString()
-        };
-
-        // Validate request body
+        const validationData = { ...req.body, user: user.toString() };
         await createTicketValidator.validate(validationData, { abortEarly: false });
 
-        // Check if Department exists
-        if (!isValidObjectId(departmentId)) {
-            return errorResponse(res, 400, 'Invalid departmentId');
-        }
+        if (!isValidObjectId(departmentId)) return errorResponse(res, 400, 'شناسه دپارتمان نامعتبر است');
         const departmentExists = await Department.findById(departmentId);
-        if (!departmentExists) {
-            return errorResponse(res, 404, 'Department not found');
-        }
+        if (!departmentExists) return errorResponse(res, 404, 'دپارتمان یافت نشد');
 
-        // Check if DepartmentSub exists
-        if (!isValidObjectId(departmentSubId)) {
-            return errorResponse(res, 400, 'Invalid departmentSubId');
-        }
+        if (!isValidObjectId(departmentSubId)) return errorResponse(res, 400, 'شناسه دپارتمان فرعی نامعتبر است');
         const departmentSubExists = await DepartmentSub.findById(departmentSubId);
-        if (!departmentSubExists) {
-            return errorResponse(res, 404, 'DepartmentSub not found');
-        }
+        if (!departmentSubExists) return errorResponse(res, 404, 'دپارتمان فرعی یافت نشد');
 
-        // Check if product exists (if provided)
         if (product) {
-            if (!isValidObjectId(product)) {
-                return errorResponse(res, 400, 'Invalid product ID');
-            }
+            if (!isValidObjectId(product)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
             const productExists = await Product.findById(product);
-            if (!productExists) {
-                return errorResponse(res, 404, 'Product not found');
-            }
+            if (!productExists) return errorResponse(res, 404, 'محصول یافت نشد');
         }
 
-        // Check if parent ticket exists (if provided)
         if (parent) {
-            if (!isValidObjectId(parent)) {
-                return errorResponse(res, 400, 'Invalid parent ticket ID');
-            }
+            if (!isValidObjectId(parent)) return errorResponse(res, 400, 'شناسه تیکت والد نامعتبر است');
             const parentTicketExists = await Ticket.findById(parent);
-            if (!parentTicketExists) {
-                return errorResponse(res, 404, 'Parent ticket not found');
-            }
+            if (!parentTicketExists) return errorResponse(res, 404, 'تیکت والد یافت نشد');
         }
 
-        // Create Ticket
         const newTicket = await Ticket.create({
             departmentId,
             departmentSubId,
@@ -75,118 +48,59 @@ exports.createTicket = async (req,res,next) => {
             status: 'open'
         });
 
-        // Populate related fields
-        await newTicket.populate('departmentId', 'title');
-        await newTicket.populate('departmentSubId', 'title');
-        await newTicket.populate('user', 'name email phone');
-        if (newTicket.product) {
-            await newTicket.populate('product', 'name slug');
-        }
-        if (newTicket.parent) {
-            await newTicket.populate('parent', 'title status');
-        }
+        await newTicket.populate('departmentId', 'title')
+            .populate('departmentSubId', 'title')
+            .populate('user', 'name email phone');
+        if (newTicket.product) await newTicket.populate('product', 'name slug');
+        if (newTicket.parent) await newTicket.populate('parent', 'title status');
 
         return successRespons(res, 201, {
             ticket: newTicket,
-            message: 'Ticket created successfully'
+            message: 'تیکت با موفقیت ایجاد شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getAllTicket = async (req,res,next) => {
     try {
-        const { 
-            page = 1, 
-            limit = 10, 
-            status,
-            priority,
-            departmentId,
-            departmentSubId,
-            user,
-            product,
-            isAnswered
-        } = req.query;
-
-        // Build filters
+        const { page=1, limit=10, status, priority, departmentId, departmentSubId, user, product, isAnswered } = req.query;
         const filters = {};
 
-        // Filter by status
-        if (status !== undefined) {
-            if (['open', 'answered', 'closed'].includes(status)) {
-                filters.status = status;
-            }
-        }
+        if (status && ['open','answered','closed'].includes(status)) filters.status = status;
+        if (priority && ['low','medium','high'].includes(priority)) filters.priority = priority;
+        if (departmentId && isValidObjectId(departmentId)) filters.departmentId = departmentId;
+        if (departmentSubId && isValidObjectId(departmentSubId)) filters.departmentSubId = departmentSubId;
+        if (user && isValidObjectId(user)) filters.user = user;
+        if (product && isValidObjectId(product)) filters.product = product;
+        if (isAnswered !== undefined) filters.isAnswered = isAnswered === 'true' || isAnswered === true;
 
-        // Filter by priority
-        if (priority !== undefined) {
-            if (['low', 'medium', 'high'].includes(priority)) {
-                filters.priority = priority;
-            }
-        }
-
-        // Filter by departmentId
-        if (departmentId !== undefined) {
-            if (isValidObjectId(departmentId)) {
-                filters.departmentId = departmentId;
-            }
-        }
-
-        // Filter by departmentSubId
-        if (departmentSubId !== undefined) {
-            if (isValidObjectId(departmentSubId)) {
-                filters.departmentSubId = departmentSubId;
-            }
-        }
-
-        // Filter by user
-        if (user !== undefined) {
-            if (isValidObjectId(user)) {
-                filters.user = user;
-            }
-        }
-
-        // Filter by product
-        if (product !== undefined) {
-            if (isValidObjectId(product)) {
-                filters.product = product;
-            }
-        }
-
-        // Filter by isAnswered
-        if (isAnswered !== undefined) {
-            filters.isAnswered = isAnswered === 'true' || isAnswered === true;
-        }
-
-        // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Find tickets with filters, pagination, and populate related fields
         const tickets = await Ticket.find(filters)
-            .populate('departmentId', 'title')
-            .populate('departmentSubId', 'title')
-            .populate('user', 'name email phone')
-            .populate('product', 'name slug')
-            .populate('parent', 'title status')
-            .sort({ createdAt: 'desc' })
-            .skip((pageNum - 1) * limitNum)
+            .populate('departmentId','title')
+            .populate('departmentSubId','title')
+            .populate('user','name email phone')
+            .populate('product','name slug')
+            .populate('parent','title status')
+            .sort({ createdAt: -1 })
+            .skip((pageNum-1)*limitNum)
             .limit(limitNum)
             .select('-__v');
 
-        // Count total tickets with filters
         const totalTickets = await Ticket.countDocuments(filters);
 
         return successRespons(res, 200, {
             tickets,
-            pagination: createPaginationData(pageNum, limitNum, totalTickets, 'Tickets'),
+            pagination: createPaginationData(pageNum, limitNum, totalTickets, 'تیکت‌ها')
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getOneTicket = async (req,res,next) => {
@@ -194,188 +108,95 @@ exports.getOneTicket = async (req,res,next) => {
         const { id } = req.params;
         const user = req.user;
 
-        // Validate Ticket ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid Ticket ID');
-        }
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه تیکت نامعتبر است');
 
-        // Find Ticket by ID and populate related fields
         const ticket = await Ticket.findById(id)
-            .populate('departmentId', 'title')
-            .populate('departmentSubId', 'title')
-            .populate('user', 'name email phone')
-            .populate('product', 'name slug')
-            .populate('parent', 'title status')
+            .populate('departmentId','title')
+            .populate('departmentSubId','title')
+            .populate('user','name email phone')
+            .populate('product','name slug')
+            .populate('parent','title status')
             .select('-__v');
 
-        // Check if Ticket exists
-        if (!ticket) {
-            return errorResponse(res, 404, 'Ticket not found');
-        }
+        if (!ticket) return errorResponse(res, 404, 'تیکت یافت نشد');
 
-        // Check if user has access (only owner or ADMIN)
-        const isAdmin = user.roles && user.roles.includes("ADMIN");
+        const isAdmin = user.roles?.includes('ADMIN');
         const isOwner = ticket.user._id.toString() === user._id.toString();
-        
-        if (!isAdmin && !isOwner) {
-            return errorResponse(res, 403, 'You do not have access to this ticket');
-        }
+        if (!isAdmin && !isOwner) return errorResponse(res, 403, 'دسترسی به این تیکت ندارید');
 
-        return successRespons(res, 200, {
-            ticket,
-        });
+        return successRespons(res, 200, { ticket });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.updateTicket = async (req,res,next) => {
     try {
         const { id } = req.params;
         const user = req.user;
-        const { departmentId, departmentSubId, priority, title, body, product, parent, isAnswered, status } = req.body;
+        const data = req.body;
 
-        // Validate Ticket ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid Ticket ID');
-        }
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه تیکت نامعتبر است');
 
-        // Find Ticket
-        const existingTicket = await Ticket.findById(id);
-        if (!existingTicket) {
-            return errorResponse(res, 404, 'Ticket not found');
-        }
+        const ticket = await Ticket.findById(id);
+        if (!ticket) return errorResponse(res, 404, 'تیکت یافت نشد');
 
-        // Check if user has access (only owner or ADMIN)
-        const isAdmin = user.roles && user.roles.includes("ADMIN");
-        const isOwner = existingTicket.user.toString() === user._id.toString();
-        
-        if (!isAdmin && !isOwner) {
-            return errorResponse(res, 403, 'You do not have access to this ticket');
-        }
+        const isAdmin = user.roles?.includes('ADMIN');
+        const isOwner = ticket.user.toString() === user._id.toString();
+        if (!isAdmin && !isOwner) return errorResponse(res, 403, 'دسترسی به این تیکت ندارید');
 
-        // Validate request body
-        await updateTicketValidator.validate(req.body, { abortEarly: false });
+        await updateTicketValidator.validate(data, { abortEarly: false });
 
-        // Build update object (only update provided fields)
         const updateData = {};
-
-        // Update departmentId if provided
-        if (departmentId !== undefined) {
-            if (!isValidObjectId(departmentId)) {
-                return errorResponse(res, 400, 'Invalid departmentId');
-            }
-            const departmentExists = await Department.findById(departmentId);
-            if (!departmentExists) {
-                return errorResponse(res, 404, 'Department not found');
-            }
-            updateData.departmentId = departmentId;
+        if (data.departmentId) {
+            if (!isValidObjectId(data.departmentId)) return errorResponse(res, 400, 'شناسه دپارتمان نامعتبر است');
+            const dep = await Department.findById(data.departmentId);
+            if (!dep) return errorResponse(res, 404, 'دپارتمان یافت نشد');
+            updateData.departmentId = data.departmentId;
         }
-
-        // Update departmentSubId if provided
-        if (departmentSubId !== undefined) {
-            if (!isValidObjectId(departmentSubId)) {
-                return errorResponse(res, 400, 'Invalid departmentSubId');
-            }
-            const departmentSubExists = await DepartmentSub.findById(departmentSubId);
-            if (!departmentSubExists) {
-                return errorResponse(res, 404, 'DepartmentSub not found');
-            }
-            updateData.departmentSubId = departmentSubId;
+        if (data.departmentSubId) {
+            if (!isValidObjectId(data.departmentSubId)) return errorResponse(res, 400, 'شناسه دپارتمان فرعی نامعتبر است');
+            const sub = await DepartmentSub.findById(data.departmentSubId);
+            if (!sub) return errorResponse(res, 404, 'دپارتمان فرعی یافت نشد');
+            updateData.departmentSubId = data.departmentSubId;
         }
-
-        // Update priority if provided
-        if (priority !== undefined) {
-            if (['low', 'medium', 'high'].includes(priority)) {
-                updateData.priority = priority;
-            } else {
-                return errorResponse(res, 400, 'Invalid priority value');
-            }
+        if (data.priority && ['low','medium','high'].includes(data.priority)) updateData.priority = data.priority;
+        if (data.title) updateData.title = data.title.trim();
+        if (data.body) updateData.body = data.body.trim();
+        if (data.product) {
+            if (!isValidObjectId(data.product)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
+            const prod = await Product.findById(data.product);
+            if (!prod) return errorResponse(res, 404, 'محصول یافت نشد');
+            updateData.product = data.product;
         }
-
-        // Update title if provided
-        if (title !== undefined) {
-            updateData.title = title.trim();
+        if (data.parent) {
+            if (!isValidObjectId(data.parent)) return errorResponse(res, 400, 'شناسه تیکت والد نامعتبر است');
+            const parentTicket = await Ticket.findById(data.parent);
+            if (!parentTicket) return errorResponse(res, 404, 'تیکت والد یافت نشد');
+            updateData.parent = data.parent;
         }
+        if (data.isAnswered !== undefined) updateData.isAnswered = data.isAnswered;
+        if (data.status && ['open','answered','closed'].includes(data.status)) updateData.status = data.status;
 
-        // Update body if provided
-        if (body !== undefined) {
-            updateData.body = body.trim();
-        }
+        if (!Object.keys(updateData).length) return errorResponse(res, 400, 'فیلدی برای بروزرسانی وجود ندارد');
 
-        // Update product if provided
-        if (product !== undefined) {
-            if (product === null || product === '') {
-                updateData.product = undefined;
-            } else {
-                if (!isValidObjectId(product)) {
-                    return errorResponse(res, 400, 'Invalid product ID');
-                }
-                const productExists = await Product.findById(product);
-                if (!productExists) {
-                    return errorResponse(res, 404, 'Product not found');
-                }
-                updateData.product = product;
-            }
-        }
-
-        // Update parent if provided
-        if (parent !== undefined) {
-            if (parent === null || parent === '') {
-                updateData.parent = undefined;
-            } else {
-                if (!isValidObjectId(parent)) {
-                    return errorResponse(res, 400, 'Invalid parent ticket ID');
-                }
-                const parentTicketExists = await Ticket.findById(parent);
-                if (!parentTicketExists) {
-                    return errorResponse(res, 404, 'Parent ticket not found');
-                }
-                updateData.parent = parent;
-            }
-        }
-
-        // Update isAnswered if provided
-        if (isAnswered !== undefined) {
-            updateData.isAnswered = isAnswered;
-        }
-
-        // Update status if provided
-        if (status !== undefined) {
-            if (['open', 'answered', 'closed'].includes(status)) {
-                updateData.status = status;
-            } else {
-                return errorResponse(res, 400, 'Invalid status value');
-            }
-        }
-
-        // Check if there's anything to update
-        if (Object.keys(updateData).length === 0) {
-            return errorResponse(res, 400, 'No fields to update');
-        }
-
-        // Update Ticket
-        const updatedTicket = await Ticket.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, runValidators: true }
-        )
-        .populate('departmentId', 'title')
-        .populate('departmentSubId', 'title')
-        .populate('user', 'name email phone')
-        .populate('product', 'name slug')
-        .populate('parent', 'title status')
-        .select('-__v');
+        const updatedTicket = await Ticket.findByIdAndUpdate(id, updateData, { new:true, runValidators:true })
+            .populate('departmentId','title')
+            .populate('departmentSubId','title')
+            .populate('user','name email phone')
+            .populate('product','name slug')
+            .populate('parent','title status')
+            .select('-__v');
 
         return successRespons(res, 200, {
             ticket: updatedTicket,
-            message: 'Ticket updated successfully'
+            message: 'تیکت با موفقیت بروزرسانی شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.deleteTicket = async (req,res,next) => {
@@ -383,124 +204,64 @@ exports.deleteTicket = async (req,res,next) => {
         const { id } = req.params;
         const user = req.user;
 
-        // Validate Ticket ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid Ticket ID');
-        }
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه تیکت نامعتبر است');
 
-        // Find Ticket
         const ticket = await Ticket.findById(id);
+        if (!ticket) return errorResponse(res, 404, 'تیکت یافت نشد');
 
-        // Check if Ticket exists
-        if (!ticket) {
-            return errorResponse(res, 404, 'Ticket not found');
-        }
-
-        // Check if user has access (only owner or ADMIN)
-        const isAdmin = user.roles && user.roles.includes("ADMIN");
+        const isAdmin = user.roles?.includes('ADMIN');
         const isOwner = ticket.user.toString() === user._id.toString();
-        
-        if (!isAdmin && !isOwner) {
-            return errorResponse(res, 403, 'You do not have access to this ticket');
-        }
+        if (!isAdmin && !isOwner) return errorResponse(res, 403, 'دسترسی به این تیکت ندارید');
 
-        // Delete Ticket
         const deletedTicket = await Ticket.findByIdAndDelete(id);
 
         return successRespons(res, 200, {
-            message: 'Ticket deleted successfully',
-            ticket: deletedTicket
+            ticket: deletedTicket,
+            message: 'تیکت با موفقیت حذف شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getMyTickets = async (req,res,next) => {
     try {
         const user = req.user._id;
-        const { 
-            page = 1, 
-            limit = 10, 
-            status,
-            priority,
-            departmentId,
-            departmentSubId,
-            product,
-            isAnswered
-        } = req.query;
-
-        // Build filters - only get current user's tickets
+        const { page=1, limit=10, status, priority, departmentId, departmentSubId, product, isAnswered } = req.query;
         const filters = { user };
 
-        // Filter by status
-        if (status !== undefined) {
-            if (['open', 'answered', 'closed'].includes(status)) {
-                filters.status = status;
-            }
-        }
+        if (status && ['open','answered','closed'].includes(status)) filters.status = status;
+        if (priority && ['low','medium','high'].includes(priority)) filters.priority = priority;
+        if (departmentId && isValidObjectId(departmentId)) filters.departmentId = departmentId;
+        if (departmentSubId && isValidObjectId(departmentSubId)) filters.departmentSubId = departmentSubId;
+        if (product && isValidObjectId(product)) filters.product = product;
+        if (isAnswered !== undefined) filters.isAnswered = isAnswered === 'true' || isAnswered === true;
 
-        // Filter by priority
-        if (priority !== undefined) {
-            if (['low', 'medium', 'high'].includes(priority)) {
-                filters.priority = priority;
-            }
-        }
-
-        // Filter by departmentId
-        if (departmentId !== undefined) {
-            if (isValidObjectId(departmentId)) {
-                filters.departmentId = departmentId;
-            }
-        }
-
-        // Filter by departmentSubId
-        if (departmentSubId !== undefined) {
-            if (isValidObjectId(departmentSubId)) {
-                filters.departmentSubId = departmentSubId;
-            }
-        }
-
-        // Filter by product
-        if (product !== undefined) {
-            if (isValidObjectId(product)) {
-                filters.product = product;
-            }
-        }
-
-        // Filter by isAnswered
-        if (isAnswered !== undefined) {
-            filters.isAnswered = isAnswered === 'true' || isAnswered === true;
-        }
-
-        // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Find tickets with filters, pagination, and populate related fields
         const tickets = await Ticket.find(filters)
-            .populate('departmentId', 'title')
-            .populate('departmentSubId', 'title')
-            .populate('user', 'name email phone')
-            .populate('product', 'name slug')
-            .populate('parent', 'title status')
-            .sort({ createdAt: 'desc' })
-            .skip((pageNum - 1) * limitNum)
+            .populate('departmentId','title')
+            .populate('departmentSubId','title')
+            .populate('user','name email phone')
+            .populate('product','name slug')
+            .populate('parent','title status')
+            .sort({ createdAt:-1 })
+            .skip((pageNum-1)*limitNum)
             .limit(limitNum)
             .select('-__v');
 
-        // Count total tickets with filters
         const totalTickets = await Ticket.countDocuments(filters);
 
         return successRespons(res, 200, {
             tickets,
-            pagination: createPaginationData(pageNum, limitNum, totalTickets, 'Tickets'),
+            pagination: createPaginationData(pageNum, limitNum, totalTickets, 'تیکت‌ها')
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.replyTicket = async (req,res,next) => {
@@ -509,32 +270,15 @@ exports.replyTicket = async (req,res,next) => {
         const adminUser = req.user._id;
         const { title, body } = req.body;
 
-        // Validate Ticket ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid Ticket ID');
-        }
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه تیکت نامعتبر است');
 
-        // Find parent ticket
         const parentTicket = await Ticket.findById(id);
-        if (!parentTicket) {
-            return errorResponse(res, 404, 'Ticket not found');
-        }
+        if (!parentTicket) return errorResponse(res, 404, 'تیکت یافت نشد');
+        if (parentTicket.status === 'closed') return errorResponse(res, 400, 'امکان پاسخ‌دهی به تیکت بسته شده وجود ندارد');
 
-        // Check if ticket is already closed
-        if (parentTicket.status === 'closed') {
-            return errorResponse(res, 400, 'Cannot reply to a closed ticket');
-        }
+        if (!title || title.trim().length<3) return errorResponse(res, 400, 'عنوان تیکت باید حداقل ۳ کاراکتر باشد');
+        if (!body || body.trim().length<5) return errorResponse(res, 400, 'متن تیکت باید حداقل ۵ کاراکتر باشد');
 
-        // Validate request body
-        if (!title || title.trim().length < 3) {
-            return errorResponse(res, 400, 'Title is required and must be at least 3 characters');
-        }
-
-        if (!body || body.trim().length < 5) {
-            return errorResponse(res, 400, 'Body is required and must be at least 5 characters');
-        }
-
-        // Create reply ticket
         const replyTicket = await Ticket.create({
             departmentId: parentTicket.departmentId,
             departmentSubId: parentTicket.departmentSubId,
@@ -548,76 +292,48 @@ exports.replyTicket = async (req,res,next) => {
             status: 'open'
         });
 
-        // Update parent ticket status to 'answered' and set isAnswered to true
-        await Ticket.findByIdAndUpdate(
-            id,
-            {
-                status: 'answered',
-                isAnswered: true
-            },
-            { new: true }
-        );
+        await Ticket.findByIdAndUpdate(id, { status:'answered', isAnswered:true }, { new:true });
 
-        // Populate related fields
-        await replyTicket.populate('departmentId', 'title');
-        await replyTicket.populate('departmentSubId', 'title');
-        await replyTicket.populate('user', 'name email phone');
-        if (replyTicket.product) {
-            await replyTicket.populate('product', 'name slug');
-        }
-        await replyTicket.populate('parent', 'title status');
+        await replyTicket.populate('departmentId','title')
+            .populate('departmentSubId','title')
+            .populate('user','name email phone');
+        if (replyTicket.product) await replyTicket.populate('product','name slug');
+        await replyTicket.populate('parent','title status');
 
         return successRespons(res, 201, {
             ticket: replyTicket,
-            message: 'Reply ticket created successfully'
+            message: 'پاسخ تیکت با موفقیت ثبت شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.closeTicket = async (req,res,next) => {
     try {
         const { id } = req.params;
 
-        // Validate Ticket ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid Ticket ID');
-        }
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه تیکت نامعتبر است');
 
-        // Find Ticket
         const ticket = await Ticket.findById(id);
-        if (!ticket) {
-            return errorResponse(res, 404, 'Ticket not found');
-        }
+        if (!ticket) return errorResponse(res, 404, 'تیکت یافت نشد');
+        if (ticket.status==='closed') return errorResponse(res, 400, 'تیکت قبلاً بسته شده است');
 
-        // Check if ticket is already closed
-        if (ticket.status === 'closed') {
-            return errorResponse(res, 400, 'Ticket is already closed');
-        }
-
-        // Update ticket status to closed
-        const closedTicket = await Ticket.findByIdAndUpdate(
-            id,
-            {
-                status: 'closed'
-            },
-            { new: true, runValidators: true }
-        )
-        .populate('departmentId', 'title')
-        .populate('departmentSubId', 'title')
-        .populate('user', 'name email phone')
-        .populate('product', 'name slug')
-        .populate('parent', 'title status')
-        .select('-__v');
+        const closedTicket = await Ticket.findByIdAndUpdate(id, { status:'closed' }, { new:true, runValidators:true })
+            .populate('departmentId','title')
+            .populate('departmentSubId','title')
+            .populate('user','name email phone')
+            .populate('product','name slug')
+            .populate('parent','title status')
+            .select('-__v');
 
         return successRespons(res, 200, {
             ticket: closedTicket,
-            message: 'Ticket closed successfully'
+            message: 'تیکت با موفقیت بسته شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };

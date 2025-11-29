@@ -16,7 +16,7 @@ exports.createPayment = async function ({ amountInRial, description, mobile }) {
         const data = await response.json();
 
         if (!data.data || !data.data.authority) {
-            throw new Error('Failed to get authority from ZarinPal');
+            throw new Error('دریافت مجوز از زرین پال ناموفق بود');
         }
 
         return {
@@ -43,7 +43,7 @@ exports.verifyPayment = async function ({ amountInRial, authority }) {
         const responseData = await response.json();
 
         if (!responseData.data) {
-            throw new Error('Failed to verify payment');
+            throw new Error('تأیید پرداخت انجام نشد');
         }
 
         return responseData.data;

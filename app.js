@@ -31,7 +31,7 @@ app.use(setHeaders);
 // Health check route - قبل از بقیه routeها
 app.get('/', (req, res) => {
     res.json({ 
-        message: "Coffee Shop API is running",
+        message: "کافی شاپ API در حال اجرا است",
         status: "ok",
         endpoints: {
             auth: "/api/v1/auth",
@@ -71,9 +71,9 @@ app.use('/api/v1/cart', cartRouter);
 app.use('/api/v1/checkout', checkoutRouter);
 // 404 handler - این باید آخرین route باشه
 app.use((req,res) => {
-    console.log('This path is not found :', req.path);
+    console.log('این مسیر پیدا نشد :', req.path);
     return res.status(404).json({
-        message: "404! path not found.please double check the path / method",
+        message: "404! مسیر یافت نشد.لطفا مسیر / متد را دوباره بررسی کنید",
         requestedPath: req.path
     });
 });

@@ -61,37 +61,31 @@ exports.createCategory = async(req,res,next) => {
     try{
         const { name, slug, description, parent, images, color, order, isActive, showOnHomepage, seo } = req.body;
 
-        // Validate request body
         await categorySchema.validate(req.body, { abortEarly: false });
 
-        // Check if slug already exists
         const existingCategory = await Category.findOne({ slug });
         if (existingCategory) {
-            return errorResponse(res, 409, 'Category with this slug already exists');
+            return errorResponse(res, 409, 'دسته‌بندی با این نام کوتاه (slug) از قبل وجود دارد');
         }
 
-        // Validate parent if provided
         if (parent) {
             if (!isValidObjectId(parent)) {
-                return errorResponse(res, 400, 'Invalid parent category ID');
+                return errorResponse(res, 400, 'شناسه دسته‌بندی والد نامعتبر است');
             }
             const parentCategory = await Category.findById(parent);
             if (!parentCategory) {
-                return errorResponse(res, 404, 'Parent category not found');
+                return errorResponse(res, 404, 'دسته‌بندی والد پیدا نشد');
             }
         }
 
-        // Handle image upload if file exists
         let imagePath = images || '/images/categories/default.jpg';
         if (req.file) {
-            // Validate file format
             if (!supportedFormat.includes(req.file.mimetype)) {
-                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                return errorResponse(res, 400, 'فرمت تصویر پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG, PNG, SVG, WEBP, GIF');
             }
             imagePath = req.file.path.replace(/\\/g, '/');
         }
 
-        // Create category object
         const categoryData = {
             name,
             slug,
@@ -104,22 +98,20 @@ exports.createCategory = async(req,res,next) => {
             showOnHomepage: showOnHomepage || false,
         };
 
-        // Add SEO data if provided
         if (seo) {
             categoryData.seo = seo;
         }
 
-        // Create category
         const newCategory = await Category.create(categoryData);
 
         return successRespons(res, 201, {
             category: newCategory,
-            message: 'Category created successfully'
+            message: 'دسته‌بندی با موفقیت ایجاد شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getCategoryTree = async(req,res,next) => {
@@ -128,12 +120,12 @@ exports.getCategoryTree = async(req,res,next) => {
 
         return successRespons(res, 200, {
             categories: categoryTree,
-            message: 'Category tree retrieved successfully'
+            message: 'درخت دسته‌بندی‌ها با موفقیت بازیابی شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getFeaturedCategories = async(req,res,next) => {
@@ -147,12 +139,12 @@ exports.getFeaturedCategories = async(req,res,next) => {
 
         return successRespons(res, 200, {
             categories: featuredCategories,
-            message: 'Featured categories retrieved successfully'
+            message: 'دسته‌بندی‌های ویژه با موفقیت بازیابی شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getRootCategories = async(req,res,next) => {
@@ -161,12 +153,12 @@ exports.getRootCategories = async(req,res,next) => {
 
         return successRespons(res, 200, {
             categories: rootCategories,
-            message: 'Root categories retrieved successfully'
+            message: 'دسته‌بندی‌های اصلی با موفقیت بازیابی شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.updateCategory = async(req,res,next) => {
@@ -174,53 +166,45 @@ exports.updateCategory = async(req,res,next) => {
         const { categoryId } = req.params;
         const { name, slug, description, parent, images, color, order, isActive, showOnHomepage, seo } = req.body;
 
-        // Validate categoryId
         if (!isValidObjectId(categoryId)) {
-            return errorResponse(res, 400, 'Invalid category ID');
+            return errorResponse(res, 400, 'شناسه دسته‌بندی نامعتبر است');
         }
 
-        // Find category
         const category = await Category.findById(categoryId);
         if (!category) {
-            return errorResponse(res, 404, 'Category not found');
+            return errorResponse(res, 404, 'دسته‌بندی پیدا نشد');
         }
 
-        // Validate request body
         await categoryUpdateSchema.validate(req.body, { abortEarly: false });
 
-        // Check slug uniqueness if slug is being updated
         if (slug && slug !== category.slug) {
             const existingCategory = await Category.findOne({ slug, _id: { $ne: categoryId } });
             if (existingCategory) {
-                return errorResponse(res, 409, 'Category with this slug already exists');
-            }
-        };
-
-        // Validate parent if provided
-        if (parent !== undefined && parent !== null) {
-            if (!isValidObjectId(parent)) {
-                return errorResponse(res, 400, 'Invalid parent category ID');
-            }
-            if (parent === categoryId) {
-                return errorResponse(res, 400, 'Category cannot be its own parent');
-            }
-            const parentCategory = await Category.findById(parent);
-            if (!parentCategory) {
-                return errorResponse(res, 404, 'Parent category not found');
+                return errorResponse(res, 409, 'دسته‌بندی با این نام کوتاه (slug) از قبل وجود دارد');
             }
         }
 
-        // Handle image upload if file exists
+        if (parent !== undefined && parent !== null) {
+            if (!isValidObjectId(parent)) {
+                return errorResponse(res, 400, 'شناسه دسته‌بندی والد نامعتبر است');
+            }
+            if (parent === categoryId) {
+                return errorResponse(res, 400, 'دسته‌بندی نمی‌تواند والد خود باشد');
+            }
+            const parentCategory = await Category.findById(parent);
+            if (!parentCategory) {
+                return errorResponse(res, 404, 'دسته‌بندی والد پیدا نشد');
+            }
+        }
+
         let imagePath = images;
         if (req.file) {
-            // Validate file format
             if (!supportedFormat.includes(req.file.mimetype)) {
-                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                return errorResponse(res, 400, 'فرمت تصویر پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG, PNG, SVG, WEBP, GIF');
             }
             imagePath = req.file.path.replace(/\\/g, '/');
-        };
+        }
 
-        // Build update object (only update provided fields)
         const updateData = {};
         if (name !== undefined) updateData.name = name;
         if (slug !== undefined) updateData.slug = slug;
@@ -233,7 +217,6 @@ exports.updateCategory = async(req,res,next) => {
         if (showOnHomepage !== undefined) updateData.showOnHomepage = showOnHomepage;
         if (seo !== undefined) updateData.seo = seo;
 
-        // Update category
         const updatedCategory = await Category.findByIdAndUpdate(
             categoryId,
             updateData,
@@ -242,62 +225,55 @@ exports.updateCategory = async(req,res,next) => {
 
         return successRespons(res, 200, {
             category: updatedCategory,
-            message: 'Category updated successfully'
+            message: 'دسته‌بندی با موفقیت به‌روزرسانی شد'
         });
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.removeCategory = async(req,res,next) => {
     try{
         const { categoryId } = req.params;
 
-        // Validate categoryId
         if (!isValidObjectId(categoryId)) {
-            return errorResponse(res, 400, 'Invalid category ID');
+            return errorResponse(res, 400, 'شناسه دسته‌بندی نامعتبر است');
         }
 
-        // Find category
         const category = await Category.findById(categoryId);
         if (!category) {
-            return errorResponse(res, 404, 'Category not found');
+            return errorResponse(res, 404, 'دسته‌بندی پیدا نشد');
         }
 
-        // Check if category has subcategories
         const subcategoriesCount = await Category.countDocuments({ parent: categoryId });
         if (subcategoriesCount > 0) {
-            return errorResponse(res, 400, 'Cannot delete category with subcategories. Please delete subcategories first');
+            return errorResponse(res, 400, 'امکان حذف دسته‌بندی دارای زیرمجموعه وجود ندارد. لطفاً ابتدا زیرمجموعه‌ها را حذف کنید');
         }
 
-        // Delete category
         await Category.findByIdAndDelete(categoryId);
 
         return successRespons(res, 200, {
-            message: 'Category deleted successfully'
+            message: 'دسته‌بندی با موفقیت حذف شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.getSubcategories = async(req,res,next) => {
     try{
         const { categoryId } = req.params;
 
-        // Validate categoryId
         if (!isValidObjectId(categoryId)) {
-            return errorResponse(res, 400, 'Invalid category ID');
+            return errorResponse(res, 400, 'شناسه دسته‌بندی نامعتبر است');
         }
 
-        // Find category
         const category = await Category.findById(categoryId);
         if (!category) {
-            return errorResponse(res, 404, 'Category not found');
+            return errorResponse(res, 404, 'دسته‌بندی پیدا نشد');
         }
 
-        // Get subcategories
         const subcategories = await Category.find({
             parent: categoryId,
             isActive: true
@@ -312,12 +288,12 @@ exports.getSubcategories = async(req,res,next) => {
                 slug: category.slug
             },
             subcategories,
-            message: 'Subcategories retrieved successfully'
+            message: 'زیرمجموعه‌های دسته‌بندی با موفقیت بازیابی شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.updateCategoryStatus = async(req,res,next) => {
@@ -325,17 +301,14 @@ exports.updateCategoryStatus = async(req,res,next) => {
         const { categoryId } = req.params;
         const { isActive } = req.body;
 
-        // Validate categoryId
         if (!isValidObjectId(categoryId)) {
-            return errorResponse(res, 400, 'Invalid category ID');
+            return errorResponse(res, 400, 'شناسه دسته‌بندی نامعتبر است');
         }
 
-        // Validate isActive
         if (typeof isActive !== 'boolean') {
-            return errorResponse(res, 400, 'isActive must be a boolean value');
+            return errorResponse(res, 400, 'isActive باید یک مقدار منطقی (boolean) باشد');
         }
 
-        // Find and update category
         const category = await Category.findByIdAndUpdate(
             categoryId,
             { isActive },
@@ -343,17 +316,17 @@ exports.updateCategoryStatus = async(req,res,next) => {
         );
 
         if (!category) {
-            return errorResponse(res, 404, 'Category not found');
+            return errorResponse(res, 404, 'دسته‌بندی پیدا نشد');
         }
 
         return successRespons(res, 200, {
             category,
-            message: `Category ${isActive ? 'activated' : 'deactivated'} successfully`
+            message: `دسته‌بندی با موفقیت ${isActive ? 'فعال شد' : 'غیرفعال شد'}`
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
 exports.updateCategoryOrder = async(req,res,next) => {
@@ -361,20 +334,17 @@ exports.updateCategoryOrder = async(req,res,next) => {
         const { categoryId } = req.params;
         const { order } = req.body;
 
-        // Validate categoryId
         if (!isValidObjectId(categoryId)) {
-            return errorResponse(res, 400, 'Invalid category ID');
+            return errorResponse(res, 400, 'شناسه دسته‌بندی نامعتبر است');
         }
 
-        // Validate order
         if (order === undefined || order === null) {
-            return errorResponse(res, 400, 'Order is required');
+            return errorResponse(res, 400, 'مقدار order الزامی است');
         }
         if (typeof order !== 'number' || order < 0) {
-            return errorResponse(res, 400, 'Order must be a positive number');
+            return errorResponse(res, 400, 'order باید یک عدد مثبت باشد');
         }
 
-        // Find and update category
         const category = await Category.findByIdAndUpdate(
             categoryId,
             { order },
@@ -382,15 +352,15 @@ exports.updateCategoryOrder = async(req,res,next) => {
         );
 
         if (!category) {
-            return errorResponse(res, 404, 'Category not found');
+            return errorResponse(res, 404, 'دسته‌بندی پیدا نشد');
         }
 
         return successRespons(res, 200, {
             category,
-            message: 'Category order updated successfully'
+            message: 'ترتیب دسته‌بندی با موفقیت به‌روزرسانی شد'
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
