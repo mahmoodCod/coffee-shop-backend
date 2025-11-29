@@ -5,49 +5,33 @@ const Product = require('../../model/Product');
 const { isValidObjectId } = require('mongoose');
 const { createPaginationData } = require('../../utils');
 
-exports.createValueBuy = async (req,res,next) => {
+exports.createValueBuy = async (req, res, next) => {
     try {
         const { product, features, filters, isActive } = req.body;
 
-        // Validate request body
         await createValueBuyValidator.validate(req.body, { abortEarly: false });
 
-        // Validate product ID
-        if (!isValidObjectId(product)) {
-            return errorResponse(res, 400, 'Invalid product ID');
-        }
+        if (!isValidObjectId(product)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
 
-        // Check if product exists
         const productExists = await Product.findById(product);
-        if (!productExists) {
-            return errorResponse(res, 404, 'Product not found');
-        }
+        if (!productExists) return errorResponse(res, 404, 'محصول یافت نشد');
 
-        // Check if this product already exists in ValueBuy
         const existingValueBuy = await ValueBuy.findOne({ product });
-        if (existingValueBuy) {
-            return errorResponse(res, 409, 'This product already exists in ValueBuy');
-        };
+        if (existingValueBuy) return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy ثبت شده است');
 
-        // Allowed keys for features and filters
         const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
         const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
 
-        // Filter only allowed features
         const filteredFeatures = {};
         allowedFeatures.forEach(key => {
-            if (features && features[key] !== undefined) {
-                filteredFeatures[key] = features[key];
-            }
+            if (features && features[key] !== undefined) filteredFeatures[key] = features[key];
         });
 
-        // Keep filters fixed (from model defaults) and ignore any input from admin
         const filteredFilters = {};
         allowedFilters.forEach(key => {
             filteredFilters[key] = filters && filters[key] !== undefined ? filters[key] : false;
         });
 
-        // Create ValueBuy
         const newValueBuy = await ValueBuy.create({
             product,
             features: filteredFeatures,
@@ -55,73 +39,40 @@ exports.createValueBuy = async (req,res,next) => {
             isActive: isActive !== undefined ? isActive : true,
         });
 
-        // Populate product details
         await newValueBuy.populate('product', 'name slug price image');
 
         return successRespons(res, 201, {
             valueBuy: newValueBuy,
-            message: 'ValueBuy created successfully'
+            message: 'مقدار خرید با موفقیت ایجاد شد',
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
-exports.getAllValueBuy = async (req,res,next) => {
+exports.getAllValueBuy = async (req, res, next) => {
     try {
-        const { 
-            page = 1, 
-            limit = 10, 
-            isActive,
-            recommended,
-            specialDiscount,
-            lowStock,
-            rareDeal,
-            economicChoice,
-            bestValue,
-            topSelling,
-            freeShipping,
-            product
-        } = req.query;
-
-        // Build filters
-        const filters = {};
-
-        // Filter by isActive status
-        if (isActive !== undefined) {
-            filters.isActive = isActive === 'true' || isActive === true;
-        }
-
-        // Filter by product ID
-        if (product !== undefined) {
-            if (isValidObjectId(product)) {
-                filters.product = product;
-            }
-        }
-
-        // Allowed features and filters
-        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
-        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
-
-        // Apply feature filters if provided
-        allowedFeatures.forEach(key => {
-            if (req.query[key] !== undefined) {
-                filters[`features.${key}`] = req.query[key] === 'true' || req.query[key] === true;
-            }
-        });
-
-        // Apply filters (fixed) if provided
-        allowedFilters.forEach(key => {
-            if (req.query[key] !== undefined) {
-                filters[`filters.${key}`] = req.query[key] === 'true' || req.query[key] === true;
-            }
-        });
-        // Parse pagination parameters
+        const { page = 1, limit = 10, product, isActive } = req.query;
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Find ValueBuy items with filters, pagination, and populate product
+        const filters = {};
+
+        if (isActive !== undefined) filters.isActive = isActive === 'true' || isActive === true;
+        if (product && isValidObjectId(product)) filters.product = product;
+
+        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
+        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
+
+        allowedFeatures.forEach(key => {
+            if (req.query[key] !== undefined) filters[`features.${key}`] = req.query[key] === 'true';
+        });
+
+        allowedFilters.forEach(key => {
+            if (req.query[key] !== undefined) filters[`filters.${key}`] = req.query[key] === 'true';
+        });
+
         const valueBuys = await ValueBuy.find(filters)
             .populate('product', 'name slug price image stock brand category')
             .sort({ createdAt: 'desc' })
@@ -129,7 +80,6 @@ exports.getAllValueBuy = async (req,res,next) => {
             .limit(limitNum)
             .select('-__v');
 
-        // Count total ValueBuy items with filters
         const totalValueBuys = await ValueBuy.countDocuments(filters);
 
         return successRespons(res, 200, {
@@ -139,137 +89,86 @@ exports.getAllValueBuy = async (req,res,next) => {
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
-exports.getOneValueBuy = async (req,res,next) => {
+exports.getOneValueBuy = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
 
-        // Validate ValueBuy ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid ValueBuy ID');
-        }
-
-        // Find ValueBuy by ID and populate product
         const valueBuy = await ValueBuy.findById(id)
             .populate('product', 'name slug price image stock brand category description')
             .select('-__v');
 
-        // Check if ValueBuy exists
-        if (!valueBuy) {
-            return errorResponse(res, 404, 'ValueBuy not found');
-        }
+        if (!valueBuy) return errorResponse(res, 404, 'ValueBuy یافت نشد');
 
-        return successRespons(res, 200, {
-            valueBuy,
-        });
+        return successRespons(res, 200, { valueBuy });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
-exports.updateValueBuy = async (req,res,next) => {
+exports.updateValueBuy = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { product, features,isActive } = req.body;
+        const { product, features, isActive } = req.body;
 
-        // Validate ValueBuy ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid ValueBuy ID');
-        }
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
 
-        // Find ValueBuy
         const existingValueBuy = await ValueBuy.findById(id);
-        if (!existingValueBuy) {
-            return errorResponse(res, 404, 'ValueBuy not found');
-        }
+        if (!existingValueBuy) return errorResponse(res, 404, 'ValueBuy یافت نشد');
 
-        // Validate request body
         await updateValueBuyValidator.validate(req.body, { abortEarly: false });
 
-        // Build update object (only update provided fields)
         const updateData = {};
 
-        // Check if product is being updated
         if (product !== undefined) {
-            // Validate product ID
-            if (!isValidObjectId(product)) {
-                return errorResponse(res, 400, 'Invalid product ID');
-            }
+            if (!isValidObjectId(product)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
 
-            // Check if product exists
             const productExists = await Product.findById(product);
-            if (!productExists) {
-                return errorResponse(res, 404, 'Product not found');
+            if (!productExists) return errorResponse(res, 404, 'محصول یافت نشد');
+
+            if (product !== existingValueBuy.product.toString()) {
+                const duplicate = await ValueBuy.findOne({ product });
+                if (duplicate) return errorResponse(res, 409, 'این محصول قبلاً در یک ValueBuy دیگر ثبت شده است');
             }
 
-            // Check if this product already exists in another ValueBuy
-            if (product !== existingValueBuy.product.toString()) {
-                const duplicateValueBuy = await ValueBuy.findOne({ product });
-                if (duplicateValueBuy) {
-                    return errorResponse(res, 409, 'This product already exists in another ValueBuy');
-                }
-            }
             updateData.product = product;
         }
 
-        // Update features if provided
-        if (features !== undefined) {
-            updateData.features = {
-                ...existingValueBuy.features,
-                ...features
-            };
-        }
+        if (features !== undefined) updateData.features = { ...existingValueBuy.features, ...features };
+        if (isActive !== undefined) updateData.isActive = isActive;
 
-        // Update isActive if provided
-        if (isActive !== undefined) {
-            updateData.isActive = isActive;
-        }
-
-        // Update ValueBuy
-        const updatedValueBuy = await ValueBuy.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, runValidators: true }
-        )
-        .populate('product', 'name slug price image stock brand category description')
-        .select('-__v');
+        const updatedValueBuy = await ValueBuy.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
+            .populate('product', 'name slug price image stock brand category description')
+            .select('-__v');
 
         return successRespons(res, 200, {
             valueBuy: updatedValueBuy,
-            message: 'ValueBuy updated successfully'
+            message: 'ValueBuy با موفقیت بروزرسانی شد',
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };
 
-exports.deleteValueBuy = async (req,res,next) => {
+exports.deleteValueBuy = async (req, res, next) => {
     try {
         const { id } = req.params;
+        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
 
-        // Validate ValueBuy ID
-        if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid ValueBuy ID');
-        }
-
-        // Find and delete ValueBuy
         const deletedValueBuy = await ValueBuy.findByIdAndDelete(id);
-
-        // Check if ValueBuy exists
-        if (!deletedValueBuy) {
-            return errorResponse(res, 404, 'ValueBuy not found');
-        }
+        if (!deletedValueBuy) return errorResponse(res, 404, 'ValueBuy یافت نشد');
 
         return successRespons(res, 200, {
-            message: 'ValueBuy deleted successfully',
-            valueBuy: deletedValueBuy
+            valueBuy: deletedValueBuy,
+            message: 'ValueBuy با موفقیت حذف شد',
         });
 
     } catch (err) {
         next(err);
-    };
+    }
 };

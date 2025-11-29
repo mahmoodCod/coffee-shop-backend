@@ -8,27 +8,27 @@ const shebaRegex = /^IR[0-9]{24}$/; // Sheba IBAN: IR + 24 digits
 const createBankAccountValidator = yup.object().shape({
     user: yup
         .string()
-        .required("user is required")
-        .test("is-objectid", "Invalid user ID", isValidObjectId),
+        .required("کاربر مورد نیاز است")
+        .test("عینی است", "شناسه کاربری نامعتبر است", isValidObjectId),
 
     bankName: yup
         .string()
-        .required("bankName is required")
-        .min(2, "bankName must be at least 2 characters"),
+        .required("نام بانک الزامی است")
+        .min(2, "bankName باید حداقل 2 کاراکتر باشد"),
 
     cardNumber: yup
         .string()
-        .required("cardNumber is required")
-        .matches(cardNumberRegex, "cardNumber must be exactly 16 digits"),
+        .required("شماره کارت الزامی است")
+        .matches(cardNumberRegex, "شماره کارت باید دقیقا 16 رقمی باشد"),
 
     shebaNumber: yup
         .string()
-        .required("shebaNumber is required")
-        .matches(shebaRegex, "shebaNumber must start with IR and contain 24 digits after it"),
+        .required("shebaNumber مورد نیاز است")
+        .matches(shebaRegex, "shebaNumber باید با IR شروع شود و بعد از آن شامل 24 رقم باشد"),
 
     accountType: yup
         .string()
-        .oneOf(['حساب جاری', 'پس‌انداز', 'دیگر'], "Invalid accountType")
+        .oneOf(['حساب جاری', 'پس‌انداز', 'دیگر'], "نوع حساب نامعتبر است")
         .default('حساب جاری'),
 
     isActive: yup.boolean().default(true)
@@ -37,22 +37,22 @@ const createBankAccountValidator = yup.object().shape({
 const updateBankAccountValidator = yup.object().shape({
     bankName: yup
         .string()
-        .min(2, "bankName must be at least 2 characters")
+        .min(2, "bankName باید حداقل 2 کاراکتر باشد")
         .optional(),
 
     cardNumber: yup
         .string()
-        .matches(cardNumberRegex, "cardNumber must be exactly 16 digits")
+        .matches(cardNumberRegex, "شماره کارت باید دقیقا 16 رقمی باشد")
         .optional(),
 
     shebaNumber: yup
         .string()
-        .matches(shebaRegex, "shebaNumber must start with IR and contain 24 digits after it")
+        .matches(shebaRegex, "shebaNumber باید با IR شروع شود و بعد از آن شامل 24 رقم باشد")
         .optional(),
 
     accountType: yup
         .string()
-        .oneOf(['حساب جاری', 'پس‌انداز', 'دیگر'], "Invalid accountType")
+        .oneOf(['حساب جاری', 'پس‌انداز', 'دیگر'], "نوع حساب نامعتبر است")
         .optional(),
 
     isActive: yup.boolean().optional()

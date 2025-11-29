@@ -7,21 +7,21 @@ const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", 
 const createValueBuyValidator  = yup.object().shape({
     product: yup
         .string()
-        .required("Product ID is required")
-        .test("is-objectid", "Invalid Product ID", (value) =>
+        .required("شناسه محصول الزامی است")
+        .test("is-objectid", "شناسه محصول معتبر نیست", (value) =>
             isValidObjectId(value)
         ),
 
     features: yup
         .array()
         .of(yup.string().oneOf(allowedFeatures))
-        .required("Features array is required")
+        .required("آرایه ویژگی‌ها الزامی است")
         .default(["پیشنهاد شده"]),
 
     filters: yup
         .array()
         .of(yup.string().oneOf(allowedFilters))
-        .required("Filters array is required")
+        .required("آرایه فیلترها الزامی است")
         .default(["انتخاب اقتصادی"]),
 
     isActive: yup.boolean().default(true),
@@ -31,7 +31,7 @@ const updateValueBuyValidator = yup.object().shape({
     product: yup
         .string()
         .notRequired()
-        .test("is-objectid", "Invalid Product ID", (value) => {
+        .test("is-objectid", "شناسه محصول معتبر نیست", (value) => {
             if (!value) return true;
             return isValidObjectId(value);
         }),

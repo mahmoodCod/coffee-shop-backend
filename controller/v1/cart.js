@@ -1,18 +1,18 @@
 const { errorResponse, successRespons } = require('../../helpers/responses');
-const {addToCartValidator, removeFromCartValidator} = require('../../validator/cart');
+const { addToCartValidator, removeFromCartValidator } = require('../../validator/cart');
 const Product = require('../../model/Product');
 const Cart = require('../../model/Cart');
 const { isValidObjectId } = require('mongoose');
 
-exports.getCart = async (req,res,next) => {
+exports.getCart = async (req, res, next) => {
     try {
         const userId = req.user._id;
 
         let cart = await Cart.findOne({ user: userId }).populate('items.product');
 
         if (!cart) {
-            return successRespons(res, 200,{
-                message: "Cart is empty",
+            return successRespons(res, 200, {
+                message: "سبد خرید خالی است",
                 cart: {
                     items: [],
                     totalPrice: 0
@@ -20,8 +20,8 @@ exports.getCart = async (req,res,next) => {
             });
         }
 
-        return successRespons(res,200,{
-            message: "Cart retrieved successfully",
+        return successRespons(res, 200, {
+            message: "سبد خرید با موفقیت بازیابی شد",
             cart: {
                 items: cart.items,
                 totalPrice: cart.totalPrice
@@ -33,27 +33,27 @@ exports.getCart = async (req,res,next) => {
     }
 };
 
-exports.addCart = async (req,res,next) => {
+exports.addCart = async (req, res, next) => {
     try {
         await addToCartValidator.validate(req.body, { abortEarly: false });
-        
+
         const user = req.user;
         const { productId, quantity } = req.body;
 
-        if (!isValidObjectId(productId)){
-            return errorResponse(res,400, 'Product is not valid !!');
-        };
+        if (!isValidObjectId(productId)) {
+            return errorResponse(res, 400, 'شناسه محصول معتبر نیست');
+        }
 
         const product = await Product.findById(productId);
         if (!product) {
-            return errorResponse(res,404, 'Product not found !!');
-        };
+            return errorResponse(res, 404, 'محصول پیدا نشد');
+        }
 
         const productDetails = product;
 
         if (!productDetails) {
-            return errorResponse(res,400, 'Product does not sell !!');
-        };
+            return errorResponse(res, 400, 'این محصول قابل فروش نیست');
+        }
 
         const cart = await Cart.findOne({ user: user._id });
         const priceAtTimeOfAdding = productDetails.price;
@@ -70,14 +70,12 @@ exports.addCart = async (req,res,next) => {
                 ],
             });
 
-            return successRespons(res,200, {
+            return successRespons(res, 200, {
                 cart: newCart
             });
-        };
+        }
 
-        const existingItem = cart.items.find((item) => {
-            return item.product.toString() === productId ;
-        });
+        const existingItem = cart.items.find((item) => item.product.toString() === productId);
 
         if (existingItem) {
             existingItem.quantity += quantity;
@@ -87,17 +85,17 @@ exports.addCart = async (req,res,next) => {
                 quantity,
                 priceAtTimeOfAdding,
             });
-        };
+        }
 
         await cart.save();
 
-        return successRespons(res,200, { cart });
+        return successRespons(res, 200, { cart });
     } catch (err) {
         next(err);
-    };
+    }
 };
 
-exports.removeCart = async (req,res,next) => {
+exports.removeCart = async (req, res, next) => {
     try {
         await removeFromCartValidator.validate(req.body, { abortEarly: false });
 
@@ -105,19 +103,19 @@ exports.removeCart = async (req,res,next) => {
         const { productId } = req.body;
 
         if (!isValidObjectId(productId)) {
-            return errorResponse(res, 400, 'Product ID is not valid');
+            return errorResponse(res, 400, 'شناسه محصول معتبر نیست');
         }
 
         const cart = await Cart.findOne({ user: userId });
 
         if (!cart) {
-            return errorResponse(res, 404, 'Cart not found');
+            return errorResponse(res, 404, 'سبد خرید پیدا نشد');
         }
 
         const itemIndex = cart.items.findIndex(item => item.product.toString() === productId);
 
         if (itemIndex === -1) {
-            return errorResponse(res, 404, 'Product not found in cart');
+            return errorResponse(res, 404, 'محصول در سبد خرید یافت نشد');
         }
 
         cart.items.splice(itemIndex, 1);
@@ -125,7 +123,7 @@ exports.removeCart = async (req,res,next) => {
         await cart.save();
 
         return successRespons(res, 200, {
-            message: 'Product removed from cart successfully',
+            message: 'محصول با موفقیت از سبد خرید حذف شد',
             cart,
             totalPrice: cart.totalPrice
         });
@@ -135,7 +133,7 @@ exports.removeCart = async (req,res,next) => {
     }
 };
 
-exports.updateCart = async (req,res,next) => {
+exports.updateCart = async (req, res, next) => {
     try {
         await addToCartValidator.validate(req.body, { abortEarly: false });
 
@@ -143,23 +141,23 @@ exports.updateCart = async (req,res,next) => {
         const { productId, quantity } = req.body;
 
         if (!isValidObjectId(productId)) {
-            return errorResponse(res, 400, 'Product ID is not valid');
+            return errorResponse(res, 400, 'شناسه محصول معتبر نیست');
         }
 
         if (quantity < 1) {
-            return errorResponse(res, 400, 'Quantity must be at least 1');
+            return errorResponse(res, 400, 'تعداد محصول باید حداقل ۱ باشد');
         }
 
         const cart = await Cart.findOne({ user: userId });
 
         if (!cart) {
-            return errorResponse(res, 404, 'Cart not found');
+            return errorResponse(res, 404, 'سبد خرید پیدا نشد');
         }
 
         const item = cart.items.find(item => item.product.toString() === productId);
 
         if (!item) {
-            return errorResponse(res, 404, 'Product not found in cart');
+            return errorResponse(res, 404, 'محصول در سبد خرید یافت نشد');
         }
 
         item.quantity = quantity;
@@ -167,7 +165,7 @@ exports.updateCart = async (req,res,next) => {
         await cart.save();
 
         return successRespons(res, 200, {
-            message: 'Cart updated successfully',
+            message: 'سبد خرید با موفقیت به‌روزرسانی شد',
             cart,
             totalPrice: cart.totalPrice
         });
@@ -177,7 +175,7 @@ exports.updateCart = async (req,res,next) => {
     }
 };
 
-exports.clearCart = async (req,res,next) => {
+exports.clearCart = async (req, res, next) => {
     try {
         const userId = req.user._id;
 
@@ -185,7 +183,7 @@ exports.clearCart = async (req,res,next) => {
 
         if (!cart) {
             return successRespons(res, 200, {
-                message: 'Cart is already empty',
+                message: 'سبد خرید پیش‌تر خالی است',
                 cart: {
                     items: [],
                     totalPrice: 0
@@ -198,7 +196,7 @@ exports.clearCart = async (req,res,next) => {
         await cart.save();
 
         return successRespons(res, 200, {
-            message: 'Cart cleared successfully',
+            message: 'سبد خرید با موفقیت خالی شد',
             cart: {
                 items: [],
                 totalPrice: 0

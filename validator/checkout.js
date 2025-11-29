@@ -7,42 +7,42 @@ const objectIdValidation = (value) => !value || isValidObjectId(value);
 const checkoutItemValidator = yup.object().shape({
     product: yup
         .string()
-        .required("product is required")
-        .test("is-objectid", "Invalid product ID", objectIdValidation),
+        .required("محصول مورد نیاز است")
+        .test("عینی است", "شناسه محصول نامعتبر است", objectIdValidation),
 
     quantity: yup
         .number()
-        .required("quantity is required")
-        .min(1, "quantity must be at least 1"),
+        .required("شناسه محصول نامعتبر است")
+        .min(1, "مقدار باید حداقل 1 باشد"),
 
     priceAtTimeOfPurchase: yup
         .number()
-        .required("priceAtTimeOfPurchase is required")
-        .min(0, "priceAtTimeOfPurchase must be >= 0"),
+        .required("PriceAtTimeOfPurchase مورد نیاز است")
+        .min(0, "priceAtTimeOfPurchase باید >= 0 باشد"),
 });
 
 const createCheckoutValidator = yup.object().shape({
     user: yup
         .string()
-        .test("is-objectid", "Invalid user ID", objectIdValidation),
+        .test("عینی هست", "شناسه کاربری نامعتبر است", objectIdValidation),
 
     items: yup
         .array()
         .of(checkoutItemValidator)
-        .min(1, "Checkout must have at least 1 item"),
+        .min(1, "تسویه حساب باید حداقل 1 مورد داشته باشد"),
         // .required("items are required"),
 
     // shippingAddress: checkoutItemValidator.required(),
 
     shippingAddressId: yup
         .string()
-        .required("Shipping address is required")
-        .test("is-objectid", "Invalid address ID", objectIdValidation),
+        .required("آدرس حمل و نقل الزامی است")
+        .test("عینی هست", "شناسه آدرس نامعتبر است", objectIdValidation),
 
     authority: yup
         .string()
         // .required("authority is required")
-        .min(5, "authority must be at least 5 characters"),
+        .min(5, "اعتبار باید حداقل 5 کاراکتر باشد"),
 
     discountCode: yup
         .string()
@@ -74,7 +74,7 @@ const updateCheckoutValidator = yup.object().shape({
 
     authority: yup
         .string()
-        .min(5, "authority must be at least 5 characters")
+        .min(5, "اعتبار باید حداقل 5 کاراکتر باشد")
         .notRequired(),
 
     discountCode: yup

@@ -15,13 +15,13 @@ exports.createCheckout = async (req,res,next) => {
         const cart = await Cart.findOne({ user: user._id }).populate('items.product');
 
         if (!cart?.items?.length) {
-            return errorResponse(res, 400, 'Cart is empty or not found!');
+            return errorResponse(res, 400, 'سبد خرید خالی است یا یافت نشد');
         }
 
         const { shippingAddressId } = req.body;
         const shippingAddress = user.addresses.find(addr => addr._id.toString() === shippingAddressId);
         if (!shippingAddress) {
-            return errorResponse(res, 400, 'Shipping address is invalid!');
+            return errorResponse(res, 400, 'آدرس ارسال نامعتبر است');
         }
 
         const checkoutItems = cart.items.map(item => ({
@@ -39,7 +39,7 @@ exports.createCheckout = async (req,res,next) => {
         });
 
         if (!payment || !payment.authority) {
-            return errorResponse(res, 500, 'Failed to create payment.');
+            return errorResponse(res, 500, 'ایجاد پرداخت با مشکل مواجه شد');
         }
 
         const newCheckout = new Checkout({
@@ -53,7 +53,7 @@ exports.createCheckout = async (req,res,next) => {
         await newCheckout.save();
 
         return successRespons(res, 201, {
-            message: 'Checkout created successfully!',
+            message: 'فرآیند تسویه حساب با موفقیت ایجاد شد',
             checkout: newCheckout,
             paymentUrl: payment.paymentUrl,
         });
@@ -69,12 +69,12 @@ exports.verifyCheckout = async (req,res,next) => {
 
         const alreadyCreateOrder = await Order.findOne({ authority });
         if (alreadyCreateOrder) {
-            return errorResponse(res, 400, 'Payment already verified!');
+            return errorResponse(res, 400, 'پرداخت قبلاً تأیید شده است');
         }
 
         const checkout = await Checkout.findOne({ authority });
         if (!checkout) {
-            return errorResponse(res, 404, 'Checkout not found!');
+            return errorResponse(res, 404, 'فرآیند تسویه حساب یافت نشد');
         }
 
         const payment = await verifyPayment({
@@ -83,7 +83,7 @@ exports.verifyCheckout = async (req,res,next) => {
         });
 
         if (![100, 101].includes(payment.data.code)) {
-            return errorResponse(res, 400, 'Payment not verified!');
+            return errorResponse(res, 400, 'پرداخت تأیید نشد');
         }
 
         const order = new Order({
@@ -107,7 +107,7 @@ exports.verifyCheckout = async (req,res,next) => {
         await checkout.deleteOne();
 
         return successRespons(res, 200, {
-            message: "Payment verified successfully!",
+            message: "پرداخت با موفقیت تأیید شد",
             order,
         });
     } catch (err) {

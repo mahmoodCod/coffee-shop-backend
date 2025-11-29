@@ -4,22 +4,22 @@ const createDiscountCodeValidator = yup.object().shape({
     code: yup
         .string()
         .trim()
-        .required("Discount code is required"),
+        .required("کد تخفیف الزامی است"),
 
     percentage: yup
         .number()
-        .required("Percentage is required")
-        .min(1, "Percentage must be at least 1%")
-        .max(100, "Percentage cannot exceed 100%"),
+        .required("درصد لازم است")
+        .min(1, "درصد باید حداقل 1٪ باشد")
+        .max(100, "درصد نمی تواند از 100٪ تجاوز کند"),
 
     expiresAt: yup
         .date()
-        .required("Expiration date is required")
-        .min(new Date(), "Expiration date must be in the future"),
+        .required("تاریخ انقضا الزامی است")
+        .min(new Date(), "تاریخ انقضا باید در آینده باشد"),
 
     usageLimit: yup
         .number()
-        .min(1, "Usage limit must be at least 1")
+        .min(1, "محدودیت استفاده باید حداقل 1 باشد")
         .default(1),
 
     isActive: yup
@@ -34,16 +34,15 @@ const updateDiscountCodeValidator = yup.object().shape({
 
     percentage: yup
         .number()
-        .min(1, "Percentage must be at least 1%")
-        .max(100, "Percentage cannot exceed 100%"),
+        .min(1, "درصد باید حداقل 1٪ باشد")
+        .max(100, "درصد نمی تواند از 100٪ تجاوز کند"),
 
     expiresAt: yup
         .date()
-        .min(new Date(), "Expiration date must be in the future"),
-
+        .min(new Date(), "تاریخ انقضا باید در آینده باشد"),
     usageLimit: yup
         .number()
-        .min(1, "Usage limit must be at least 1"),
+        .min(1, "محدودیت استفاده باید حداقل 1 باشد"),
 
     isActive: yup
         .boolean(),
@@ -53,7 +52,7 @@ const applyDiscountCodeValidator = yup.object().shape({
     code: yup
         .string()
         .trim()
-        .required("Discount code is required"),
+        .required("کد تخفیف الزامی است"),
 });
 
 module.exports = {

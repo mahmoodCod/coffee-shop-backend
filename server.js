@@ -11,11 +11,11 @@ const port = process.env.PORT || 4000;
 
 (async () => {
     await mongoose.connect(process.env.MONGO_URL);
-    console.log('MongoDB connected');
+    console.log('MongoDB متصل شد');
 })();
 
 configSwagger(app);
 
 app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+    console.log(`سرور در حال اجرا بر روی پورت ${port}`);
 });

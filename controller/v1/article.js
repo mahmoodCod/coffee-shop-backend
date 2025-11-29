@@ -84,13 +84,13 @@ exports.createArticle = async (req,res,next) => {
 
         // Validate category ID
         if (!isValidObjectId(category)) {
-            return errorResponse(res, 400, `Invalid category ID: ${category}`);
+            return errorResponse(res, 400, `شناسه دسته نامعتبر است: ${category}`);
         }
 
         // Check if category exists
         const categoryExists = await Category.findById(category);
         if (!categoryExists) {
-            return errorResponse(res, 404, `Category not found: ${category}`);
+            return errorResponse(res, 404, `دسته پیدا نشد: ${category}`);
         }
 
         // Handle cover image upload
@@ -98,17 +98,17 @@ exports.createArticle = async (req,res,next) => {
         if (req.file) {
             // Validate file format (optional - you can add more validation)
             if (!supportedFormat.includes(req.file.mimetype)) {
-                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, WEBP, GIF');
+                return errorResponse(res, 400, 'فرمت فایل پشتیبانی نشده فرمت های پشتیبانی شده: JPEG، PNG، WEBP، GIF');
             }
             coverPath = req.file.path.replace(/\\/g, '/');
         } else {
-            return errorResponse(res, 400, 'Cover image is required');
+            return errorResponse(res, 400, 'تصویر جلد الزامی است');
         }
 
         // Check if href (link) already exists
         const existingArticle = await Article.findOne({ href });
         if (existingArticle) {
-            return errorResponse(res, 400, `Article with link "${href}" already exists`);
+            return errorResponse(res, 400, `مقاله با لینک "${href}" در حال حاضر وجود دارد`);
         }
 
         // Create article
@@ -133,7 +133,7 @@ exports.createArticle = async (req,res,next) => {
         await newArticle.populate('creator', 'name email');
 
         return successRespons(res, 201, {
-            message: 'Article created successfully :))',
+            message: 'مقاله با موفقیت ایجاد شد :))',
             article: newArticle
         });
 
@@ -153,12 +153,12 @@ exports.getOne = async (req,res,next) => {
 
         // Check if article exists
         if (!article) {
-            return errorResponse(res, 404, 'Article not found');
+            return errorResponse(res, 404, 'مقاله یافت نشد');
         }
 
         // Check if article is published (publish === 1)
         if (article.publish !== 1) {
-            return errorResponse(res, 404, 'Article not found');
+            return errorResponse(res, 404, 'مقاله یافت نشد');
         }
 
         return successRespons(res, 200, {
@@ -176,7 +176,7 @@ exports.deleteArticle = async (req,res,next) => {
 
         // Validate article ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid article ID');
+            return errorResponse(res, 400, 'شناسه مقاله نامعتبر است');
         }
 
         // Find and delete article
@@ -184,11 +184,11 @@ exports.deleteArticle = async (req,res,next) => {
 
         // Check if article exists
         if (!deletedArticle) {
-            return errorResponse(res, 404, 'Article not found');
+            return errorResponse(res, 404, 'مقاله یافت نشد');
         }
 
         return successRespons(res, 200, {
-            message: 'Article deleted successfully :))',
+            message: 'مقاله با موفقیت حذف شد :))',
             article: deletedArticle
         });
 
@@ -197,59 +197,57 @@ exports.deleteArticle = async (req,res,next) => {
     };
 };
 
-exports.updateArticle = async (req,res,next) => {
+exports.updateArticle = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { title, excerpt, discription, body, href, category, badge, readTime, author, date, publish } = req.body;
 
         // Validate article ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid article ID');
+            return errorResponse(res, 400, 'شناسه مقاله معتبر نیست');
         }
 
         // Find article
         const existingArticle = await Article.findById(id);
         if (!existingArticle) {
-            return errorResponse(res, 404, 'Article not found');
+            return errorResponse(res, 404, 'مقاله پیدا نشد');
         }
 
         // Validate request body
         await updateArticleValidator.validate(req.body, { abortEarly: false });
 
-        // Build update object (only update provided fields)
         const updateData = {};
 
-        // Handle category if provided
+        // Handle category
         if (category !== undefined) {
             if (!isValidObjectId(category)) {
-                return errorResponse(res, 400, `Invalid category ID: ${category}`);
+                return errorResponse(res, 400, `شناسه دسته‌بندی معتبر نیست: ${category}`);
             }
             const categoryExists = await Category.findById(category);
             if (!categoryExists) {
-                return errorResponse(res, 404, `Category not found: ${category}`);
+                return errorResponse(res, 404, `دسته‌بندی پیدا نشد: ${category}`);
             }
             updateData.category = category;
         }
 
-        // Handle cover image upload if file exists
+        // Handle cover upload
         if (req.file) {
-            // Validate file format
             if (!supportedFormat.includes(req.file.mimetype)) {
-                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                return errorResponse(res, 400, 'فرمت فایل پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG، PNG، SVG، WEBP، GIF');
             }
             updateData.cover = req.file.path.replace(/\\/g, '/');
         }
 
-        // Handle href if provided (check for duplicate)
+        // Handle href
         if (href !== undefined && href !== existingArticle.href) {
             const duplicateArticle = await Article.findOne({ href });
             if (duplicateArticle) {
-                return errorResponse(res, 400, `Article with link "${href}" already exists`);
+                return errorResponse(res, 400, `مقاله‌ای با لینک "${href}" از قبل وجود دارد`);
             }
             updateData.href = href;
         }
 
-        // Add other fields if provided
+        // Add optional fields
         if (title !== undefined) updateData.title = title;
         if (excerpt !== undefined) updateData.excerpt = excerpt;
         if (discription !== undefined) updateData.discription = discription;
@@ -270,69 +268,65 @@ exports.updateArticle = async (req,res,next) => {
         .populate('creator', 'name email');
 
         return successRespons(res, 200, {
-            message: 'Article updated successfully :))',
+            message: 'مقاله با موفقیت به‌روزرسانی شد',
             article: updatedArticle
         });
 
     } catch (err) {
-        next (err);
-    };
+        next(err);
+    }
 };
 
-exports.saveDraft = async (req,res,next) => {
+
+exports.saveDraft = async (req, res, next) => {
     try {
-        const user = req.user;
         const { id } = req.params;
         const { title, excerpt, discription, body, href, category, badge, readTime, author, date } = req.body;
 
         // Validate article ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid article ID');
+            return errorResponse(res, 400, 'شناسه مقاله معتبر نیست');
         }
 
-        // Find article
         const existingArticle = await Article.findById(id);
         if (!existingArticle) {
-            return errorResponse(res, 404, 'Article not found');
+            return errorResponse(res, 404, 'مقاله پیدا نشد');
         }
 
-        // Validate request body (use updateArticleValidator since all fields are optional)
         await updateArticleValidator.validate(req.body, { abortEarly: false });
 
-        // Build update object (only update provided fields)
         const updateData = {};
 
-        // Handle category if provided
+        // Category
         if (category !== undefined) {
             if (!isValidObjectId(category)) {
-                return errorResponse(res, 400, `Invalid category ID: ${category}`);
+                return errorResponse(res, 400, `شناسه دسته‌بندی معتبر نیست: ${category}`);
             }
             const categoryExists = await Category.findById(category);
             if (!categoryExists) {
-                return errorResponse(res, 404, `Category not found: ${category}`);
+                return errorResponse(res, 404, `دسته‌بندی پیدا نشد: ${category}`);
             }
             updateData.category = category;
         }
 
-        // Handle cover image upload if file exists
+        // Cover
         if (req.file) {
-            // Validate file format
             if (!supportedFormat.includes(req.file.mimetype)) {
-                return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                return errorResponse(res, 400, 'فرمت فایل پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG، PNG، SVG، WEBP، GIF');
             }
             updateData.cover = req.file.path.replace(/\\/g, '/');
         }
 
-        // Handle href if provided (check for duplicate, but only if different from current)
+        // href duplicate check
         if (href !== undefined && href !== existingArticle.href) {
             const duplicateArticle = await Article.findOne({ href });
             if (duplicateArticle && duplicateArticle._id.toString() !== id) {
-                return errorResponse(res, 400, `Article with link "${href}" already exists`);
+                return errorResponse(res, 400, `مقاله‌ای با لینک "${href}" از قبل وجود دارد`);
             }
             updateData.href = href;
         }
 
-        // Add other fields if provided
+        // Fields
         if (title !== undefined) updateData.title = title;
         if (excerpt !== undefined) updateData.excerpt = excerpt;
         if (discription !== undefined) updateData.discription = discription;
@@ -342,10 +336,9 @@ exports.saveDraft = async (req,res,next) => {
         if (author !== undefined) updateData.author = author;
         if (date !== undefined) updateData.date = new Date(date);
 
-        // Always set publish to 0 (draft) when saving as draft
+        // Saving draft → always publish = 0
         updateData.publish = 0;
 
-        // Update article
         const updatedArticle = await Article.findByIdAndUpdate(
             id,
             updateData,
@@ -355,11 +348,11 @@ exports.saveDraft = async (req,res,next) => {
         .populate('creator', 'name email');
 
         return successRespons(res, 200, {
-            message: 'Draft saved successfully :))',
+            message: 'پیش‌نویس با موفقیت ذخیره شد',
             article: updatedArticle
         });
 
     } catch (err) {
-        next (err);
-    };
+        next(err);
+    }
 };

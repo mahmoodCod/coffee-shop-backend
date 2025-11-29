@@ -8,16 +8,13 @@ exports.createDiscountCode = async (req,res,next) => {
     try {
         const { code, percentage, expiresAt, usageLimit, isActive } = req.body;
 
-        // Validate request body
         await createDiscountCodeValidator.validate(req.body, { abortEarly: false });
 
-        // Check if code already exists
         const existingDiscountCode = await DiscountCode.findOne({ code: code.trim().toUpperCase() });
         if (existingDiscountCode) {
-            return errorResponse(res, 409, 'Discount code already exists');
+            return errorResponse(res, 409, 'کد تخفیف قبلاً ثبت شده است');
         }
 
-        // Create discount code
         const newDiscountCode = await DiscountCode.create({
             code: code.trim().toUpperCase(),
             percentage,
@@ -28,7 +25,7 @@ exports.createDiscountCode = async (req,res,next) => {
 
         return successRespons(res, 201, {
             discountCode: newDiscountCode,
-            message: 'Discount code created successfully'
+            message: 'کد تخفیف با موفقیت ایجاد شد'
         });
 
     } catch (err) {
@@ -39,31 +36,19 @@ exports.createDiscountCode = async (req,res,next) => {
 exports.getAllDiscountCode = async (req,res,next) => {
     try {
         const { page = 1, limit = 10, isActive, search } = req.query;
-
-        // Build filters
         const filters = {};
 
-        // Filter by isActive status
-        if (isActive !== undefined) {
-            filters.isActive = isActive === 'true' || isActive === true;
-        }
+        if (isActive !== undefined) filters.isActive = isActive === 'true' || isActive === true;
+        if (search) filters.code = { $regex: search, $options: 'i' };
 
-        // Search by code
-        if (search) {
-            filters.code = { $regex: search, $options: 'i' };
-        }
-
-        // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Find discount codes with filters, pagination
         const discountCodes = await DiscountCode.find(filters)
             .sort({ createdAt: 'desc' })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum);
 
-        // Count total discount codes with filters
         const totalDiscountCodes = await DiscountCode.countDocuments(filters);
 
         return successRespons(res, 200, {
@@ -80,22 +65,16 @@ exports.getOneDiscountCode = async (req,res,next) => {
     try {
         const { id } = req.params;
 
-        // Validate discount code ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid discount code ID');
+            return errorResponse(res, 400, 'شناسه کد تخفیف معتبر نیست');
         }
 
-        // Find discount code by ID
         const discountCode = await DiscountCode.findById(id);
-
-        // Check if discount code exists
         if (!discountCode) {
-            return errorResponse(res, 404, 'Discount code not found');
+            return errorResponse(res, 404, 'کد تخفیف یافت نشد');
         }
 
-        return successRespons(res, 200, {
-            discountCode,
-        });
+        return successRespons(res, 200, { discountCode });
 
     } catch (err) {
         next(err);
@@ -107,31 +86,23 @@ exports.updateDiscountCode = async (req,res,next) => {
         const { id } = req.params;
         const { code, percentage, expiresAt, usageLimit, isActive } = req.body;
 
-        // Validate discount code ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid discount code ID');
+            return errorResponse(res, 400, 'شناسه کد تخفیف معتبر نیست');
         }
 
-        // Find discount code
         const existingDiscountCode = await DiscountCode.findById(id);
         if (!existingDiscountCode) {
-            return errorResponse(res, 404, 'Discount code not found');
+            return errorResponse(res, 404, 'کد تخفیف یافت نشد');
         }
 
-        // Validate request body
         await updateDiscountCodeValidator.validate(req.body, { abortEarly: false });
 
-        // Build update object (only update provided fields)
         const updateData = {};
 
-        
-        // Check if code is being updated and if it's duplicate
         if (code !== undefined && code.trim().toUpperCase() !== existingDiscountCode.code) {
-            const duplicateDiscountCode = await DiscountCode.findOne({ 
-                code: code.trim().toUpperCase() 
-            });
+            const duplicateDiscountCode = await DiscountCode.findOne({ code: code.trim().toUpperCase() });
             if (duplicateDiscountCode) {
-                return errorResponse(res, 409, 'Discount code already exists');
+                return errorResponse(res, 409, 'کد تخفیف قبلاً ثبت شده است');
             }
             updateData.code = code.trim().toUpperCase();
         }
@@ -141,16 +112,11 @@ exports.updateDiscountCode = async (req,res,next) => {
         if (usageLimit !== undefined) updateData.usageLimit = usageLimit;
         if (isActive !== undefined) updateData.isActive = isActive;
 
-        // Update discount code
-        const updatedDiscountCode = await DiscountCode.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true, runValidators: true }
-        );
+        const updatedDiscountCode = await DiscountCode.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
 
         return successRespons(res, 200, {
             discountCode: updatedDiscountCode,
-            message: 'Discount code updated successfully'
+            message: 'کد تخفیف با موفقیت بروزرسانی شد'
         });
 
     } catch (err) {
@@ -162,21 +128,17 @@ exports.deleteDiscountCode = async (req,res,next) => {
     try {
         const { id } = req.params;
 
-        // Validate discount code ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid discount code ID');
+            return errorResponse(res, 400, 'شناسه کد تخفیف معتبر نیست');
         }
 
-        // Find and delete discount code
         const deletedDiscountCode = await DiscountCode.findByIdAndDelete(id);
-
-        // Check if discount code exists
         if (!deletedDiscountCode) {
-            return errorResponse(res, 404, 'Discount code not found');
+            return errorResponse(res, 404, 'کد تخفیف یافت نشد');
         }
 
         return successRespons(res, 200, {
-            message: 'Discount code deleted successfully',
+            message: 'کد تخفیف با موفقیت حذف شد',
             discountCode: deletedDiscountCode
         });
 
@@ -189,32 +151,23 @@ exports.applyDiscountCode = async (req,res,next) => {
     try {
         const { code } = req.body;
 
-        // Validate request body
         await applyDiscountCodeValidator.validate(req.body, { abortEarly: false });
 
-        // Find discount code (case-insensitive)
-        const discountCode = await DiscountCode.findOne({ 
-            code: code.trim().toUpperCase() 
-        });
-
-        // Check if discount code exists
+        const discountCode = await DiscountCode.findOne({ code: code.trim().toUpperCase() });
         if (!discountCode) {
-            return errorResponse(res, 404, 'Discount code not found');
+            return errorResponse(res, 404, 'کد تخفیف یافت نشد');
         }
 
-        // Check if discount code is active
         if (!discountCode.isActive) {
-            return errorResponse(res, 400, 'Discount code is not active');
+            return errorResponse(res, 400, 'کد تخفیف فعال نیست');
         }
 
-        // Check if discount code has expired
         if (new Date() > discountCode.expiresAt) {
-            return errorResponse(res, 400, 'Discount code has expired');
+            return errorResponse(res, 400, 'کد تخفیف منقضی شده است');
         }
 
-        // Check if usage limit has been reached
         if (discountCode.usedCount >= discountCode.usageLimit) {
-            return errorResponse(res, 400, 'Discount code usage limit has been reached');
+            return errorResponse(res, 400, 'حداکثر تعداد استفاده از این کد تخفیف رسیده است');
         }
 
         return successRespons(res, 200, {
@@ -223,7 +176,7 @@ exports.applyDiscountCode = async (req,res,next) => {
                 percentage: discountCode.percentage,
                 expiresAt: discountCode.expiresAt,
             },
-            message: 'Discount code is valid'
+            message: 'کد تخفیف معتبر است'
         });
 
     } catch (err) {

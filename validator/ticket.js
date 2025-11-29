@@ -8,45 +8,45 @@ const objectIdValidation = (value) =>
 const createTicketValidator = yup.object().shape({
     departmentId: yup
         .string()
-        .required("departmentId is required")
-        .test("is-objectid", "Invalid departmentId", objectIdValidation),
+        .required("شناسه دپارتمان الزامی است")
+        .test("is-objectid", "شناسه دپارتمان معتبر نیست", objectIdValidation),
 
     departmentSubId: yup
         .string()
-        .required("departmentSubId is required")
-        .test("is-objectid", "Invalid departmentSubId", objectIdValidation),
+        .required("شناسه زیرمجموعه دپارتمان الزامی است")
+        .test("is-objectid", "شناسه زیرمجموعه دپارتمان معتبر نیست", objectIdValidation),
 
     priority: yup
         .string()
-        .oneOf(["low", "medium", "high"], "Invalid priority value")
-        .required("priority is required"),
+        .oneOf(["low", "medium", "high"], "مقدار اولویت معتبر نیست")
+        .required("اولویت الزامی است"),
 
     title: yup
         .string()
-        .required("title is required")
-        .min(3, "title must be at least 3 characters"),
+        .required("عنوان الزامی است")
+        .min(3, "عنوان باید حداقل ۳ کاراکتر باشد"),
 
     body: yup
         .string()
-        .required("body is required")
-        .min(5, "body must be at least 5 characters"),
+        .required("متن تیکت الزامی است")
+        .min(5, "متن باید حداقل ۵ کاراکتر باشد"),
 
     user: yup
         .string()
-        .required("user is required")
-        .test("is-objectid", "Invalid user ID", objectIdValidation),
+        .required("شناسه کاربر الزامی است")
+        .test("is-objectid", "شناسه کاربر معتبر نیست", objectIdValidation),
 
     product: yup
         .string()
         .nullable()
         .notRequired()
-        .test("is-objectid", "Invalid product ID", objectIdValidation),
+        .test("is-objectid", "شناسه محصول معتبر نیست", objectIdValidation),
 
     parent: yup
         .string()
         .nullable()
         .notRequired()
-        .test("is-objectid", "Invalid parent ID", objectIdValidation),
+        .test("is-objectid", "شناسه والد معتبر نیست", objectIdValidation),
 
     isAnswered: yup
         .boolean()
@@ -54,7 +54,7 @@ const createTicketValidator = yup.object().shape({
 
     status: yup
         .string()
-        .oneOf(["open", "answered", "closed"], "Invalid status value")
+        .oneOf(["open", "answered", "closed"], "وضعیت معتبر نیست")
         .notRequired(),
 });
 
@@ -62,39 +62,39 @@ const updateTicketValidator = yup.object().shape({
     departmentId: yup
         .string()
         .notRequired()
-        .test("is-objectid", "Invalid departmentId", objectIdValidation),
+        .test("is-objectid", "شناسه دپارتمان معتبر نیست", objectIdValidation),
 
     departmentSubId: yup
         .string()
         .notRequired()
-        .test("is-objectid", "Invalid departmentSubId", objectIdValidation),
+        .test("is-objectid", "شناسه زیرمجموعه دپارتمان معتبر نیست", objectIdValidation),
 
     priority: yup
         .string()
-        .oneOf(["low", "medium", "high"], "Invalid priority value")
+        .oneOf(["low", "medium", "high"], "مقدار اولویت معتبر نیست")
         .notRequired(),
 
     title: yup
         .string()
-        .min(3, "title must be at least 3 characters")
+        .min(3, "عنوان باید حداقل ۳ کاراکتر باشد")
         .notRequired(),
 
     body: yup
         .string()
-        .min(5, "body must be at least 5 characters")
+        .min(5, "متن باید حداقل ۵ کاراکتر باشد")
         .notRequired(),
 
     product: yup
         .string()
         .nullable()
         .notRequired()
-        .test("is-objectid", "Invalid product ID", objectIdValidation),
+        .test("is-objectid", "شناسه محصول معتبر نیست", objectIdValidation),
 
     parent: yup
         .string()
         .nullable()
         .notRequired()
-        .test("is-objectid", "Invalid parent ID", objectIdValidation),
+        .test("is-objectid", "شناسه والد معتبر نیست", objectIdValidation),
 
     isAnswered: yup
         .boolean()
@@ -102,7 +102,7 @@ const updateTicketValidator = yup.object().shape({
 
     status: yup
         .string()
-        .oneOf(["open", "answered", "closed"], "Invalid status value")
+        .oneOf(["open", "answered", "closed"], "وضعیت معتبر نیست")
         .notRequired(),
 });
 
