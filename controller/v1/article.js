@@ -127,40 +127,6 @@ exports.createArticle = async (req, res, next) => {
     };
 };
 
-exports.getOne = async (req,res,next) => {
-    try {
-        const { href } = req.params;
-
-        // Find article by href
-        const article = await Article.findOne({ href })
-            .populate('category', 'name slug')
-            .populate('creator', 'name email');
-
-        // Check if article exists and is published
-        if (!article || article.publish !== 1) {
-            return errorResponse(res, 404, 'مقاله موردنظر یافت نشد');
-        }
-
-        // Initialize relatedProducts array
-        let relatedProducts = [];
-
-        // Load related products if any
-        if (article.relatedProducts?.length) {
-            relatedProducts = await Product.find({
-                _id: { $in: article.relatedProducts }
-            }).select("name slug price image stock");
-        }
-
-        return successRespons(res, 200, {
-            article,
-            relatedProducts
-        });
-
-    } catch (err) {
-        next(err);
-    }
-};
-
 // ---------------- GET ONE ARTICLE ----------------
 exports.getOne = async (req, res, next) => {
     try {
