@@ -165,6 +165,13 @@ exports.getOne = async (req,res,next) => {
                 _id: { $in: article.relatedProducts }
             }).select("name slug price image stock");
         }
+       // Load related products if any
+       let relatedProducts = [];
+       if (article.relatedProducts?.length) {
+           relatedProducts = await Product.find({
+               _id: { $in: article.relatedProducts }
+           }).select("name slug price image stock");
+       }
 
         return successRespons(res, 200, {
             article,
