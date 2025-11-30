@@ -77,7 +77,7 @@ exports.getAllArticles = async (req,res,next) => {
 exports.createArticle = async (req,res,next) => {
     try {
         const user = req.user;
-        const { title, excerpt, discription, body, href, category, badge, readTime, author, date, publish } = req.body;
+        const { title, excerpt, discription, body, href, category, badge, readTime, author, date, publish, productTags } = req.body;
 
         // Validate request body
         await createArticleValidator.validate(req.body, { abortEarly: false });
@@ -126,6 +126,7 @@ exports.createArticle = async (req,res,next) => {
             author,
             date: date ? new Date(date) : new Date(),
             publish,
+            productTags: productTags || []
         });
 
         // Populate category and creator
@@ -152,17 +153,20 @@ exports.getOne = async (req,res,next) => {
             .populate('creator', 'name email');
 
         // Check if article exists
-        if (!article) {
-            return errorResponse(res, 404, 'Article not found');
+        if (!article || article.publish !== 1) {
+            return errorResponse(res, 404, "مقاله موردنظر یافت نشد");
         }
 
-        // Check if article is published (publish === 1)
-        if (article.publish !== 1) {
-            return errorResponse(res, 404, 'Article not found');
+        let relatedProducts = [];
+        if (article.productTags?.length) {
+            relatedProducts = await Product.find({
+                tags: { $in: article.productTags }
+            }).select("name slug price image stock");
         }
 
         return successRespons(res, 200, {
             article,
+            relatedProducts
         });
 
     } catch (err) {
