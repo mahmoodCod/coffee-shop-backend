@@ -3,21 +3,21 @@ const yup = require('yup');
 const categorySchema = yup.object({
   name: yup
     .string()
-    .required('Name is required')
+    .required('نام الزامی است')
     .trim()
-    .max(100, 'Category name cannot exceed 100 characters'),
+    .max(100, 'نام دسته نباید از 100 کاراکتر بیشتر باشد'),
 
   slug: yup
     .string()
-    .required('Slug is required')
+    .required('Slug مورد نیاز است')
     .trim()
     .lowercase()
-    .matches(/^[a-z0-9\u0600-\u06FF-]+$/, 'Slug must contain only lowercase letters, numbers and hyphens'),
+    .matches(/^[a-z0-9\u0600-\u06FF-]+$/, 'Slug باید فقط شامل حروف کوچک، اعداد و خط فاصله باشد'),
 
   description: yup
     .string()
     .trim()
-    .max(500, 'Description cannot exceed 500 characters'),
+    .max(500, 'توضیحات نمی تواند بیش از 500 کاراکتر باشد'),
 
   images: yup
     .string()
@@ -28,7 +28,7 @@ const categorySchema = yup.object({
     .string()
     .nullable()
     .notRequired()
-    .test('color-format', 'Color must be a valid hex color', function(value) {
+    .test('فرمت رنگی', 'رنگ باید یک رنگ هگز معتبر باشد', function(value) {
       if (!value || value === null || value.length === 0) {
         return true; // Optional field, skip validation if empty
       }
@@ -42,12 +42,12 @@ const categorySchema = yup.object({
   parent: yup
     .string()
     .nullable()
-    .matches(/^[0-9a-fA-F]{24}$/, 'Parent must be a valid ObjectId'),
+    .matches(/^[0-9a-fA-F]{24}$/, 'والد باید یک ObjectId معتبر باشد'),
 
   order: yup
     .number()
     .integer()
-    .min(0, 'Order must be a positive number')
+    .min(0, 'سفارش باید یک عدد مثبت باشد')
     .default(0),
 
   isActive: yup
@@ -61,11 +61,11 @@ const categorySchema = yup.object({
   seo: yup.object({
     metaTitle: yup
       .string()
-      .max(70, 'Meta title cannot exceed 70 characters'),
+      .max(70, 'عنوان متا نمی تواند بیش از 70 کاراکتر باشد'),
 
     metaDescription: yup
       .string()
-      .max(160, 'Meta description cannot exceed 160 characters'),
+      .max(160, 'توضیحات متا نباید بیش از 160 کاراکتر باشد'),
 
     metaKeywords: yup
       .array()
@@ -75,7 +75,7 @@ const categorySchema = yup.object({
   productsCount: yup
     .number()
     .integer()
-    .min(0, 'Products count must be a positive number')
+    .min(0, 'تعداد محصولات باید یک عدد مثبت باشد')
     .default(0)
 });
 
@@ -83,18 +83,18 @@ const categoryUpdateSchema = yup.object({
     name: yup
       .string()
       .trim()
-      .max(100, 'Category name cannot exceed 100 characters'),
+      .max(100, 'نام دسته نباید از 100 کاراکتر بیشتر باشد'),
   
     slug: yup
       .string()
       .trim()
       .lowercase()
-      .matches(/^[a-z0-9\u0600-\u06FF-]+$/, 'Slug must contain only lowercase letters, numbers and hyphens'),
+      .matches(/^[a-z0-9\u0600-\u06FF-]+$/, 'Slug باید فقط شامل حروف کوچک، اعداد و خط فاصله باشد'),
   
     description: yup
       .string()
       .trim()
-      .max(500, 'Description cannot exceed 500 characters'),
+      .max(500, 'توضیحات نمی تواند بیش از 500 کاراکتر باشد'),
   
     images: yup
       .string()
@@ -105,7 +105,7 @@ const categoryUpdateSchema = yup.object({
       .string()
       .nullable()
       .notRequired()
-      .test('color-format', 'Color must be a valid hex color', function(value) {
+      .test('فرمت رنگی', 'رنگ باید یک رنگ هگز معتبر باشد', function(value) {
         if (!value || value === null || value.length === 0) {
           return true;
         }
@@ -119,12 +119,12 @@ const categoryUpdateSchema = yup.object({
     parent: yup
       .string()
       .nullable()
-      .matches(/^[0-9a-fA-F]{24}$/, 'Parent must be a valid ObjectId'),
+      .matches(/^[0-9a-fA-F]{24}$/, 'والد باید یک ObjectId معتبر باشد'),
   
     order: yup
       .number()
       .integer()
-      .min(0, 'Order must be a positive number'),
+      .min(0, 'سفارش باید یک عدد مثبت باشد'),
   
     isActive: yup
       .boolean(),
@@ -135,11 +135,11 @@ const categoryUpdateSchema = yup.object({
     seo: yup.object({
       metaTitle: yup
         .string()
-        .max(70, 'Meta title cannot exceed 70 characters'),
+        .max(70, 'عنوان متا نباید بیش از 70 کاراکتر باشد'),
   
       metaDescription: yup
         .string()
-        .max(160, 'Meta description cannot exceed 160 characters'),
+        .max(160, 'توضیحات متا نباید بیش از 160 کاراکتر باشد'),
   
       metaKeywords: yup
         .array()
@@ -149,7 +149,7 @@ const categoryUpdateSchema = yup.object({
     productsCount: yup
       .number()
       .integer()
-      .min(0, 'Products count must be a positive number')
+      .min(0, 'تعداد محصولات باید یک عدد مثبت باشد')
   });
   
   module.exports = {

@@ -3,23 +3,23 @@ const yup = require('yup');
 const createArticleValidator = yup.object().shape({
     title: yup
         .string()
-        .required("Article title is required")
-        .min(3, "Title must be at least 3 characters long")
-        .max(150, "Title cannot exceed 150 characters"),
+        .required("عنوان مقاله الزامی است")
+        .min(3, "عنوان باید حداقل 3 کاراکتر باشد")
+        .max(150, "عنوان نمی تواند بیش از 150 کاراکتر باشد"),
 
     excerpt: yup
         .string()
-        .required("Article excerpt is required")
-        .max(300, "Excerpt cannot exceed 300 characters"),
+        .required("گزیده مقاله الزامی است")
+        .max(300, "گزیده نباید بیش از 300 کاراکتر باشد"),
 
     discription: yup
         .string()
-        .required("Short description is required")
-        .max(500, "Short description cannot exceed 500 characters"),
+        .required("توضیح کوتاه لازم است")
+        .max(500, "شرح کوتاه نمی تواند بیش از 500 کاراکتر باشد"),
     
     body: yup
         .string()
-        .required("Article body is required"),
+        .required("بدن مقاله الزامی است"),
 
     cover: yup
         .string(),
@@ -27,16 +27,16 @@ const createArticleValidator = yup.object().shape({
 
     href: yup
         .string()
-        .required("Article link is required")
-        .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Link must be URL-friendly"),
+        .required("لینک مقاله الزامی است")
+        .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "پیوند باید URL پسند باشد"),
 
     category: yup
         .string()
-        .required("Category is required"),
+        .required("دسته بندی الزامی است"),
 
     creator: yup
         .string()
-        .required("Creator ID is required"),
+        .required("شناسه سازنده الزامی است"),
 
     relatedProducts: yup
         .array()
@@ -53,7 +53,7 @@ const createArticleValidator = yup.object().shape({
 
     author: yup
         .string()
-        .required("Author name is required"),
+        .required("نام نویسنده الزامی است"),
 
     date: yup
         .date()
@@ -61,22 +61,22 @@ const createArticleValidator = yup.object().shape({
 
     publish: yup
         .number()
-        .required("Publish status is required"),
+        .required("وضعیت انتشار الزامی است"),
 });
 
 const updateArticleValidator = yup.object().shape({
     title: yup
         .string()
-        .min(3, "Title must be at least 3 characters long")
-        .max(150, "Title cannot exceed 150 characters"),
+        .min(3, "عنوان باید حداقل 3 کاراکتر باشد")
+        .max(150, "عنوان نمی تواند بیش از 150 کاراکتر باشد"),
 
     excerpt: yup
         .string()
-        .max(300, "Excerpt cannot exceed 300 characters"),
+        .max(300, "گزیده نباید بیش از 300 کاراکتر باشد"),
 
     discription: yup
         .string()
-        .max(500, "Short description cannot exceed 500 characters"),
+        .max(500, "شرح کوتاه نمی تواند بیش از 500 کاراکتر باشد"),
 
     body: yup
         .string(),
@@ -86,7 +86,7 @@ const updateArticleValidator = yup.object().shape({
 
     href: yup
         .string()
-        .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Link must be URL-friendly"),
+        .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "پیوند باید URL پسند باشد"),
 
     category: yup
         .string(),

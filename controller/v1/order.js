@@ -10,27 +10,23 @@ exports.createOrder = async (req,res,next) => {
         const user = req.user;
         const { items, shippingAddress, authority } = req.body;
 
-        // Validate request body
         await createOrderValidator.validate(req.body, { abortEarly: false });
 
-        // Validate and check products
         const orderItems = [];
         for (const item of items) {
             if (!isValidObjectId(item.product)) {
-                return errorResponse(res, 400, `Invalid product ID: ${item.product}`);
+                return errorResponse(res, 400, `شناسه محصول نامعتبر است: ${item.product}`);
             }
 
             const product = await Product.findById(item.product);
             if (!product) {
-                return errorResponse(res, 404, `Product not found: ${item.product}`);
+                return errorResponse(res, 404, `محصول یافت نشد: ${item.product}`);
             }
 
-            // Check stock availability
             if (product.stock < item.quantity) {
-                return errorResponse(res, 400, `Insufficient stock for product: ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`);
+                return errorResponse(res, 400, `موجودی محصول کافی نیست: ${product.name}. موجود: ${product.stock}, درخواستی: ${item.quantity}`);
             }
 
-            // Add item with price at time of adding
             orderItems.push({
                 product: product._id,
                 quantity: item.quantity,
@@ -38,7 +34,6 @@ exports.createOrder = async (req,res,next) => {
             });
         }
 
-        // Create order
         const newOrder = await Order.create({
             user: user._id,
             items: orderItems,
@@ -48,7 +43,7 @@ exports.createOrder = async (req,res,next) => {
         });
 
         return successRespons(res, 201, {
-            message: 'Order created successfully :))',
+            message: 'سفارش با موفقیت ایجاد شد',
             order: newOrder
         });
 
@@ -62,29 +57,23 @@ exports.getOrderById = async (req,res,next) => {
         const { id } = req.params;
         const user = req.user;
 
-        // Validate order ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid order ID');
+            return errorResponse(res, 400, 'شناسه سفارش نامعتبر است');
         }
 
-        // Find order by ID with populate
         const order = await Order.findById(id)
             .populate('user', '-addresses')
             .populate('items.product');
 
-        // Check if order exists
         if (!order) {
-            return errorResponse(res, 404, 'Order not found');
+            return errorResponse(res, 404, 'سفارش یافت نشد');
         }
 
-        // Check if user has access (only owner or ADMIN)
         if (!user.roles.includes("ADMIN") && order.user._id.toString() !== user._id.toString()) {
-            return errorResponse(res, 403, 'You do not have access to this order');
+            return errorResponse(res, 403, 'شما به این سفارش دسترسی ندارید');
         }
 
-        return successRespons(res, 200, {
-            order,
-        });
+        return successRespons(res, 200, { order });
 
     } catch (err) {
         next (err);
@@ -94,64 +83,36 @@ exports.getOrderById = async (req,res,next) => {
 exports.getAllOrders = async (req,res,next) => {
     try {
         const { page = 1, limit = 10, status, userId } = req.query;
-
-        // Build filters
         const filters = {};
 
-        // Filter by status
-        if (status) {
-            if (['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(status)) {
-                filters.status = status;
-            }
+        if (status && ['PROCESSING', 'SHIPPED', 'DELIVERED'].includes(status)) {
+            filters.status = status;
         }
 
-        // Filter by user ID
-        if (userId) {
-            if (isValidObjectId(userId)) {
-                filters.user = userId;
-            }
+        if (userId && isValidObjectId(userId)) {
+            filters.user = userId;
         }
 
-        // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Find orders with filters, pagination, and populate
-        // Handle deleted products by filtering them out
         const orders = await Order.find(filters)
             .sort({ createdAt: "desc" })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum)
-            .populate({
-                path: 'user',
-                select: '-addresses'
-            })
-            .populate({
-                path: 'items.product',
-                options: { strictPopulate: false }
-            });
+            .populate({ path: 'user', select: '-addresses' })
+            .populate({ path: 'items.product', options: { strictPopulate: false } });
 
-        // Filter out items with null/undefined products (deleted products) and convert to JSON
         const ordersData = orders.map(order => {
             try {
                 const orderObj = order.toObject({ virtuals: true });
-                
-                // Filter out items with null/undefined products
                 if (orderObj.items && Array.isArray(orderObj.items)) {
-                    orderObj.items = orderObj.items.filter(item => {
-                        return item.product !== null && item.product !== undefined;
-                    });
+                    orderObj.items = orderObj.items.filter(item => item.product !== null && item.product !== undefined);
                 }
-                
-                // Ensure user exists (should always exist, but just in case)
-                if (!orderObj.user) {
-                    orderObj.user = null;
-                }
-                
+                if (!orderObj.user) orderObj.user = null;
                 return orderObj;
             } catch (err) {
-                // If there's an error converting to object, return minimal data
-                console.error('Error converting order to object:', err);
+                console.error('خطا در تبدیل سفارش به شیء:', err);
                 return {
                     _id: order._id,
                     status: order.status,
@@ -161,12 +122,11 @@ exports.getAllOrders = async (req,res,next) => {
             }
         });
 
-        // Count total orders with filters
         const totalOrders = await Order.countDocuments(filters);
 
         return successRespons(res, 200, {
             orders: ordersData,
-            pagination: createPaginationData(pageNum, limitNum, totalOrders, "Orders"),
+            pagination: createPaginationData(pageNum, limitNum, totalOrders, "سفارش‌ها"),
         });
 
     } catch (err) {
@@ -177,18 +137,9 @@ exports.getAllOrders = async (req,res,next) => {
 exports.getMyOrders = async (req,res,next) => {
     try {
         const { page = 1, limit = 10 } = req.query;
-        // const user = req.user;
-
-        // Filter by current user only (even for ADMIN)
-        // const filters = {
-        //     user: user._id
-        // };
-
-        // Parse pagination parameters
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        // Find orders with pagination and populate
         const orders = await Order.find()
             .sort({ createdAt: "desc" })
             .skip((pageNum - 1) * limitNum)
@@ -196,12 +147,11 @@ exports.getMyOrders = async (req,res,next) => {
             .populate('user', '-addresses')
             .populate('items.product');
 
-        // Count total orders
         const totalOrders = await Order.countDocuments();
 
         return successRespons(res, 200, {
             orders,
-            pagination: createPaginationData(pageNum, limitNum, totalOrders, "Orders"),
+            pagination: createPaginationData(pageNum, limitNum, totalOrders, "سفارش‌ها"),
         });
 
     } catch (err) {
@@ -214,40 +164,27 @@ exports.updateOrder = async (req,res,next) => {
         const { id } = req.params;
         const { postTrackingCode, status } = req.body;
 
-        // Validate order ID
         if (!isValidObjectId(id)) {
-            return errorResponse(res, 400, 'Invalid order ID');
+            return errorResponse(res, 400, 'شناسه سفارش نامعتبر است');
         }
 
-        // Validate request body
         await updateOrderValidator.validate(req.body, { abortEarly: false });
 
-        // Build update object with only provided fields
         const updateData = {};
-        if (status !== undefined) {
-            updateData.status = status;
-        }
-        if (postTrackingCode !== undefined) {
-            updateData.postTrackingCode = postTrackingCode;
-        }
+        if (status !== undefined) updateData.status = status;
+        if (postTrackingCode !== undefined) updateData.postTrackingCode = postTrackingCode;
 
-        // Update order
-        const order = await Order.findByIdAndUpdate(
-            id,
-            updateData,
-            { new: true }
-        )
-        .populate('user', '-addresses')
-        .populate('items.product');
+        const order = await Order.findByIdAndUpdate(id, updateData, { new: true })
+            .populate('user', '-addresses')
+            .populate('items.product');
 
-        // Check if order exists
         if (!order) {
-            return errorResponse(res, 404, 'Order not found');
+            return errorResponse(res, 404, 'سفارش یافت نشد');
         }
 
         return successRespons(res, 200, { 
             order,
-            message: 'Order updated successfully :))'
+            message: 'سفارش با موفقیت بروزرسانی شد'
         });
 
     } catch (err) {

@@ -8,34 +8,34 @@ const createOrderValidator = yup.object({
       yup.object({
         product: yup
           .string()
-          .required("Product ID is required")
-          .test("is-valid-object-id", "Invalid product ID", (value) =>
+          .required("شناسه محصول الزامی است")
+          .test("is-valid-object-id", "شناسه محصول نامعتبر است", (value) =>
             isValidObjectId(value)
           ),
         quantity: yup
           .number()
-          .required("Quantity is required")
-          .min(1, "Quantity must be at least 1"),
+          .required("مقدار مورد نیاز است")
+          .min(1, "مقدار باید حداقل 1 باشد"),
       })
     )
-    .min(1, "At least one item is required")
-    .required("Items are required"),
+    .min(1, "حداقل یک مورد مورد نیاز است")
+    .required("موارد مورد نیاز است"),
   shippingAddress: yup.object({
-    postalCode: yup.string().required("Postal code is required"),
+    postalCode: yup.string().required("کد پستی الزامی است"),
     coordinates: yup.object({
-      lat: yup.string().required("Latitude is required"),
-      lng: yup.string().required("Longitude is required"),
+      lat: yup.string().required("عرض جغرافیایی لازم است"),
+      lng: yup.string().required("طول جغرافیایی مورد نیاز است"),
     }),
-    address: yup.string().required("Address is required"),
-    cityId: yup.number().required("City ID is required"),
+    address: yup.string().required("آدرس الزامی است"),
+    cityId: yup.number().required("شناسه شهر الزامی است"),
   }),
-  authority: yup.string().required("Authority is required"),
+  authority: yup.string().required("اختیار لازم است"),
 });
 
 const updateOrderValidator = yup.object({
   status: yup
     .string()
-    .required("Status is required")
+    .required("وضعیت مورد نیاز است")
     .oneOf(["PROCESSING", "SHIPPED", "DELIVERED"]),
   postTrackingCode: yup.string(),
 });

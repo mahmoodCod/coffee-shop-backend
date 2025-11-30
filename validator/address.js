@@ -3,32 +3,32 @@ const yup = require('yup');
 const createAddressValidator = yup.object({
   name: yup
   .string()
-  .required("Name is required")
+  .required("نام الزامی است")
   .min(3)
   .max(255),
 
   postalCode: yup
   .string()
-  .required("Postal code is required")
+  .required("کد پستی الزامی است")
   .length(10),
 
   province: yup
   .string()
-  .required("Province is required")
-  .min(3, "Province must have at least 2 letters")
-  .max(50, "Province must have at most 50 letters"),
+  .required("استان مورد نیاز است")
+  .min(3, "استان باید حداقل 2 حرف داشته باشد")
+  .max(50, "استان باید حداکثر 50 حرف داشته باشد"),
 
   city: yup
   .string()
-  .required("City is required")
-  .min(2, "City must have at least 2 letters")
-  .max(50, "City must have at ,most 50 letters"),
+  .required("شهر مورد نیاز است")
+  .min(2, "شهر باید حداقل 2 حرف داشته باشد")
+  .max(50, "شهر باید حداکثر 50 حرف داشته باشد"),
 
   street: yup
   .string()
-  .required("Street is required")
-  .min(3, "Street name is too short")
-  .max(255, "Street name is too long"),
+  .required("خیابان الزامی است")
+  .min(3, "نام خیابان خیلی کوتاه است")
+  .max(255, "نام خیابان خیلی طولانی است"),
 });
 
 const updateAddressValidator = yup.object({
