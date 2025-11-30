@@ -35,6 +35,12 @@ const articleSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
+    relatedProducts: [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: "Product",
+        }
+    ],
     badge: { 
         type: String, 
         default: "", 
