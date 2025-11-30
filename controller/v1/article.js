@@ -123,6 +123,48 @@ exports.createArticle = async (req, res, next) => {
         });
 
     } catch (err) {
+<<<<<<< HEAD
+=======
+        next (err);
+    };
+};
+
+exports.getOne = async (req,res,next) => {
+    try {
+        const { href } = req.params;
+
+        // Find article by href
+        const article = await Article.findOne({ href })
+            .populate('category', 'name slug')
+            .populate('creator', 'name email');
+
+        // Check if article exists and is published
+        if (!article || article.publish !== 1) {
+            return errorResponse(res, 404, 'مقاله موردنظر یافت نشد');
+        }
+
+        // Load related products if any
+        let relatedProducts = [];
+        if (article.relatedProducts?.length) {
+            relatedProducts = await Product.find({
+                _id: { $in: article.relatedProducts }
+            }).select("name slug price image stock");
+        }
+       // Load related products if any
+       let relatedProducts = [];
+       if (article.relatedProducts?.length) {
+           relatedProducts = await Product.find({
+               _id: { $in: article.relatedProducts }
+           }).select("name slug price image stock");
+       }
+
+        return successRespons(res, 200, {
+            article,
+            relatedProducts
+        });
+
+    } catch (err) {
+>>>>>>> fde885e046fe3a0f48bb183cb8bb8c6efe1a1b41
         next(err);
     }
 };
