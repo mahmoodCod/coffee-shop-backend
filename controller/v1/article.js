@@ -148,17 +148,23 @@ exports.getOne = async (req,res,next) => {
     try {
         const { href } = req.params;
 
-        // Find article by href with populate
+        // Find article by href
         const article = await Article.findOne({ href })
             .populate('category', 'name slug')
             .populate('creator', 'name email');
 
-        // Check if article exists
-
+        // Check if article exists and is published
         if (!article || article.publish !== 1) {
-            return errorResponse(res, 404, "مقاله موردنظر یافت نشد");
+            return errorResponse(res, 404, 'مقاله موردنظر یافت نشد');
         }
 
+        // Load related products if any
+        let relatedProducts = [];
+        if (article.relatedProducts?.length) {
+            relatedProducts = await Product.find({
+                _id: { $in: article.relatedProducts }
+            }).select("name slug price image stock");
+        }
        // Load related products if any
        let relatedProducts = [];
        if (article.relatedProducts?.length) {
@@ -173,8 +179,8 @@ exports.getOne = async (req,res,next) => {
         });
 
     } catch (err) {
-        next (err);
-    };
+        next(err);
+    }
 };
 
 exports.deleteArticle = async (req,res,next) => {
