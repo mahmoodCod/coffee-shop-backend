@@ -38,6 +38,11 @@ const createArticleValidator = yup.object().shape({
         .string()
         .required("شناسه سازنده الزامی است"),
 
+    relatedProducts: yup
+        .array()
+        .of(yup.string())
+        .notRequired(),
+
     badge: yup
         .string()
         .notRequired(),
@@ -88,6 +93,10 @@ const updateArticleValidator = yup.object().shape({
 
     creator: yup
         .string(),
+
+    relatedProducts: yup
+        .array()
+        .of(yup.string()),
 
     badge: yup
         .string(),
