@@ -3,49 +3,53 @@ const yup = require('yup');
 const createProductValidator = yup.object().shape({
   name: yup
     .string()
-    .required("Product name is required")
-    .min(3, "Product name must be at least 3 characters long")
-    .max(100, "Product name cannot exceed 100 characters"),
+    .required("نام محصول الزامی است")
+    .min(3, "نام محصول باید حداقل ۳ کاراکتر باشد")
+    .max(100, "نام محصول نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد"),
   slug: yup
     .string()
-    .required("Slug is required")
-    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-friendly"),
+    .required("اسلاگ الزامی است")
+    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "اسلاگ باید سازگار با URL باشد"),
   description: yup
     .string()
-    .required("Product description is required")
-    .max(1000, "Product description cannot exceed 1000 characters"),
+    .required("توضیحات محصول الزامی است")
+    .max(1000, "توضیحات محصول نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد"),
   positiveFeature: yup
     .string()
-    .required("Positive feature is required")
-    .max(255, "Positive feature cannot exceed 255 characters"),
+    .required("ویژگی مثبت الزامی است")
+    .max(255, "ویژگی مثبت نمی‌تواند بیشتر از ۲۵۵ کاراکتر باشد"),
   category: yup
     .string()
-    .required("Category is required")
-    .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+    .required("دسته‌بندی الزامی است")
+    .matches(/^[0-9a-fA-F]{24}$/, "دسته‌بندی باید یک ObjectId معتبر باشد"),
+  brand: yup
+    .string()
+    .required("برند الزامی است")
+    .trim(),
   badge: yup
     .string()
-    .required("Badge is required")
-    .max(50, "Badge cannot exceed 50 characters"),
+    .max(50, "بج نمی‌تواند بیشتر از ۵۰ کاراکتر باشد")
+    .default(""),
   status: yup
     .string()
     .oneOf(["active", "inactive"])
     .default("inactive"),
   price: yup
     .number()
-    .required("Price is required")
-    .min(0, "Price cannot be negative"),
+    .required("قیمت الزامی است")
+    .min(0, "قیمت نمی‌تواند منفی باشد"),
   stock: yup
     .number()
-    .required("Stock is required")
-    .min(0, "Stock cannot be negative"),
+    .required("موجودی الزامی است")
+    .min(0, "موجودی نمی‌تواند منفی باشد"),
   originalPrice: yup
     .number()
-    .min(0, "Original price cannot be negative")
+    .min(0, "قیمت اصلی نمی‌تواند منفی باشد")
     .default(0),
   discount: yup
     .number()
-    .min(0, "Discount cannot be negative")
-    .max(100, "Discount cannot exceed 100")
+    .min(0, "تخفیف نمی‌تواند منفی باشد")
+    .max(100, "تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد")
     .default(0),
   type: yup
     .string()
@@ -70,11 +74,45 @@ const createProductValidator = yup.object().shape({
     .min(0)
     .max(5)
     .default(0),
-  reviews: yup
+  weight: yup
     .number()
-    .min(0)
+    .min(0, "وزن نمی‌تواند منفی باشد")
     .default(0),
-
+  ingredients: yup
+    .string()
+    .default(""),
+  benefits: yup
+    .string()
+    .default(""),
+  howToUse: yup
+    .string()
+    .default(""),
+  hasWarranty: yup
+    .boolean()
+    .default(false),
+  warrantyDuration: yup
+    .number()
+    .min(0, "مدت زمان گارانتی نمی‌تواند منفی باشد")
+    .default(0),
+  warrantyDescription: yup
+    .string()
+    .default(""),
+  userReviews: yup
+    .array()
+    .of(yup.object().shape({
+      user: yup.string().required("کاربر الزامی است"),
+      rating: yup.number().min(1).max(5).required("امتیاز الزامی است"),
+      comment: yup.string(),
+      createdAt: yup.date().default(() => new Date())
+    }))
+    .default([]),
+  recommended: yup
+    .boolean()
+    .default(false),
+  relatedProducts: yup
+    .array()
+    .of(yup.string().matches(/^[0-9a-fA-F]{24}$/, "محصول مرتبط باید یک ObjectId معتبر باشد"))
+    .default([]),
   isPrime: yup
     .boolean()
     .default(false),
@@ -102,39 +140,42 @@ const createProductValidator = yup.object().shape({
 const updateProductValidator = yup.object().shape({
   name: yup
     .string()
-    .min(3, "Product name must be at least 3 characters long")
-    .max(100, "Product name cannot exceed 100 characters"),
+    .min(3, "نام محصول باید حداقل ۳ کاراکتر باشد")
+    .max(100, "نام محصول نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد"),
   slug: yup
     .string()
-    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be URL-friendly"),
+    .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "اسلاگ باید سازگار با URL باشد"),
   description: yup
     .string()
-    .max(1000, "Product description cannot exceed 1000 characters"),
+    .max(1000, "توضیحات محصول نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد"),
   positiveFeature: yup
     .string()
-    .max(255, "Positive feature cannot exceed 255 characters"),
+    .max(255, "ویژگی مثبت نمی‌تواند بیشتر از ۲۵۵ کاراکتر باشد"),
   category: yup
     .string()
-    .matches(/^[0-9a-fA-F]{24}$/, "Category must be a valid ObjectId"),
+    .matches(/^[0-9a-fA-F]{24}$/, "دسته‌بندی باید یک ObjectId معتبر باشد"),
+  brand: yup
+    .string()
+    .trim(),
   badge: yup
     .string()
-    .max(50, "Badge cannot exceed 50 characters"),
+    .max(50, "بج نمی‌تواند بیشتر از ۵۰ کاراکتر باشد"),
   status: yup
     .string()
     .oneOf(["active", "inactive"]),
   price: yup
     .number()
-    .min(0, "Price cannot be negative"),
+    .min(0, "قیمت نمی‌تواند منفی باشد"),
   stock: yup
     .number()
-    .min(0, "Stock cannot be negative"),
+    .min(0, "موجودی نمی‌تواند منفی باشد"),
   originalPrice: yup
     .number()
-    .min(0, "Original price cannot be negative"),
+    .min(0, "قیمت اصلی نمی‌تواند منفی باشد"),
   discount: yup
     .number()
-    .min(0, "Discount cannot be negative")
-    .max(100, "Discount cannot exceed 100"),
+    .min(0, "تخفیف نمی‌تواند منفی باشد")
+    .max(100, "تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد"),
   type: yup
     .string()
     .oneOf(['regular','discount','premium']),
@@ -152,9 +193,35 @@ const updateProductValidator = yup.object().shape({
     .number()
     .min(0)
     .max(5),
-  reviews: yup
+  weight: yup
     .number()
-    .min(0),
+    .min(0, "وزن نمی‌تواند منفی باشد"),
+  ingredients: yup
+    .string(),
+  benefits: yup
+    .string(),
+  howToUse: yup
+    .string(),
+  hasWarranty: yup
+    .boolean(),
+  warrantyDuration: yup
+    .number()
+    .min(0, "مدت زمان گارانتی نمی‌تواند منفی باشد"),
+  warrantyDescription: yup
+    .string(),
+  userReviews: yup
+    .array()
+    .of(yup.object().shape({
+      user: yup.string(),
+      rating: yup.number().min(1).max(5),
+      comment: yup.string(),
+      createdAt: yup.date()
+    })),
+  recommended: yup
+    .boolean(),
+  relatedProducts: yup
+    .string()
+    .matches(/^[0-9a-fA-F]{24}$/, "محصول مرتبط باید یک ObjectId معتبر باشد"),
   isPrime: yup
     .boolean(),
   isPremium: yup

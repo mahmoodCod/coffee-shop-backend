@@ -10,16 +10,12 @@ exports.createComment = async (req,res,next) => {
         const user = req.user;
         const { content, rating, productId } = req.body;
 
-        await createCommentValidator.validate({
-            content,
-            productId,
-            rating,
-        }, { abortEarly: false});
+        await createCommentValidator.validate({ content, productId, rating }, { abortEarly: false });
         const product = await Product.findOne({ _id: productId });
 
         if (!product) {
-            return errorResponse(res,404, 'Product not found !!');
-        };
+            return errorResponse(res, 404, 'محصول یافت نشد');
+        }
 
         const newComment = await Comment.create({
             product: product._id,
@@ -29,8 +25,8 @@ exports.createComment = async (req,res,next) => {
             replies: [],
         });
 
-        return successRespons(res,201, {
-            message: 'Comment created successfully :))',
+        return successRespons(res, 201, {
+            message: 'نظر با موفقیت ثبت شد',
             comment: newComment
         });
 
@@ -44,17 +40,12 @@ exports.getComment = async (req,res,next) => {
         const { page = 1, limit = 10 } = req.query;
 
         const comments = await Comment.find()
-        .sort({
-        createdAt: "desc",
-        })
+        .sort({ createdAt: "desc" })
         .skip((page - 1) * limit)
         .limit(limit)
         .populate("product")
         .populate("user", "-addresses")
-        .populate({
-        path: "replies",
-        populate: { path: "user", select: "-addresses" },
-        });
+        .populate({ path: "replies", populate: { path: "user", select: "-addresses" } });
 
         const totalComments = await Comment.countDocuments();
 
@@ -73,12 +64,12 @@ exports.getAllComments = async (req,res,next) => {
         const { page = 1 , limit = 10 } = req.query;
 
         const comments = await Comment.find()
-        .sort({
-          createdAt: "desc",
-        }).skip(( page  - 1 ) * limit).limit(limit).populate('product').populate('user', '-addresses').populate({
-          path: 'replies',
-          populate: { path: "user", select: "-addresses" }
-        });
+        .sort({ createdAt: "desc" })
+        .skip(( page  - 1 ) * limit)
+        .limit(limit)
+        .populate('product')
+        .populate('user', '-addresses')
+        .populate({ path: 'replies', populate: { path: "user", select: "-addresses" } });
 
         const totalComments = await Comment.countDocuments();
 
@@ -97,17 +88,17 @@ exports.removeComment = async (req,res,next) => {
         const { commentId } = req.params;
 
         if (!isValidObjectId(commentId)) {
-            return errorResponse(res,400, 'Comment id is not valid !!');
+            return errorResponse(res,400, 'شناسه نظر معتبر نیست');
         };
 
         const deleteComment = await Comment.findByIdAndDelete(commentId);
 
         if (!deleteComment) {
-            return errorResponse(res,400, 'Comment not found !!');
+            return errorResponse(res,404, 'نظر یافت نشد');
         };
 
         return successRespons(res,200, {
-            message: 'Comment deleted successfully :))',
+            message: 'نظر با موفقیت حذف شد',
             comment: deleteComment
         });
 
@@ -122,34 +113,21 @@ exports.updateComment = async (req,res,next) => {
         const { content, rating } = req.body;
         const user = req.user;
     
-        await updateCommentValidator.validate(
-          { content, rating },
-          {
-            abortEarly: false,
-          }
-        );
+        await updateCommentValidator.validate({ content, rating }, { abortEarly: false });
 
         const comment = await Comment.findById(commentId);
-    
         if (!comment) {
-          return errorResponse(res, 404, "Comment not found !!");
-        }
-    
-        if (comment.user.toString() !== user._id.toString()) {
-          return errorResponse(res, 403, "You have not access to this action !!");
+          return errorResponse(res, 404, "نظر یافت نشد");
         }
 
-        const updatedComment = await Comment.findByIdAndUpdate(
-            commentId,
-            {
-              content,
-              rating,
-            },
-            { new: true }
-        );
+        if (comment.user.toString() !== user._id.toString()) {
+          return errorResponse(res, 403, "دسترسی به این عملیات ندارید");
+        }
+
+        const updatedComment = await Comment.findByIdAndUpdate(commentId, { content, rating }, { new: true });
       
-          return successRespons(res, 200, {
-            message: "Comment updated successfully :))",
+        return successRespons(res, 200, {
+            message: "نظر با موفقیت بروزرسانی شد",
             comment: updatedComment,
         });
 
@@ -165,29 +143,20 @@ exports.createReply = async (req,res,next) => {
         const { commentId } = req.params;
 
         if (!isValidObjectId(commentId)) {
-            return errorResponse(res,400, 'Comment id is not valid !!');
+            return errorResponse(res,400, 'شناسه نظر معتبر نیست');
         };
     
-        await addReplyValidator.validate({
-          content,
-        }, { abortEarly: false });
+        await addReplyValidator.validate({ content }, { abortEarly: false });
 
-        const reply = await Comment.findByIdAndUpdate(commentId,{
-            $push: {
-                replies: {
-                  content,
-                  user: user._id,
-                },
-              },
+        const reply = await Comment.findByIdAndUpdate(commentId, {
+            $push: { replies: { content, user: user._id } },
         }, { new: true });
     
         if (!reply) {
-            return errorResponse(res,404, 'Comment not found !!');
+            return errorResponse(res,404, 'نظر یافت نشد');
         };
     
-        return successRespons(res, 200, {
-          reply
-        });
+        return successRespons(res, 200, { reply });
 
     } catch (err) {
         next(err);
@@ -201,34 +170,31 @@ exports.updateReply = async (req,res,next) => {
         const user = req.user;
 
         if (!isValidObjectId(commentId) || !isValidObjectId(replyId)) {
-            return errorResponse(res, 400, "Comment or Reply id is not correct !!");
+            return errorResponse(res, 400, "شناسه نظر یا پاسخ معتبر نیست");
         }
 
-        await updateReplyValidator.validate(
-            { content },
-            { abortEarly: false }
-        );
+        await updateReplyValidator.validate({ content }, { abortEarly: false });
 
         const comment = await Comment.findById(commentId);
         if (!comment) {
-            return errorResponse(res, 404, "Comment not found !!");
+            return errorResponse(res, 404, "نظر یافت نشد");
         }
 
         const reply = comment.replies.id(replyId);
         if (!reply) {
-            return errorResponse(res, 404, "Reply not found !!");
+            return errorResponse(res, 404, "پاسخ یافت نشد");
         }
 
         if (reply.user.toString() !== user._id.toString()) {
-            return errorResponse(res, 403, "You have not access to this action !!");
+            return errorResponse(res, 403, "دسترسی به این عملیات ندارید");
         }
 
         reply.content = content;
         await comment.save();
 
         return successRespons(res, 200, {
-            message: "Reply updated successfully :))",
-            reply: reply
+            message: "پاسخ با موفقیت بروزرسانی شد",
+            reply
         });
 
     } catch (err) {
@@ -242,28 +208,28 @@ exports.removeReply = async (req,res,next) => {
         const user = req.user;
     
         if (!isValidObjectId(commentId) || !isValidObjectId(replyId)) {
-          return errorResponse(res, 400, "Comment or Reply id is not correct !!");
+          return errorResponse(res, 400, "شناسه نظر یا پاسخ معتبر نیست");
         }
     
         const comment = await Comment.findById(commentId);
         if (!comment) {
-          return errorResponse(res, 404, "Comment not found !!");
+          return errorResponse(res, 404, "نظر یافت نشد");
         }
 
         const reply = comment.replies.id(replyId);
         if (!reply) {
-          return errorResponse(res, 404, "Reply not found !!");
+          return errorResponse(res, 404, "پاسخ یافت نشد");
         }
     
         if (reply.user.toString() !== user._id.toString()) {
-          return errorResponse(res, 403, "You have not access to this action !!");
+          return errorResponse(res, 403, "دسترسی به این عملیات ندارید");
         }
     
         comment.replies.pull(replyId);
         await comment.save();
     
         return successRespons(res, 200, {
-          message: "Reply deleted successfully :))",
+          message: "پاسخ با موفقیت حذف شد",
         });
 
     } catch (err) {

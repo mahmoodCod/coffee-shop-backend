@@ -4,21 +4,21 @@ const { isValidObjectId } = require('mongoose');
 const createCommentValidator = yup.object().shape({
     productId: yup
     .string()
-    .required("Product ID is required")
-    .test("is-valid-object-id", "Invalid product ID", (value) =>
+    .required("شناسه محصول الزامی است")
+    .test("is-valid-object-id", "شناسه محصول نامعتبر است", (value) =>
       isValidObjectId(value)
     ),
-    rating: yup.number().required("Rating is required").min(1).max(5),
+    rating: yup.number().required("رتبه بندی الزامی است").min(1).max(5),
 
     content: yup
     .string()
-    .max(1000, "Comment content cannot exceed 1000 characters"),
+    .max(1000, "محتوای نظر نمی تواند بیش از 1000 کاراکتر باشد"),
 });
 
 const updateCommentValidator = yup.object().shape({
     content: yup
     .string()
-    .max(1000, "Comment content cannot exceed 1000 characters"),
+    .max(1000, "محتوای نظر نمی تواند بیش از 1000 کاراکتر باشد"),
   
     rating: yup.number().min(1).max(5),
 });
@@ -26,14 +26,14 @@ const updateCommentValidator = yup.object().shape({
 const addReplyValidator = yup.object().shape({
     content: yup
     .string()
-    .max(1000, "Reply content cannot exceed 1000 characters")
-    .required("Reply content is required"),
+    .max(1000, "محتوای پاسخ نمی تواند بیش از 1000 کاراکتر باشد")
+    .required("محتوای پاسخ الزامی است"),
 });
 
 const updateReplyValidator = yup.object().shape({
     content: yup
     .string()
-    .max(1000, "Reply content cannot exceed 1000 characters"),
+    .max(1000, "محتوای پاسخ نمی تواند بیش از 1000 کاراکتر باشد"),
 });
 
 module.exports = {

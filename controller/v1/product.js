@@ -15,31 +15,28 @@ const supportedFormat = [
 
 exports.createProduct = async (req,res,next) => {
     try {
-        const { 
-            name, 
-            slug, 
-            description, 
-            positiveFeature, 
-            category, 
-            badge, 
-            status, 
-            price, 
-            stock, 
-            originalPrice, 
-            discount, 
-            type, 
-            dealType, 
-            timeLeft, 
-            soldCount, 
-            totalCount, 
-            rating, 
-            reviews, 
-            isPrime, 
-            isPremium, 
-            features, 
-            image, 
-            seo 
-        } = req.body;
+        if (req.body.userReviews) {
+            try {
+                req.body.userReviews = JSON.parse(req.body.userReviews);
+            } catch (err) {
+                return errorResponse(res, 400, 'userReviews باید یک آرایه JSON معتبر باشد');
+            }
+        }
+
+        if (req.body.relatedProducts) {
+            if (typeof req.body.relatedProducts === 'string') {
+              try {
+                const clean = req.body.relatedProducts.replace(/^"|"$/g, '');
+                req.body.relatedProducts = JSON.parse(clean);
+              } catch (err) {
+                return errorResponse(res, 400, 'relatedProducts باید یک آرایه JSON معتبر باشد');
+              }
+            }
+            const invalidIds = req.body.relatedProducts.filter(id => !isValidObjectId(id));
+            if (invalidIds.length > 0) {
+              return errorResponse(res, 400, `شناسه(های) نامعتبر: ${invalidIds.join(', ')}`);
+            }
+        }
 
         if (req.body.features && typeof req.body.features === 'string') {
             req.body.features = req.body.features
@@ -49,87 +46,80 @@ exports.createProduct = async (req,res,next) => {
               .filter(f => f);
         }
 
-        // Validate request body
         await createProductValidator.validate(req.body, { abortEarly: false });
 
-        // Check if slug already exists
-        const existingProduct = await Product.findOne({ slug });
+        const existingProduct = await Product.findOne({ slug: req.body.slug });
         if (existingProduct) {
-            return errorResponse(res, 409, 'Product with this slug already exists');
+            return errorResponse(res, 409, 'محصولی با این slug از قبل وجود دارد');
         }
 
-        // Validate category
-        if (!isValidObjectId(category)) {
-            return errorResponse(res, 400, 'Invalid category ID');
+        if (!isValidObjectId(req.body.category)) {
+            return errorResponse(res, 400, 'شناسه دسته‌بندی نامعتبر است');
         }
-        const categoryExists = await Category.findById(category);
+        const categoryExists = await Category.findById(req.body.category);
         if (!categoryExists) {
-            return errorResponse(res, 404, 'Category not found');
+            return errorResponse(res, 404, 'دسته‌بندی یافت نشد');
         }
 
-        // Handle image uploads
         let imagePaths = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
-                // Validate file format
                 if (!supportedFormat.includes(file.mimetype)) {
-                    return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                    return errorResponse(res, 400, 'فرمت فایل پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG, PNG, SVG, WEBP, GIF');
                 }
                 imagePaths.push(file.path.replace(/\\/g, '/'));
             }
         }
 
-        // Set main image (first uploaded image or default)
-        const mainImage = imagePaths.length > 0 ? imagePaths[0] : (image || '/images/default-product.jpg');
+        const mainImage = imagePaths.length > 0 ? imagePaths[0] : (req.body.image || '/images/default-product.jpg');
 
-        // Create product object
         const productData = {
-            name,
-            slug,
-            description: description || '',
-            positiveFeature,
-            category,
-            badge,
-            status: status || 'inactive',
-            price,
-            stock,
-            originalPrice: originalPrice || 0,
-            discount: discount || 0,
-            type: type || 'regular',
-            dealType: dealType || '',
-            timeLeft: timeLeft || '',
-            soldCount: soldCount || 0,
-            totalCount: totalCount || 0,
-            rating: rating || 0,
-            reviews: reviews || 0,
-            isPrime: isPrime || false,
-            isPremium: isPremium || false,
-            features: features || [],
+            ...req.body,
             image: mainImage,
             images: imagePaths,
+            features: req.body.features || [],
+            description: req.body.description || '',
+            badge: req.body.badge || '',
+            status: req.body.status || 'inactive',
+            originalPrice: req.body.originalPrice || 0,
+            discount: req.body.discount || 0,
+            type: req.body.type || 'regular',
+            dealType: req.body.dealType || '',
+            timeLeft: req.body.timeLeft || '',
+            soldCount: req.body.soldCount || 0,
+            totalCount: req.body.totalCount || 0,
+            rating: req.body.rating || 0,
+            weight: req.body.weight || 0,
+            ingredients: req.body.ingredients || '',
+            benefits: req.body.benefits || '',
+            howToUse: req.body.howToUse || '',
+            hasWarranty: req.body.hasWarranty || false,
+            warrantyDuration: req.body.warrantyDuration || 0,
+            warrantyDescription: req.body.warrantyDescription || '',
+            userReviews: req.body.userReviews || [],
+            recommended: req.body.recommended || false,
+            relatedProducts: req.body.relatedProducts || [],
+            isPrime: req.body.isPrime || false,
+            isPremium: req.body.isPremium || false,
         };
 
-        // Add SEO data if provided
-        if (seo) {
-            productData.seo = seo;
-        }
+        if (req.body.seo) productData.seo = req.body.seo;
 
-        // Create product
         const newProduct = await Product.create(productData);
+        await newProduct.populate('category', 'name slug');
 
         return successRespons(res, 201, {
             product: newProduct,
-            message: 'Product created successfully'
+            message: 'محصول با موفقیت ایجاد شد'
         });
 
     } catch (err) {
-        // Handle validation errors
         if (err.name === 'ValidationError' && err.inner) {
             const validationErrors = err.inner.map(e => ({
                 path: e.path,
                 message: e.message
             }));
-            return errorResponse(res, 400, 'Validation failed', validationErrors);
+            return errorResponse(res, 400, 'اعتبارسنجی شکست خورد', validationErrors);
         }
         next(err);
     };
@@ -137,80 +127,42 @@ exports.createProduct = async (req,res,next) => {
 
 exports.getAllProduct = async (req,res,next) => {
     try {
-        let { 
-            page = 1, 
-            limit = 10, 
-            status, 
-            category, 
-            type, 
-            minPrice, 
-            maxPrice,
-            inStock,
-            search 
-        } = req.query;
-
+        let { page = 1, limit = 10, status, category, brand, type, minPrice, maxPrice, inStock, search } = req.query;
         page = parseInt(page);
         limit = parseInt(limit);
-
         const query = {};
 
-        // Filter by status
-        if (status !== undefined) {
-            query.status = status === 'true' || status === 'active' ? 'active' : 'inactive';
-        }
+        if (status !== undefined) query.status = status === 'true' || status === 'active' ? 'active' : 'inactive';
+        if (category !== undefined && isValidObjectId(category)) query.category = category;
+        if (brand !== undefined) query.brand = { $regex: brand, $options: 'i' };
+        if (type !== undefined && ['regular','discount','premium'].includes(type)) query.type = type;
 
-        // Filter by category
-        if (category !== undefined) {
-            if (isValidObjectId(category)) {
-                query.category = category;
-            }
-        }
-
-        // Filter by type
-        if (type !== undefined) {
-            if (['regular', 'discount', 'premium'].includes(type)) {
-                query.type = type;
-            }
-        }
-
-        // Filter by price range
         if (minPrice !== undefined || maxPrice !== undefined) {
             query.price = {};
-            if (minPrice !== undefined) {
-                query.price.$gte = parseFloat(minPrice);
-            }
-            if (maxPrice !== undefined) {
-                query.price.$lte = parseFloat(maxPrice);
-            }
+            if (minPrice !== undefined) query.price.$gte = parseFloat(minPrice);
+            if (maxPrice !== undefined) query.price.$lte = parseFloat(maxPrice);
         }
 
-        // Filter by stock availability
-        if (inStock !== undefined) {
-            if (inStock === 'true' || inStock === true) {
-                query.stock = { $gt: 0 };
-            }
+        if (inStock !== undefined && (inStock === 'true' || inStock === true)) {
+            query.stock = { $gt: 0 };
         }
 
-        // Search by name or description
-        let searchQuery = query;
         if (search) {
-            searchQuery = {
-                ...query,
-                $or: [
-                    { name: { $regex: search, $options: 'i' } },
-                    { description: { $regex: search, $options: 'i' } }
-                ]
-            };
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { brand: { $regex: search, $options: 'i' } },
+            ];
         }
 
-        const products = await Product.find(searchQuery)
+        const products = await Product.find(query)
             .populate('category', 'name slug')
-            .skip((page - 1) * limit)
+            .skip((page-1)*limit)
             .limit(limit)
             .sort({ createdAt: -1 })
             .select('-__v');
 
-        const totalProducts = await Product.countDocuments(searchQuery);
+        const totalProducts = await Product.countDocuments(query);
 
         return successRespons(res, 200, {
             products,
@@ -230,25 +182,18 @@ exports.getAllProduct = async (req,res,next) => {
 exports.getOneProduct = async (req,res,next) => {
     try {
         const { productId } = req.params;
-
-        // Validate productId
         if (!isValidObjectId(productId)) {
-            return errorResponse(res, 400, 'Invalid product ID');
+            return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
         }
 
-        // Find product by ID and populate category
         const product = await Product.findById(productId)
             .populate('category', 'name slug')
+            .populate('userReviews.user', 'name email')
             .select('-__v');
 
-        // Check if product exists
-        if (!product) {
-            return errorResponse(res, 404, 'Product not found');
-        }
+        if (!product) return errorResponse(res, 404, 'محصول یافت نشد');
 
-        return successRespons(res, 200, {
-            product,
-        });
+        return successRespons(res, 200, { product });
 
     } catch (err) {
         next(err);
@@ -258,144 +203,60 @@ exports.getOneProduct = async (req,res,next) => {
 exports.updateProduct = async (req,res,next) => {
     try {
         const { productId } = req.params;
-        const { 
-            name, 
-            slug, 
-            description, 
-            positiveFeature, 
-            category, 
-            badge, 
-            status, 
-            price, 
-            stock, 
-            originalPrice, 
-            discount, 
-            type, 
-            dealType, 
-            timeLeft, 
-            soldCount, 
-            totalCount, 
-            rating, 
-            reviews, 
-            isPrime, 
-            isPremium, 
-            features, 
-            image, 
-            seo 
-        } = req.body;
+        if (!isValidObjectId(productId)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
 
-        // Validate productId
-        if (!isValidObjectId(productId)) {
-            return errorResponse(res, 400, 'Invalid product ID');
-        }
-
-        // Find product
         const product = await Product.findById(productId);
-        if (!product) {
-            return errorResponse(res, 404, 'Product not found');
-        }
+        if (!product) return errorResponse(res, 404, 'محصول یافت نشد');
 
-        // Parse features if provided as string
         if (req.body.features && typeof req.body.features === 'string') {
-            req.body.features = req.body.features
-              .replace(/["']/g, '')
-              .split(',')
-              .map(f => f.trim())
-              .filter(f => f);
+            req.body.features = req.body.features.replace(/["']/g,'').split(',').map(f=>f.trim()).filter(f=>f);
         }
 
-        // Validate request body
         await updateProductValidator.validate(req.body, { abortEarly: false });
 
-        // Check if slug already exists (if slug is being updated)
-        if (slug && slug !== product.slug) {
-            const existingProduct = await Product.findOne({ slug });
-            if (existingProduct) {
-                return errorResponse(res, 409, 'Product with this slug already exists');
-            }
+        if (req.body.slug && req.body.slug !== product.slug) {
+            const existingProduct = await Product.findOne({ slug: req.body.slug });
+            if (existingProduct) return errorResponse(res, 409, 'محصولی با این slug از قبل وجود دارد');
         }
 
-        // Validate category if provided
-        if (category !== undefined) {
-            if (!isValidObjectId(category)) {
-                return errorResponse(res, 400, 'Invalid category ID');
-            }
-            const categoryExists = await Category.findById(category);
-            if (!categoryExists) {
-                return errorResponse(res, 404, 'Category not found');
-            }
+        if (req.body.category !== undefined) {
+            if (!isValidObjectId(req.body.category)) return errorResponse(res, 400, 'شناسه دسته‌بندی نامعتبر است');
+            const categoryExists = await Category.findById(req.body.category);
+            if (!categoryExists) return errorResponse(res, 404, 'دسته‌بندی یافت نشد');
         }
 
-        // Handle image uploads
         let imagePaths = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
-                // Validate file format
                 if (!supportedFormat.includes(file.mimetype)) {
-                    return errorResponse(res, 400, 'Unsupported file format. Supported formats: JPEG, PNG, SVG, WEBP, GIF');
+                    return errorResponse(res, 400, 'فرمت فایل پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG, PNG, SVG, WEBP, GIF');
                 }
-                imagePaths.push(file.path.replace(/\\/g, '/'));
+                imagePaths.push(file.path.replace(/\\/g,'/'));
             }
         }
 
-        // Build update object (only update provided fields)
-        const updateData = {};
-        if (name !== undefined) updateData.name = name;
-        if (slug !== undefined) updateData.slug = slug;
-        if (description !== undefined) updateData.description = description;
-        if (positiveFeature !== undefined) updateData.positiveFeature = positiveFeature;
-        if (category !== undefined) updateData.category = category;
-        if (badge !== undefined) updateData.badge = badge;
-        if (status !== undefined) updateData.status = status;
-        if (price !== undefined) updateData.price = price;
-        if (stock !== undefined) updateData.stock = stock;
-        if (originalPrice !== undefined) updateData.originalPrice = originalPrice;
-        if (discount !== undefined) updateData.discount = discount;
-        if (type !== undefined) updateData.type = type;
-        if (dealType !== undefined) updateData.dealType = dealType;
-        if (timeLeft !== undefined) updateData.timeLeft = timeLeft;
-        if (soldCount !== undefined) updateData.soldCount = soldCount;
-        if (totalCount !== undefined) updateData.totalCount = totalCount;
-        if (rating !== undefined) updateData.rating = rating;
-        if (reviews !== undefined) updateData.reviews = reviews;
-        if (isPrime !== undefined) updateData.isPrime = isPrime;
-        if (isPremium !== undefined) updateData.isPremium = isPremium;
-        if (features !== undefined) updateData.features = features;
-        if (seo !== undefined) updateData.seo = seo;
-
-        // Handle images
+        const updateData = { ...req.body };
         if (imagePaths.length > 0) {
-            // If new images uploaded, add them to existing images or replace
-            updateData.images = [...(product.images || []), ...imagePaths];
-            // Set main image to first uploaded image
+            updateData.images = [...(product.images||[]), ...imagePaths];
             updateData.image = imagePaths[0];
-        } else if (image !== undefined) {
-            // If image URL provided, set it as main image
-            updateData.image = image;
+        } else if (req.body.image !== undefined) {
+            updateData.image = req.body.image;
         }
 
-        // Update product
-        const updatedProduct = await Product.findByIdAndUpdate(
-            productId,
-            updateData,
-            { new: true, runValidators: true }
-        )
-        .populate('category', 'name slug')
-        .select('-__v');
+        const updatedProduct = await Product.findByIdAndUpdate(productId, updateData, { new: true, runValidators: true })
+            .populate('category', 'name slug')
+            .populate('userReviews.user', 'name email')
+            .select('-__v');
 
         return successRespons(res, 200, {
             product: updatedProduct,
-            message: 'Product updated successfully'
+            message: 'محصول با موفقیت بروزرسانی شد'
         });
 
     } catch (err) {
-        // Handle validation errors
         if (err.name === 'ValidationError' && err.inner) {
-            const validationErrors = err.inner.map(e => ({
-                path: e.path,
-                message: e.message
-            }));
-            return errorResponse(res, 400, 'Validation failed', validationErrors);
+            const validationErrors = err.inner.map(e => ({ path: e.path, message: e.message }));
+            return errorResponse(res, 400, 'اعتبارسنجی شکست خورد', validationErrors);
         }
         next(err);
     };
@@ -404,23 +265,15 @@ exports.updateProduct = async (req,res,next) => {
 exports.deleteProduct = async (req,res,next) => {
     try {
         const { productId } = req.params;
+        if (!isValidObjectId(productId)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
 
-        // Validate productId
-        if (!isValidObjectId(productId)) {
-            return errorResponse(res, 400, 'Invalid product ID');
-        }
-
-        // Find product
         const product = await Product.findById(productId);
-        if (!product) {
-            return errorResponse(res, 404, 'Product not found');
-        }
+        if (!product) return errorResponse(res, 404, 'محصول یافت نشد');
 
-        // Delete product
         await Product.findByIdAndDelete(productId);
 
         return successRespons(res, 200, {
-            message: 'Product deleted successfully'
+            message: 'محصول با موفقیت حذف شد'
         });
 
     } catch (err) {

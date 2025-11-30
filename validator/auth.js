@@ -3,17 +3,17 @@ const yup = require('yup');
 const sendOtpValidator = yup.object({
     phone: yup
     .string()
-    .required('Phone number is required')
-    .matches(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'phone number is not valid')
+    .required('شماره تلفن الزامی است')
+    .matches(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/, 'شماره تلفن معتبر نیست')
 });
 
 const otpVerifyValidator = yup.object({
     phone: yup
     .string()
-    .required('Phone number is required')
+    .required('شماره تلفن الزامی است')
     .matches(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/,
-    'phone number is not valid'),
-    otp: yup.string().required('otp code is required').matches(/^[0-9]+$/,'otp code is not valid'),
+    'شماره تلفن معتبر نیست'),
+    otp: yup.string().required('کد otp مورد نیاز است').matches(/^[0-9]+$/,'کد وارد شده معتبر نیست'),
 });
 
 module.exports = { sendOtpValidator, otpVerifyValidator };
