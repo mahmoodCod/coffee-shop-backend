@@ -123,8 +123,6 @@ exports.createArticle = async (req, res, next) => {
         });
 
     } catch (err) {
-<<<<<<< HEAD
-=======
         next (err);
     };
 };
@@ -143,20 +141,15 @@ exports.getOne = async (req,res,next) => {
             return errorResponse(res, 404, 'مقاله موردنظر یافت نشد');
         }
 
-        // Load related products if any
+        // Initialize relatedProducts array
         let relatedProducts = [];
+
+        // Load related products if any
         if (article.relatedProducts?.length) {
             relatedProducts = await Product.find({
                 _id: { $in: article.relatedProducts }
             }).select("name slug price image stock");
         }
-       // Load related products if any
-       let relatedProducts = [];
-       if (article.relatedProducts?.length) {
-           relatedProducts = await Product.find({
-               _id: { $in: article.relatedProducts }
-           }).select("name slug price image stock");
-       }
 
         return successRespons(res, 200, {
             article,
@@ -164,7 +157,6 @@ exports.getOne = async (req,res,next) => {
         });
 
     } catch (err) {
->>>>>>> fde885e046fe3a0f48bb183cb8bb8c6efe1a1b41
         next(err);
     }
 };
