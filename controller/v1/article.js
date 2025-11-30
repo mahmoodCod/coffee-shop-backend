@@ -159,20 +159,13 @@ exports.getOne = async (req,res,next) => {
             return errorResponse(res, 404, "مقاله موردنظر یافت نشد");
         }
 
-        let relatedProducts = [];
-        if (article.productTags?.length) {
-            relatedProducts = await Product.find({
-                tags: { $in: article.productTags }
-            }).select("name slug price image stock");
-        if (!article) {
-            return errorResponse(res, 404, 'مقاله یافت نشد');
-        }
-    }
-
-        // Check if article is published (publish === 1)
-        if (article.publish !== 1) {
-            return errorResponse(res, 404, 'مقاله یافت نشد');
-        }
+       // Load related products if any
+       let relatedProducts = [];
+       if (article.relatedProducts?.length) {
+           relatedProducts = await Product.find({
+               _id: { $in: article.relatedProducts }
+           }).select("name slug price image stock");
+       }
 
         return successRespons(res, 200, {
             article,
