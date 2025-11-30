@@ -1,6 +1,7 @@
 const { successRespons, errorResponse } = require("../../helpers/responses");
 const Article = require("../../model/Article");
 const Category = require("../../model/Category");
+const Product = require('../../model/Product');
 const { createArticleValidator, updateArticleValidator } = require('../../validator/article');
 const { isValidObjectId } = require('mongoose');
 const { createPaginationData } = require('../../utils');
@@ -77,7 +78,7 @@ exports.getAllArticles = async (req,res,next) => {
 exports.createArticle = async (req,res,next) => {
     try {
         const user = req.user;
-        const { title, excerpt, discription, body, href, category, badge, readTime, author, date, publish, relatedProducts } = req.body;
+        const { title, excerpt, discription, body, href, category, badge, readTime, author, date, publish, productTags } = req.body;
 
         // Validate request body
         await createArticleValidator.validate(req.body, { abortEarly: false });
@@ -126,7 +127,7 @@ exports.createArticle = async (req,res,next) => {
             author,
             date: date ? new Date(date) : new Date(),
             publish,
-            relatedProducts: relatedProducts || []
+            productTags: productTags || []
         });
 
         // Populate category and creator
@@ -166,6 +167,7 @@ exports.getOne = async (req,res,next) => {
         if (!article) {
             return errorResponse(res, 404, 'مقاله یافت نشد');
         }
+    }
 
         // Check if article is published (publish === 1)
         if (article.publish !== 1) {
