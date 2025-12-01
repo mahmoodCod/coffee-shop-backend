@@ -5,13 +5,22 @@ const { createValueBuy, getAllValueBuy, getOneValueBuy, updateValueBuy, deleteVa
 
 const router = express.Router();
 
+// router.route('/')
+//     .post(auth, roleGuard('ADMIN'), createValueBuy)
+//     .get(getAllValueBuy);
+
+// router.route('/:id')
+//     .get(getOneValueBuy)
+//     .patch(auth, roleGuard('ADMIN'), updateValueBuy)
+//     .delete(auth, roleGuard('ADMIN'), deleteValueBuy);
+
 router.route('/')
-    .post(auth, roleGuard('ADMIN'), createValueBuy)
+    .post( createValueBuy)
     .get(getAllValueBuy);
 
 router.route('/:id')
     .get(getOneValueBuy)
-    .patch(auth, roleGuard('ADMIN'), updateValueBuy)
-    .delete(auth, roleGuard('ADMIN'), deleteValueBuy);
+    .patch( updateValueBuy)
+    .delete( deleteValueBuy);
 
 module.exports = router;
