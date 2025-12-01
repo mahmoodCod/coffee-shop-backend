@@ -96,7 +96,7 @@ exports.createProduct = async (req,res,next) => {
             hasWarranty: req.body.hasWarranty || false,
             warrantyDuration: req.body.warrantyDuration || 0,
             warrantyDescription: req.body.warrantyDescription || '',
-            userReviews: req.body.userReviews || [],
+            // userReviews: req.body.userReviews || [],
             recommended: req.body.recommended || false,
             relatedProducts: req.body.relatedProducts || [],
             isPrime: req.body.isPrime || false,
