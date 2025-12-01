@@ -8,7 +8,7 @@ const createProductValidator = yup.object().shape({
     .max(100, "نام محصول نمی‌تواند بیشتر از ۱۰۰ کاراکتر باشد"),
   slug: yup
     .string()
-    .required("اسلاگ الزامی است")
+    // .required("اسلاگ الزامی است")
     .matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "اسلاگ باید سازگار با URL باشد"),
   description: yup
     .string()
@@ -97,15 +97,15 @@ const createProductValidator = yup.object().shape({
   warrantyDescription: yup
     .string()
     .default(""),
-  userReviews: yup
-    .array()
-    .of(yup.object().shape({
-      user: yup.string().required("کاربر الزامی است"),
-      rating: yup.number().min(1).max(5).required("امتیاز الزامی است"),
-      comment: yup.string(),
-      createdAt: yup.date().default(() => new Date())
-    }))
-    .default([]),
+  // userReviews: yup
+  //   .array()
+  //   .of(yup.object().shape({
+  //     user: yup.string().required("کاربر الزامی است"),
+  //     rating: yup.number().min(1).max(5).required("امتیاز الزامی است"),
+  //     comment: yup.string(),
+  //     createdAt: yup.date().default(() => new Date())
+  //   }))
+  //   .default([]),
   recommended: yup
     .boolean()
     .default(false),
@@ -209,14 +209,14 @@ const updateProductValidator = yup.object().shape({
     .min(0, "مدت زمان گارانتی نمی‌تواند منفی باشد"),
   warrantyDescription: yup
     .string(),
-  userReviews: yup
-    .array()
-    .of(yup.object().shape({
-      user: yup.string(),
-      rating: yup.number().min(1).max(5),
-      comment: yup.string(),
-      createdAt: yup.date()
-    })),
+  // userReviews: yup
+  //   .array()
+  //   .of(yup.object().shape({
+  //     user: yup.string(),
+  //     rating: yup.number().min(1).max(5),
+  //     comment: yup.string(),
+  //     createdAt: yup.date()
+  //   })),
   recommended: yup
     .boolean(),
   relatedProducts: yup
