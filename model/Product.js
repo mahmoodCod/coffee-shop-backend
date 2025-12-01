@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
 
     slug: {
         type: String,
-        required: true,
+        // required: true,
         trim: true,
         unique: true,
     },
@@ -159,14 +159,14 @@ const productSchema = new mongoose.Schema({
         default: ""
     },
 
-    userReviews: [
-        {
-            user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-            rating: { type: Number, min: 1, max: 5, required: true },
-            comment: { type: String, trim: true },
-            createdAt: { type: Date, default: Date.now }
-        }
-    ],
+    // userReviews: [
+    //     {
+    //         user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    //         rating: { type: Number, min: 1, max: 5, required: true },
+    //         comment: { type: String, trim: true },
+    //         createdAt: { type: Date, default: Date.now }
+    //     }
+    // ],
 
     brand: {
         type: String,
