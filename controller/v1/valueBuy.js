@@ -11,31 +11,45 @@ exports.createValueBuy = async (req, res, next) => {
 
         await createValueBuyValidator.validate(req.body, { abortEarly: false });
 
-        if (!isValidObjectId(product)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
+        if (!isValidObjectId(product)) 
+            return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
 
         const productExists = await Product.findById(product);
-        if (!productExists) return errorResponse(res, 404, 'محصول یافت نشد');
+        if (!productExists) 
+            return errorResponse(res, 404, 'محصول یافت نشد');
 
         const existingValueBuy = await ValueBuy.findOne({ product });
-        if (existingValueBuy) return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy ثبت شده است');
+        if (existingValueBuy) 
+            return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy ثبت شده است');
 
-        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
-        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
+        // ---- تبدیل ورودی features به آرایه رشته ----
+        const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
+        let finalFeatures = [];
 
-        const filteredFeatures = {};
-        allowedFeatures.forEach(key => {
-            if (features && features[key] !== undefined) filteredFeatures[key] = features[key];
-        });
+        if (Array.isArray(features)) {
+            finalFeatures = features.filter(f => allowedFeatures.includes(f));
+        }
 
-        const filteredFilters = {};
-        allowedFilters.forEach(key => {
-            filteredFilters[key] = filters && filters[key] !== undefined ? filters[key] : false;
-        });
+        if (finalFeatures.length === 0) {
+            finalFeatures = ["پیشنهاد شده"]; // مقدار پیش‌فرض مدل
+        }
+
+        // ---- تبدیل ورودی filters به آرایه رشته ----
+        const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
+        let finalFilters = [];
+
+        if (Array.isArray(filters)) {
+            finalFilters = filters.filter(f => allowedFilters.includes(f));
+        }
+
+        if (finalFilters.length === 0) {
+            finalFilters = ["انتخاب اقتصادی"];
+        }
 
         const newValueBuy = await ValueBuy.create({
             product,
-            features: filteredFeatures,
-            filters: filteredFilters,
+            features: finalFeatures,
+            filters: finalFilters,
             isActive: isActive !== undefined ? isActive : true,
         });
 
@@ -53,38 +67,43 @@ exports.createValueBuy = async (req, res, next) => {
 
 exports.getAllValueBuy = async (req, res, next) => {
     try {
-        const { page = 1, limit = 10, product, isActive } = req.query;
+        const { page = 1, limit = 10, product, isActive, feature, filter } = req.query;
+
         const pageNum = parseInt(page);
         const limitNum = parseInt(limit);
 
-        const filters = {};
+        const filtersQuery = {};
 
-        if (isActive !== undefined) filters.isActive = isActive === 'true' || isActive === true;
-        if (product && isValidObjectId(product)) filters.product = product;
+        if (isActive !== undefined)
+            filtersQuery.isActive = isActive === 'true';
 
-        const allowedFeatures = ['recommended', 'specialDiscount', 'lowStock', 'rareDeal'];
-        const allowedFilters = ['economicChoice', 'bestValue', 'topSelling', 'freeShipping'];
+        if (product && isValidObjectId(product))
+            filtersQuery.product = product;
 
-        allowedFeatures.forEach(key => {
-            if (req.query[key] !== undefined) filters[`features.${key}`] = req.query[key] === 'true';
-        });
+        // ------ فیلترگذاری براساس ویژگی‌ها ------
+        const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
+        if (feature && allowedFeatures.includes(feature)) {
+            filtersQuery.features = feature; // جستجو داخل آرایه
+        }
 
-        allowedFilters.forEach(key => {
-            if (req.query[key] !== undefined) filters[`filters.${key}`] = req.query[key] === 'true';
-        });
+        // ------ فیلترگذاری براساس فیلترها ------
+        const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
+        if (filter && allowedFilters.includes(filter)) {
+            filtersQuery.filters = filter; // جستجو داخل آرایه
+        }
 
-        const valueBuys = await ValueBuy.find(filters)
+        const valueBuys = await ValueBuy.find(filtersQuery)
             .populate('product', 'name slug price image stock brand category')
-            .sort({ createdAt: 'desc' })
+            .sort({ createdAt: -1 })
             .skip((pageNum - 1) * limitNum)
             .limit(limitNum)
             .select('-__v');
 
-        const totalValueBuys = await ValueBuy.countDocuments(filters);
+        const total = await ValueBuy.countDocuments(filtersQuery);
 
         return successRespons(res, 200, {
             valueBuys,
-            pagination: createPaginationData(pageNum, limitNum, totalValueBuys, 'ValueBuys'),
+            pagination: createPaginationData(pageNum, limitNum, total, 'ValueBuys'),
         });
 
     } catch (err) {
@@ -113,41 +132,80 @@ exports.getOneValueBuy = async (req, res, next) => {
 exports.updateValueBuy = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { product, features, isActive } = req.body;
+        const { product, features, filters, isActive } = req.body;
 
-        if (!isValidObjectId(id)) return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
+        if (!isValidObjectId(id))
+            return errorResponse(res, 400, 'شناسه ValueBuy نامعتبر است');
 
         const existingValueBuy = await ValueBuy.findById(id);
-        if (!existingValueBuy) return errorResponse(res, 404, 'ValueBuy یافت نشد');
+        if (!existingValueBuy)
+            return errorResponse(res, 404, 'ValueBuy یافت نشد');
 
         await updateValueBuyValidator.validate(req.body, { abortEarly: false });
 
         const updateData = {};
 
+        // --- تغییر محصول ---
         if (product !== undefined) {
-            if (!isValidObjectId(product)) return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
+            if (!isValidObjectId(product))
+                return errorResponse(res, 400, 'شناسه محصول نامعتبر است');
 
             const productExists = await Product.findById(product);
-            if (!productExists) return errorResponse(res, 404, 'محصول یافت نشد');
+            if (!productExists)
+                return errorResponse(res, 404, 'محصول یافت نشد');
 
             if (product !== existingValueBuy.product.toString()) {
                 const duplicate = await ValueBuy.findOne({ product });
-                if (duplicate) return errorResponse(res, 409, 'این محصول قبلاً در یک ValueBuy دیگر ثبت شده است');
+                if (duplicate)
+                    return errorResponse(res, 409, 'این محصول قبلاً در ValueBuy دیگری ثبت شده');
             }
 
             updateData.product = product;
         }
 
-        if (features !== undefined) updateData.features = { ...existingValueBuy.features, ...features };
+        // --- اصلاح features ---
+        if (features !== undefined) {
+            const allowedFeatures = ["پیشنهاد شده", "تخفیف ویژه", "موجودی کم", "پیشنهاد نادر"];
+
+            if (!Array.isArray(features))
+                return errorResponse(res, 400, "features باید آرایه باشد");
+
+            const filtered = features.filter(f => allowedFeatures.includes(f));
+
+            if (filtered.length === 0)
+                return errorResponse(res, 400, "هیچ مقدار معتبر برای features ارسال نشده");
+
+            updateData.features = filtered;
+        }
+
+        // --- اصلاح filters ---
+        if (filters !== undefined) {
+            const allowedFilters = ["انتخاب اقتصادی", "بهترین ارزش", "پرفروش‌ترین", "ارسال رایگان"];
+
+            if (!Array.isArray(filters))
+                return errorResponse(res, 400, "filters باید آرایه باشد");
+
+            const filtered = filters.filter(f => allowedFilters.includes(f));
+
+            if (filtered.length === 0)
+                return errorResponse(res, 400, "هیچ مقدار معتبر برای filters ارسال نشده");
+
+            updateData.filters = filtered;
+        }
+
+        // --- اصلاح isActive ---
         if (isActive !== undefined) updateData.isActive = isActive;
 
-        const updatedValueBuy = await ValueBuy.findByIdAndUpdate(id, updateData, { new: true, runValidators: true })
-            .populate('product', 'name slug price image stock brand category description')
+        const updated = await ValueBuy.findByIdAndUpdate(id, updateData, {
+            new: true,
+            runValidators: true,
+        })
+            .populate('product', 'name slug price image')
             .select('-__v');
 
         return successRespons(res, 200, {
-            valueBuy: updatedValueBuy,
-            message: 'ValueBuy با موفقیت بروزرسانی شد',
+            valueBuy: updated,
+            message: "ValueBuy با موفقیت بروزرسانی شد"
         });
 
     } catch (err) {
