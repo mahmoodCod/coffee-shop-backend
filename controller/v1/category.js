@@ -3,6 +3,7 @@ const { errorResponse, successRespons } = require('../../helpers/responses');
 const Category = require('../../model/Category');
 const { isValidObjectId } = require('mongoose');
 const { createPaginationData } = require('../../utils');
+const { uploadToMinio, generateUniqueFileName } = require('../../utils/minioUpload');
 
 const supportedFormat = [
     "image/jpeg",
@@ -83,7 +84,9 @@ exports.createCategory = async(req,res,next) => {
             if (!supportedFormat.includes(req.file.mimetype)) {
                 return errorResponse(res, 400, 'فرمت تصویر پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG, PNG, SVG, WEBP, GIF');
             }
-            imagePath = req.file.path.replace(/\\/g, '/');
+            // آپلود تصویر به MinIO
+            const uniqueFileName = generateUniqueFileName(req.file.originalname);
+            imagePath = await uploadToMinio(req.file.buffer, uniqueFileName, 'categories', req.file.mimetype);
         }
 
         const categoryData = {
@@ -202,7 +205,9 @@ exports.updateCategory = async(req,res,next) => {
             if (!supportedFormat.includes(req.file.mimetype)) {
                 return errorResponse(res, 400, 'فرمت تصویر پشتیبانی نمی‌شود. فرمت‌های مجاز: JPEG, PNG, SVG, WEBP, GIF');
             }
-            imagePath = req.file.path.replace(/\\/g, '/');
+            // آپلود تصویر به MinIO
+            const uniqueFileName = generateUniqueFileName(req.file.originalname);
+            imagePath = await uploadToMinio(req.file.buffer, uniqueFileName, 'categories', req.file.mimetype);
         }
 
         const updateData = {};

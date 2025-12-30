@@ -4,7 +4,7 @@ const roleGuard = require('../../middleware/roleGuard');
 const { multerStorage } = require('../../utils/multerConfigs');
 const { createProduct, getAllProduct, getOneProduct, updateProduct, deleteProduct } = require('../../controller/v1/product');
 
-const upload = multerStorage('public/images/products');
+const upload = multerStorage();
 
 const router = express.Router();
 
