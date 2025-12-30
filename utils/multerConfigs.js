@@ -1,29 +1,12 @@
 const multer = require("multer");
-const fs = require("fs");
-const path = require("path");
 
-exports.multerStorage = (destination) => {
-  if (!fs.existsSync(destination)) {
-    fs.mkdirSync(destination, { recursive: true });
-  }
-
-  const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, destination);
-    },
-
-    filename: function (req, file, cb) {
-      const imageFile = file.originalname.split(".");
-      const extName = imageFile.pop();
-      const fileName = imageFile.join(".");
-
-      cb(null, `${fileName}-${Date.now()}.${extName}`);
-    },
-  });
+// استفاده از memory storage برای آپلود به MinIO
+exports.multerStorage = () => {
+  const storage = multer.memoryStorage();
 
   const upload = multer({
     storage: storage,
-    limits: { fileSize: 512_000_000 },
+    limits: { fileSize: 512_000_000 }, // 512MB
   });
 
   return upload;

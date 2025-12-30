@@ -5,7 +5,7 @@ const { multerStorage } = require('../../utils/multerConfigs');
 const { createCategory,getCategory, getCategoryTree, getFeaturedCategories, getRootCategories, updateCategory, removeCategory, 
         getSubcategories, updateCategoryOrder, updateCategoryStatus} = require('../../controller/v1/category');
 
-const upload = multerStorage('public/images/category-images');
+const upload = multerStorage();
 
 // Middleware to handle optional file upload
 // const optionalUpload = (req, res, next) => {

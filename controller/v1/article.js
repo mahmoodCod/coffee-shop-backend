@@ -5,6 +5,7 @@ const Product = require('../../model/Product');
 const { createArticleValidator, updateArticleValidator } = require('../../validator/article');
 const { isValidObjectId } = require('mongoose');
 const { createPaginationData } = require('../../utils');
+const { uploadToMinio, generateUniqueFileName } = require('../../utils/minioUpload');
 
 const supportedFormat = [
     "image/jpeg",
@@ -97,12 +98,16 @@ exports.createArticle = async (req, res, next) => {
         // Parse relatedProducts safely
         const relatedProductsArray = parseArrayField(relatedProducts);
 
+        // آپلود تصویر جلد به MinIO
+        const uniqueFileName = generateUniqueFileName(req.file.originalname);
+        const coverUrl = await uploadToMinio(req.file.buffer, uniqueFileName, 'articles', req.file.mimetype);
+
         const newArticle = await Article.create({
             title,
             excerpt,
             discription,
             body,
-            cover: req.file.path.replace(/\\/g, '/'),
+            cover: coverUrl,
             href,
             category,
             creator: user._id,
@@ -200,7 +205,10 @@ exports.updateArticle = async (req, res, next) => {
             if (!supportedFormat.includes(req.file.mimetype)) {
                 return errorResponse(res, 400, 'فرمت فایل پشتیبانی نمی‌شود');
             }
-            updateData.cover = req.file.path.replace(/\\/g, '/');
+            // آپلود تصویر جلد به MinIO
+            const uniqueFileName = generateUniqueFileName(req.file.originalname);
+            const coverUrl = await uploadToMinio(req.file.buffer, uniqueFileName, 'articles', req.file.mimetype);
+            updateData.cover = coverUrl;
         }
 
         if (href !== undefined && href !== existingArticle.href) {
@@ -263,7 +271,10 @@ exports.saveDraft = async (req, res, next) => {
             if (!supportedFormat.includes(req.file.mimetype)) {
                 return errorResponse(res, 400, 'فرمت فایل پشتیبانی نمی‌شود');
             }
-            updateData.cover = req.file.path.replace(/\\/g, '/');
+            // آپلود تصویر جلد به MinIO
+            const uniqueFileName = generateUniqueFileName(req.file.originalname);
+            const coverUrl = await uploadToMinio(req.file.buffer, uniqueFileName, 'articles', req.file.mimetype);
+            updateData.cover = coverUrl;
         }
 
         if (href !== undefined && href !== existingArticle.href) {
